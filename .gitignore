@@ -1,0 +1,5 @@
+.gradle
+gradle
+bin
+node_modules
+yarn-error.log

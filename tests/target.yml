@@ -1,0 +1,7 @@
+version: '2.3'
+
+services:
+    target:
+        image: soluto/simple-fake-server
+        ports:
+            - 3000:3000

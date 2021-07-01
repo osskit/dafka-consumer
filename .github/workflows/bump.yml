@@ -1,0 +1,26 @@
+name: "Bump Version"
+
+on:
+  push:
+    paths-ignore:
+      - ".github/**"
+      - "README.md"
+    branches: [main]
+
+jobs:
+  bump-version:
+    name: "Bump Version on main"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout source code"
+        uses: "actions/checkout@v2"
+        with:
+          token: ${{ secrets.REPO_TOKEN }}
+      - name: "Automated Version Bump"
+        id: version-bump
+        uses: "phips28/gh-action-bump-version@master"
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+        with:
+          tag-prefix: "v"
