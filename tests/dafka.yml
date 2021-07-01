@@ -20,7 +20,7 @@ services:
             - KAFKA_BROKER=kafka:9092
             - TOPICS=dead-letter
             - GROUP_ID=consumer_dead_letter
-            - TARGET=http://target:2000/consume
+            - TARGET=http://target:2000/deadLetter
 
     retry_consumer:
         build: ../
