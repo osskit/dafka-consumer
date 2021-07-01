@@ -28,7 +28,7 @@ services:
             - KAFKA_BROKER=kafka:9092
             - TOPICS=retry
             - GROUP_ID=consumer_retry
-            - TARGET=target:2000/retry 
+            - TARGET=http://target:2000/retry 
 
     unexpected_consumer:
         build: ../
