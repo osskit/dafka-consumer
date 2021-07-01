@@ -1,53 +1,53 @@
 {
-  "name": "dafka-consumer",
-  "version": "1.0.7",
-  "description": "Dockerized kafka consumer",
-  "private": true,
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/osskit/dafka-consumer.git"
-  },
-  "author": "osskit",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/osskit/dafka-consumer/issues"
-  },
-  "homepage": "https://github.com/osskit/dafka-consumer#readme",
-  "scripts": {
-    "test:teardown": "docker-compose -f tests/kafka.yml down -v --remove-orphans && docker-compose -f tests/dafka.yml down -v --remove-orphans && docker-compose -f tests/target.yml down -v --remove-orphans",
-    "test:setup": " docker-compose -f tests/target.yml up -d && sleep 30 && docker-compose -f tests/kafka.yml up -d && sleep 30 && docker-compose -f tests/dafka.yml up --build -d && sleep 30",
-    "test:start": "jest --runInBand --forceExit --config tests/jest.config.local.js --testResultsProcessor jest-teamcity-reporter",
-    "test": "yarn && npm run test:teardown && npm run test:setup && npm run test:start && npm run test:teardown",
-    "format": "prettier --write '**/*.{ts,js,json,java}'",
-    "logs": "docker-compose -f tests/dafka.yml logs"
-  },
-  "dependencies": {
-    "@types/jest": "^24.0.12",
-    "@types/lodash": "^4.14.149",
-    "@types/node": "^11.13.8",
-    "@types/node-fetch": "^2.5.2",
-    "@types/uuid": "^3.4.4",
-    "delay": "^4.2.0",
-    "jest": "^24.9.0",
-    "jest-cli": "^24.7.1",
-    "jest-teamcity-reporter": "^0.9.0",
-    "kafka-node": "4.1.3",
-    "lodash": "^4.17.15",
-    "node-fetch": "^2.6.0",
-    "simple-fake-server-server-client": "^2.0.1",
-    "ts-jest": "^24.2.0",
-    "tslib": "^1.10.0",
-    "typescript": "^3.7.3",
-    "uuid": "^3.3.2"
-  },
-  "devDependencies": {
-    "husky": "^3.1.0",
-    "prettier": "^2.3.2",
-    "prettier-plugin-java": "^1.3.0"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn format && git add ."
+    "name": "dafka-consumer",
+    "version": "1.0.7",
+    "description": "Dockerized kafka consumer",
+    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/osskit/dafka-consumer.git"
+    },
+    "author": "osskit",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/osskit/dafka-consumer/issues"
+    },
+    "homepage": "https://github.com/osskit/dafka-consumer#readme",
+    "scripts": {
+        "test:teardown": "docker-compose -f tests/kafka.yml down -v --remove-orphans && docker-compose -f tests/dafka.yml down -v --remove-orphans && docker-compose -f tests/target.yml down -v --remove-orphans",
+        "test:setup": " docker-compose -f tests/target.yml up -d && sleep 30 && docker-compose -f tests/kafka.yml up -d && sleep 30 && docker-compose -f tests/dafka.yml up --build -d && sleep 30",
+        "test:start": "jest --runInBand --forceExit --config tests/jest.config.local.js --testResultsProcessor jest-teamcity-reporter",
+        "test": "yarn && npm run test:teardown && npm run test:setup && npm run test:start && npm run test:teardown",
+        "format": "prettier --write '**/*.{ts,js,json,java}'",
+        "logs": "docker-compose -f tests/dafka.yml logs"
+    },
+    "dependencies": {
+        "@types/jest": "^24.0.12",
+        "@types/lodash": "^4.14.149",
+        "@types/node": "^11.13.8",
+        "@types/node-fetch": "^2.5.2",
+        "@types/uuid": "^3.4.4",
+        "delay": "^4.2.0",
+        "jest": "^24.9.0",
+        "jest-cli": "^24.7.1",
+        "jest-teamcity-reporter": "^0.9.0",
+        "kafka-node": "4.1.3",
+        "lodash": "^4.17.15",
+        "node-fetch": "^2.6.0",
+        "simple-fake-server-server-client": "^2.0.1",
+        "ts-jest": "^24.2.0",
+        "tslib": "^1.10.0",
+        "typescript": "^3.7.3",
+        "uuid": "^3.3.2"
+    },
+    "devDependencies": {
+        "husky": "^3.1.0",
+        "prettier": "^2.3.2",
+        "prettier-plugin-java": "^1.3.0"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "yarn format && git add ."
+        }
     }
-  }
 }
