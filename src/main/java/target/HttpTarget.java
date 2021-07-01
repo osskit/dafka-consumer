@@ -26,7 +26,7 @@ public class HttpTarget implements ITarget {
         final var request = HttpRequest
             .newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
-            .uri(URI.create(Config.SENDING_PROTOCOL + "://" + Config.TARGET))
+            .uri(URI.create(Config.TARGET))
             .header("Content-Type", "application/json")
             .header("x-record-topic", record.topic())
             .header("x-record-partition", String.valueOf(record.partition()))

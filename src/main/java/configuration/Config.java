@@ -19,7 +19,6 @@ public class Config {
     public static String KAFKA_BROKER;
     public static List<String> TOPICS;
     public static String GROUP_ID;
-    public static String SENDING_PROTOCOL;
     public static String TARGET;
 
     //Optional
@@ -60,7 +59,6 @@ public class Config {
 
         TOPICS = getStringList(dotenv, "TOPICS");
         GROUP_ID = getString(dotenv, "GROUP_ID");
-        SENDING_PROTOCOL = getString(dotenv, "SENDING_PROTOCOL");
 
         TARGET = getString(dotenv, "TARGET");
         POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);
