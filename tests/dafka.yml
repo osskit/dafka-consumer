@@ -11,7 +11,7 @@ services:
             - RETRY_TOPIC=retry
             - DEAD_LETTER_TOPIC=dead-letter
             - GROUP_ID=consumer_1
-            - TARGET=target:2000/consume
+            - TARGET=http://target:2000/consume
             - MONITORING_SERVER_PORT=4001
              
     dead_letter_consumer:
@@ -20,7 +20,7 @@ services:
             - KAFKA_BROKER=kafka:9092
             - TOPICS=dead-letter
             - GROUP_ID=consumer_dead_letter
-            - TARGET=target:2000/deadLetter
+            - TARGET=http://target:2000/consume
 
     retry_consumer:
         build: ../
