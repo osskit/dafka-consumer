@@ -60,7 +60,7 @@ public class Main {
                     }
                 }
             ),
-            TargetFactory.create(
+            new HttpTarget(
                 new TargetRetryPolicy(
                     new Producer(new KafkaClientFactory().createProducer()),
                     Config.RETRY_TOPIC,

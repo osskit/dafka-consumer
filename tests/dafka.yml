@@ -11,8 +11,7 @@ services:
             - RETRY_TOPIC=retry
             - DEAD_LETTER_TOPIC=dead-letter
             - GROUP_ID=consumer_1
-            - SENDING_PROTOCOL=http
-            - TARGET=target:2000/consume
+            - TARGET=http://target:2000/consume
             - MONITORING_SERVER_PORT=4001
              
     dead_letter_consumer:
@@ -21,8 +20,7 @@ services:
             - KAFKA_BROKER=kafka:9092
             - TOPICS=dead-letter
             - GROUP_ID=consumer_dead_letter
-            - SENDING_PROTOCOL=http
-            - TARGET=target:2000/deadLetter
+            - TARGET=http://target:2000/deadLetter
 
     retry_consumer:
         build: ../
@@ -30,8 +28,7 @@ services:
             - KAFKA_BROKER=kafka:9092
             - TOPICS=retry
             - GROUP_ID=consumer_retry
-            - SENDING_PROTOCOL=http
-            - TARGET=target:2000/retry 
+            - TARGET=http://target:2000/retry 
 
     unexpected_consumer:
         build: ../
@@ -41,7 +38,6 @@ services:
             - KAFKA_BROKER=kafka:9092
             - TOPICS=unexpected
             - GROUP_ID=consumer_no_target
-            - SENDING_PROTOCOL=http
             - TARGET=nothing
             - MONITORING_SERVER_PORT=4002          
 
