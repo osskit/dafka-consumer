@@ -13,17 +13,17 @@ public class TargetIsAlive {
     private static final HttpClient client = HttpClient.newHttpClient();
 
     public String getEndpoint() {
-        return Config.TARGET_IS_ALIVE_HTTP_ENDPOINT;
+        return Config.TARGET_IS_ALIVE_ROUTE;
     }
 
     public boolean check() throws IOException {
-        if (Config.TARGET_IS_ALIVE_HTTP_ENDPOINT != null) {
+        if (Config.TARGET_IS_ALIVE_ROUTE != null) {
             try {
                 final var request = HttpRequest
                     .newBuilder()
                     .version(HttpClient.Version.HTTP_1_1)
                     .GET()
-                    .uri(URI.create(Config.TARGET_IS_ALIVE_HTTP_ENDPOINT))
+                    .uri(URI.create(Config.TARGET_IS_ALIVE_ROUTE))
                     .build();
 
                 var targetIsAliveResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
