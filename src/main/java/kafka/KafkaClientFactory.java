@@ -18,25 +18,23 @@ public class KafkaClientFactory {
             return props;
         }
 
-        props.put("security.protocol", Config.SECURITY_PROTOCOL);
+        props.put("security.protocol", "SASL_SSL");
 
         if (Config.TRUSTSTORE_PASSWORD != null) {
             props.put("ssl.truststore.location", Config.TRUSTSTORE_LOCATION);
             props.put("ssl.truststore.password", Config.TRUSTSTORE_PASSWORD);
         }
 
-        if (Config.SECURITY_PROTOCOL.equals("SASL_SSL")) {
-            props.put("sasl.mechanism", "PLAIN");
-            props.put("ssl.endpoint.identification.algorithm", "");
-            props.put(
-                "sasl.jaas.config",
-                String.format(
-                    "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";",
-                    Config.SASL_USERNAME,
-                    Config.SASL_PASSWORD
-                )
-            );
-        }
+        props.put("sasl.mechanism", "PLAIN");
+        props.put("ssl.endpoint.identification.algorithm", "");
+        props.put(
+            "sasl.jaas.config",
+            String.format(
+                "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";",
+                Config.SASL_USERNAME,
+                Config.SASL_PASSWORD
+            )
+        );
 
         return props;
     }

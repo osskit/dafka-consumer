@@ -34,8 +34,7 @@ public class Config {
     public static List<Integer> RETRY_POLICY_EXPONENTIAL_BACKOFF;
 
     //Authentication
-    public static boolean AUTHENTICATED_KAFKA = false;
-    public static String SECURITY_PROTOCOL;
+    public static boolean AUTHENTICATED_KAFKA;
     public static String BASE64_TRUSTSTORE_FILE_PATH;
     public static String TRUSTSTORE_LOCATION;
     public static String KEYSTORE_LOCATION;
@@ -79,25 +78,22 @@ public class Config {
         DEAD_LETTER_TOPIC = getOptionalString(dotenv, "DEAD_LETTER_TOPIC", null);
         PROCESSING_DELAY = getOptionalInt(dotenv, "PROCESSING_DELAY", 0);
         MONITORING_SERVER_PORT = getOptionalInt(dotenv, "MONITORING_SERVER_PORT", 0);
-
         TARGET_IS_ALIVE_ROUTE = getOptionalString(dotenv, "TARGET_IS_ALIVE_ROUTE", null);
-        BASE64_TRUSTSTORE_FILE_PATH = getOptionalString(dotenv, "BASE64_TRUSTSTORE_FILE_PATH", null);
 
-        if (BASE64_TRUSTSTORE_FILE_PATH != null) {
-            TRUSTSTORE_LOCATION = "client.truststore.jks";
-            writeToFile(TRUSTSTORE_LOCATION, readFile(getString(dotenv, "BASE64_TRUSTSTORE_FILE_PATH")));
-            TRUSTSTORE_PASSWORD = readFile(getString(dotenv, "TRUSTSTORE_PASSWORD_FILE_PATH"));
-        }
-        SECURITY_PROTOCOL = getOptionalString(dotenv, "SECURITY_PROTOCOL", "");
+        AUTHENTICATED_KAFKA = getOptionalBool(dotenv, "AUTHENTICATED_KAFKA", false);
 
-        if (SECURITY_PROTOCOL.equals("SASL_SSL")) {
+        if (AUTHENTICATED_KAFKA) {
             SASL_USERNAME = getString(dotenv, "SASL_USERNAME");
             SASL_PASSWORD = readFile(getString(dotenv, "SASL_PASSWORD_FILE_PATH"));
-            AUTHENTICATED_KAFKA = true;
+            BASE64_TRUSTSTORE_FILE_PATH = getOptionalString(dotenv, "BASE64_TRUSTSTORE_FILE_PATH", null);
+            if (BASE64_TRUSTSTORE_FILE_PATH != null) {
+                TRUSTSTORE_LOCATION = "client.truststore.jks";
+                writeToFile(TRUSTSTORE_LOCATION, readFile(getString(dotenv, "BASE64_TRUSTSTORE_FILE_PATH")));
+                TRUSTSTORE_PASSWORD = readFile(getString(dotenv, "TRUSTSTORE_PASSWORD_FILE_PATH"));
+            }
         }
 
         USE_PROMETHEUS = getOptionalBool(dotenv, "USE_PROMETHEUS", false);
-
         PROMETHEUS_BUCKETS = getOptionalString(dotenv, "PROMETHEUS_BUCKETS", "0.003,0.03,0.1,0.3,1.5,10");
         LOG_RECORD = getOptionalBool(dotenv, "LOG_RECORD", false);
     }
