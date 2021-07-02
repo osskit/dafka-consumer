@@ -90,14 +90,6 @@ public class Config {
         }
         SECURITY_PROTOCOL = getOptionalString(dotenv, "SECURITY_PROTOCOL", "");
 
-        if (SECURITY_PROTOCOL.equals("SSL")) {
-            KEYSTORE_LOCATION = "client.keystore.p12";
-            KEYSTORE_PASSWORD = readFile(getString(dotenv, "KEYSTORE_PASSWORD_FILE_PATH"));
-            writeToFile(KEYSTORE_LOCATION, readFile(getString(dotenv, "KEYSTORE_FILE_PATH")));
-            KEY_PASSWORD = readFile(getString(dotenv, "KEY_PASSWORD_FILE_PATH"));
-            AUTHENTICATED_KAFKA = true;
-        }
-
         if (SECURITY_PROTOCOL.equals("SASL_SSL")) {
             SASL_USERNAME = getString(dotenv, "SASL_USERNAME");
             SASL_PASSWORD = readFile(getString(dotenv, "SASL_PASSWORD_FILE_PATH"));
