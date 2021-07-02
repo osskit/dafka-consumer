@@ -88,7 +88,7 @@ public class MonitoringServer {
     }
 
     private boolean targetAlive(HttpExchange exchange) throws IOException {
-        if (Config.TARGET_IS_ALIVE_HTTP_ENDPOINT != null) {
+        if (Config.TARGET_IS_ALIVE_ROUTE != null) {
             try {
                 return this.targetIsAlive.check();
             } catch (Exception e) {

@@ -50,7 +50,7 @@ public class Config {
     public static boolean USE_PROMETHEUS;
     public static String PROMETHEUS_BUCKETS;
     public static boolean LOG_RECORD;
-    public static String TARGET_IS_ALIVE_HTTP_ENDPOINT;
+    public static String TARGET_IS_ALIVE_ROUTE;
 
     public static void init() throws Exception {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -80,7 +80,7 @@ public class Config {
         PROCESSING_DELAY = getOptionalInt(dotenv, "PROCESSING_DELAY", 0);
         MONITORING_SERVER_PORT = getOptionalInt(dotenv, "MONITORING_SERVER_PORT", 0);
 
-        TARGET_IS_ALIVE_HTTP_ENDPOINT = getOptionalString(dotenv, "TARGET_IS_ALIVE_HTTP_ENDPOINT", null);
+        TARGET_IS_ALIVE_ROUTE = getOptionalString(dotenv, "TARGET_IS_ALIVE_ROUTE", null);
         BASE64_TRUSTSTORE_FILE_PATH = getOptionalString(dotenv, "BASE64_TRUSTSTORE_FILE_PATH", null);
 
         if (BASE64_TRUSTSTORE_FILE_PATH != null) {
