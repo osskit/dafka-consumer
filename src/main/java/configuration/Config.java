@@ -2,11 +2,9 @@ package configuration;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,7 +32,7 @@ public class Config {
     public static List<Integer> RETRY_POLICY_EXPONENTIAL_BACKOFF;
 
     //Authentication
-    public static boolean AUTHENTICATED_KAFKA;
+    public static boolean USE_SASL_AUTH;
     public static String SASL_USERNAME;
     public static String SASL_PASSWORD;
     public static String TRUSTSTORE_FILE_PATH;
@@ -76,9 +74,9 @@ public class Config {
         MONITORING_SERVER_PORT = getOptionalInt(dotenv, "MONITORING_SERVER_PORT", 0);
         TARGET_IS_ALIVE_ROUTE = getOptionalString(dotenv, "TARGET_IS_ALIVE_ROUTE", null);
 
-        AUTHENTICATED_KAFKA = getOptionalBool(dotenv, "AUTHENTICATED_KAFKA", false);
+        USE_SASL_AUTH = getOptionalBool(dotenv, "USE_SASL_AUTH", false);
 
-        if (AUTHENTICATED_KAFKA) {
+        if (USE_SASL_AUTH) {
             SASL_USERNAME = getString(dotenv, "SASL_USERNAME");
             SASL_PASSWORD = readFile(getString(dotenv, "SASL_PASSWORD_FILE_PATH"));
             TRUSTSTORE_FILE_PATH = getOptionalString(dotenv, "TRUSTSTORE_FILE_PATH", null);

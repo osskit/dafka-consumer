@@ -14,7 +14,7 @@ public class KafkaClientFactory {
         var props = new Properties();
         props.put("bootstrap.servers", Config.KAFKA_BROKER);
 
-        if (!Config.AUTHENTICATED_KAFKA) {
+        if (!Config.USE_SASL_AUTH) {
             return props;
         }
 
