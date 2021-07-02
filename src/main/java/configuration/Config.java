@@ -35,14 +35,10 @@ public class Config {
 
     //Authentication
     public static boolean AUTHENTICATED_KAFKA;
-    public static String BASE64_TRUSTSTORE_FILE_PATH;
-    public static String TRUSTSTORE_LOCATION;
-    public static String KEYSTORE_LOCATION;
-    public static String TRUSTSTORE_PASSWORD;
-    public static String KEYSTORE_PASSWORD;
-    public static String KEY_PASSWORD;
     public static String SASL_USERNAME;
     public static String SASL_PASSWORD;
+    public static String TRUSTSTORE_FILE_PATH;
+    public static String TRUSTSTORE_PASSWORD;
 
     //Monitoring
     public static int MONITORING_SERVER_PORT;
@@ -85,10 +81,8 @@ public class Config {
         if (AUTHENTICATED_KAFKA) {
             SASL_USERNAME = getString(dotenv, "SASL_USERNAME");
             SASL_PASSWORD = readFile(getString(dotenv, "SASL_PASSWORD_FILE_PATH"));
-            BASE64_TRUSTSTORE_FILE_PATH = getOptionalString(dotenv, "BASE64_TRUSTSTORE_FILE_PATH", null);
-            if (BASE64_TRUSTSTORE_FILE_PATH != null) {
-                TRUSTSTORE_LOCATION = "client.truststore.jks";
-                writeToFile(TRUSTSTORE_LOCATION, readFile(getString(dotenv, "BASE64_TRUSTSTORE_FILE_PATH")));
+            TRUSTSTORE_FILE_PATH = getOptionalString(dotenv, "TRUSTSTORE_FILE_PATH", null);
+            if (TRUSTSTORE_FILE_PATH != null) {
                 TRUSTSTORE_PASSWORD = readFile(getString(dotenv, "TRUSTSTORE_PASSWORD_FILE_PATH"));
             }
         }
@@ -96,10 +90,6 @@ public class Config {
         USE_PROMETHEUS = getOptionalBool(dotenv, "USE_PROMETHEUS", false);
         PROMETHEUS_BUCKETS = getOptionalString(dotenv, "PROMETHEUS_BUCKETS", "0.003,0.03,0.1,0.3,1.5,10");
         LOG_RECORD = getOptionalBool(dotenv, "LOG_RECORD", false);
-    }
-
-    private static void writeToFile(String path, String value) throws IOException {
-        Files.write(Paths.get(path), Base64.getDecoder().decode(value.getBytes(StandardCharsets.UTF_8)));
     }
 
     private static String readFile(String path) throws IOException {
