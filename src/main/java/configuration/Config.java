@@ -74,7 +74,6 @@ public class Config {
         TARGET_IS_ALIVE_ROUTE = getOptionalString(dotenv, "TARGET_IS_ALIVE_ROUTE", null);
 
         USE_SASL_AUTH = getOptionalBool(dotenv, "USE_SASL_AUTH", false);
-
         if (USE_SASL_AUTH) {
             SASL_USERNAME = getString(dotenv, "SASL_USERNAME");
             SASL_PASSWORD = getStringValueOrFromFile(dotenv, "SASL_PASSWORD");
