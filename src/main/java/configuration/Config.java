@@ -1,7 +1,6 @@
 package configuration;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -78,20 +77,16 @@ public class Config {
 
         if (USE_SASL_AUTH) {
             SASL_USERNAME = getString(dotenv, "SASL_USERNAME");
-            SASL_PASSWORD = readFile(getString(dotenv, "SASL_PASSWORD_FILE_PATH"));
+            SASL_PASSWORD = getStringValueOrFromFile(dotenv, "SASL_PASSWORD");
             TRUSTSTORE_FILE_PATH = getOptionalString(dotenv, "TRUSTSTORE_FILE_PATH", null);
             if (TRUSTSTORE_FILE_PATH != null) {
-                TRUSTSTORE_PASSWORD = readFile(getString(dotenv, "TRUSTSTORE_PASSWORD_FILE_PATH"));
+                TRUSTSTORE_PASSWORD = getStringValueOrFromFile(dotenv, "TRUSTSTORE_PASSWORD");
             }
         }
 
         USE_PROMETHEUS = getOptionalBool(dotenv, "USE_PROMETHEUS", false);
         PROMETHEUS_BUCKETS = getOptionalString(dotenv, "PROMETHEUS_BUCKETS", "0.003,0.03,0.1,0.3,1.5,10");
         LOG_RECORD = getOptionalBool(dotenv, "LOG_RECORD", false);
-    }
-
-    private static String readFile(String path) throws IOException {
-        return new String(Files.readAllBytes(Paths.get(path)));
     }
 
     private static String getString(Dotenv dotenv, String name) throws Exception {
@@ -161,5 +156,21 @@ public class Config {
         } catch (NumberFormatException e) {
             return fallback;
         }
+    }
+
+    private static String getStringValueOrFromFile(Dotenv dotenv, String name) throws Exception {
+        String value = dotenv.get(name);
+
+        if (value != null) {
+            return value;
+        }
+
+        String filePath = dotenv.get(name + "_FILE_PATH");
+
+        if (filePath == null) {
+            throw new Exception("missing env var: " + name + " or " + name + "_FILE_PATH");
+        }
+
+        return new String(Files.readAllBytes(Paths.get(filePath)));
     }
 }
