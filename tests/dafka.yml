@@ -27,7 +27,7 @@ services:
         environment:
             - KAFKA_BROKER=kafka:9092
             - TARGET_BASE_URL=http://target:2000/
-            - TOPICS_ROUTES=retryr:retry
+            - TOPICS_ROUTES=retry:retry
             - GROUP_ID=consumer_retry
 
     unexpected_consumer:
