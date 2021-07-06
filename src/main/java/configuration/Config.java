@@ -4,7 +4,9 @@ import io.github.cdimascio.dotenv.Dotenv;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Config {
@@ -14,9 +16,9 @@ public class Config {
 
     //Required
     public static String KAFKA_BROKER;
-    public static List<String> TOPICS;
     public static String GROUP_ID;
-    public static String TARGET;
+    public static String TARGET_BASE_URL;
+    public static Map<String, String> TOPICS_ROUTES;
 
     //Optional
     public static int POLL_TIMEOUT;
@@ -48,11 +50,10 @@ public class Config {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
         KAFKA_BROKER = getString(dotenv, "KAFKA_BROKER");
-
-        TOPICS = getStringList(dotenv, "TOPICS");
         GROUP_ID = getString(dotenv, "GROUP_ID");
+        TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
+        TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
 
-        TARGET = getString(dotenv, "TARGET");
         POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 50);
         SESSION_TIMEOUT = getOptionalInt(dotenv, "SESSION_TIMEOUT", 10000);
@@ -171,5 +172,16 @@ public class Config {
         }
 
         return new String(Files.readAllBytes(Paths.get(filePath)));
+    }
+
+    private static Map<String, String> getStringMap(Dotenv dotenv, String name) throws Exception {
+        var list = getStringList(dotenv, name);
+        var map = new HashMap<String, String>();
+        for (var i = 0; i < list.size(); i++) {
+            var left = list.get(i).split(":")[0];
+            var right = list.get(i).split(":")[1];
+            map.put(left, right);
+        }
+        return map;
     }
 }
