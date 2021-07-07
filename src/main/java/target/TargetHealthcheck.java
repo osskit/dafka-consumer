@@ -23,7 +23,7 @@ public class TargetHealthcheck {
                     .newBuilder()
                     .version(HttpClient.Version.HTTP_1_1)
                     .GET()
-                    .uri(URI.create(Config.TARGET_HEALTHCHECK))
+                    .uri(URI.create(Config.TARGET_BASE_URL + Config.TARGET_HEALTHCHECK))
                     .build();
 
                 var targetHealthcheckResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
