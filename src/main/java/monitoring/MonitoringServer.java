@@ -9,17 +9,17 @@ import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import target.TargetIsAlive;
+import target.TargetHealthcheck;
 
 public class MonitoringServer {
 
-    private final TargetIsAlive targetIsAlive;
+    private final TargetHealthcheck targetHealthcheck;
     private boolean consumerAssigned;
     private boolean consumerDisposed;
     private HttpServer server;
 
-    public MonitoringServer(TargetIsAlive targetIsAlive) {
-        this.targetIsAlive = targetIsAlive;
+    public MonitoringServer(TargetHealthcheck targetHealthcheck) {
+        this.targetHealthcheck = targetHealthcheck;
     }
 
     public MonitoringServer start() throws IOException {
@@ -28,7 +28,7 @@ public class MonitoringServer {
         }
 
         server = HttpServer.create(new InetSocketAddress(Config.MONITORING_SERVER_PORT), 0);
-        isAliveGetRoute(server);
+        healthCheckRoute(server);
         if (Config.USE_PROMETHEUS) {
             DefaultExports.initialize();
             new HTTPServer(server, CollectorRegistry.defaultRegistry, false);
@@ -54,8 +54,8 @@ public class MonitoringServer {
         server.stop(0);
     }
 
-    private void isAliveGetRoute(final HttpServer server) {
-        final var httpContext = server.createContext("/isAlive");
+    private void healthCheckRoute(final HttpServer server) {
+        final var httpContext = server.createContext("/healthcheck");
 
         httpContext.setHandler(
             new HttpHandler() {
@@ -76,7 +76,7 @@ public class MonitoringServer {
                         return;
                     }
 
-                    if (!targetAlive(exchange)) {
+                    if (!targetHealthcheck(exchange)) {
                         writeResponse(500, exchange);
                         return;
                     }
@@ -87,10 +87,10 @@ public class MonitoringServer {
         );
     }
 
-    private boolean targetAlive(HttpExchange exchange) throws IOException {
-        if (Config.TARGET_IS_ALIVE_ROUTE != null) {
+    private boolean targetHealthcheck(HttpExchange exchange) throws IOException {
+        if (Config.TARGET_HEALTHCHECK != null) {
             try {
-                return this.targetIsAlive.check();
+                return this.targetHealthcheck.check();
             } catch (Exception e) {
                 return false;
             }

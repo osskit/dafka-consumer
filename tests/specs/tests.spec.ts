@@ -26,7 +26,7 @@ describe('tests', () => {
     it('liveliness', async () => {
         await delay(1000);
         const producer = await fetch('http://localhost:6000/isAlive');
-        const consumer = await fetch('http://localhost:4001/isAlive');
+        const consumer = await fetch('http://localhost:4001/healthcheck');
         expect(producer.ok).toBeTruthy();
         expect(consumer.ok).toBeTruthy();
     });
@@ -109,7 +109,7 @@ describe('tests', () => {
 
     it('consumer should terminate on an unexpected error', async () => {
         await delay(1000);
-        let consumerLiveliness = await fetch('http://localhost:4002/isAlive');
+        let consumerLiveliness = await fetch('http://localhost:4002/healthcheck');
         expect(consumerLiveliness.ok).toBeTruthy();
 
         await produce('http://localhost:6000/produce', [
@@ -117,7 +117,7 @@ describe('tests', () => {
         ]);
         await delay(10000);
 
-        consumerLiveliness = await fetch('http://localhost:4002/isAlive');
+        consumerLiveliness = await fetch('http://localhost:4002/healthcheck');
         expect(consumerLiveliness.ok).toBeFalsy();
     });
 });

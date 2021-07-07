@@ -8,30 +8,30 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import monitoring.Monitor;
 
-public class TargetIsAlive {
+public class TargetHealthcheck {
 
     private static final HttpClient client = HttpClient.newHttpClient();
 
     public String getEndpoint() {
-        return Config.TARGET_IS_ALIVE_ROUTE;
+        return Config.TARGET_HEALTHCHECK;
     }
 
     public boolean check() throws IOException {
-        if (Config.TARGET_IS_ALIVE_ROUTE != null) {
+        if (Config.TARGET_HEALTHCHECK != null) {
             try {
                 final var request = HttpRequest
                     .newBuilder()
                     .version(HttpClient.Version.HTTP_1_1)
                     .GET()
-                    .uri(URI.create(Config.TARGET_IS_ALIVE_ROUTE))
+                    .uri(URI.create(Config.TARGET_BASE_URL + Config.TARGET_HEALTHCHECK))
                     .build();
 
-                var targetIsAliveResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-                if (targetIsAliveResponse.statusCode() != 200) {
-                    Monitor.targetNotAlive(targetIsAliveResponse.statusCode());
+                var targetHealthcheckResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+                if (targetHealthcheckResponse.statusCode() != 200) {
+                    Monitor.targetHealthcheckFailed(targetHealthcheckResponse.statusCode());
                     return false;
                 }
-                Monitor.targetAlive(targetIsAliveResponse.statusCode());
+                Monitor.targetHealthcheckPassed(targetHealthcheckResponse.statusCode());
                 return true;
             } catch (Exception e) {
                 Monitor.initializationError(e);
