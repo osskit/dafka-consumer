@@ -300,20 +300,20 @@ public class Monitor {
         targetExecutionRetry.labels(String.valueOf(attempt)).inc();
     }
 
-    public static void targetNotAlive(int targetIsAliveStatusCode) {
+    public static void targetHealthcheckFailed(int targetHealthcheckStatusCode) {
         JSONObject log = new JSONObject()
             .put("level", "info")
-            .put("message", "target not alive")
-            .put("targetIsAliveStatusCode", targetIsAliveStatusCode);
+            .put("message", "target healthcheck failed")
+            .put("targetHealthcheckStatusCode", targetHealthcheckStatusCode);
 
         write(log);
     }
 
-    public static void targetAlive(int targetIsAliveStatusCode) {
+    public static void targetHealthcheckPassed(int targetHealthcheckStatusCode) {
         JSONObject log = new JSONObject()
             .put("level", "info")
-            .put("message", "target alive")
-            .put("targetIsAliveStatusCode", targetIsAliveStatusCode);
+            .put("message", "target healthcheck passed")
+            .put("targetHealthcheckStatusCode", targetHealthcheckStatusCode);
 
         write(log);
     }

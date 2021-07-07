@@ -20,7 +20,7 @@ public class Main {
             Config.init();
             Monitor.init();
 
-            monitoringServer = new MonitoringServer(waitForTargetToBeAlive()).start();
+            monitoringServer = new MonitoringServer(waitForTargetHealthcheck()).start();
             consumer = createConsumer(monitoringServer);
             onShutdown(consumer, monitoringServer);
 
@@ -32,14 +32,14 @@ public class Main {
         Monitor.serviceTerminated();
     }
 
-    private static TargetIsAlive waitForTargetToBeAlive() throws InterruptedException, IOException {
-        var targetIsAlive = new TargetIsAlive();
+    private static TargetHealthcheck waitForTargetHealthcheck() throws InterruptedException, IOException {
+        var targetHealthcheck = new TargetHealthcheck();
         do {
-            System.out.printf("waiting for target to be alive %s%n", targetIsAlive.getEndpoint());
+            System.out.printf("waiting for target healthcheck %s%n", targetHealthcheck.getEndpoint());
             Thread.sleep(1000);
-        } while (!targetIsAlive.check());
-        System.out.println("target is alive");
-        return targetIsAlive;
+        } while (!targetHealthcheck.check());
+        System.out.println("target healthcheck pass successfully");
+        return targetHealthcheck;
     }
 
     private static Disposable createConsumer(MonitoringServer monitoringServer) {
