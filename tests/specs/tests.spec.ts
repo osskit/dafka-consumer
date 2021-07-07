@@ -25,7 +25,7 @@ describe('tests', () => {
 
     it('liveliness', async () => {
         await delay(1000);
-        const producer = await fetch('http://localhost:6000/healthcheck');
+        const producer = await fetch('http://localhost:6000/isAlive');
         const consumer = await fetch('http://localhost:4001/healthcheck');
         expect(producer.ok).toBeTruthy();
         expect(consumer.ok).toBeTruthy();
