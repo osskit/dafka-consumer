@@ -31,7 +31,6 @@ public class TargetHealthcheck {
                     Monitor.targetHealthcheckFailed(targetHealthcheckResponse.statusCode());
                     return false;
                 }
-                Monitor.targetHealthcheckPassed(targetHealthcheckResponse.statusCode());
                 return true;
             } catch (Exception e) {
                 Monitor.initializationError(e);

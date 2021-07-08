@@ -309,15 +309,6 @@ public class Monitor {
         write(log);
     }
 
-    public static void targetHealthcheckPassed(int targetHealthcheckStatusCode) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "target healthcheck passed")
-            .put("targetHealthcheckStatusCode", targetHealthcheckStatusCode);
-
-        write(log);
-    }
-
     private static void write(JSONObject log) {
         System.out.println(log.toString());
     }
