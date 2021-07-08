@@ -106,7 +106,7 @@ public class Config {
             throw new Exception("missing env var: " + name);
         }
 
-        return Arrays.asList(value.split(","));
+        return Arrays.asList(value.replaceAll(" ", "").split(","));
     }
 
     private static List<Integer> getOptionalIntList(
