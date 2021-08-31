@@ -124,7 +124,13 @@ public class Monitor {
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "process message started")
-            .put("extra", new JSONObject().put("record", record.value()));
+            .put(
+                "extra",
+                new JSONObject()
+                    .put("recordValue", record.value())
+                    .put("extra", new JSONObject().put("recordHeaders", record.headers()))
+            );
+
         write(log);
     }
 
