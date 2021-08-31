@@ -127,10 +127,8 @@ public class Monitor {
             .put(
                 "extra",
                 new JSONObject()
-                    .put("recordValue", record.value())
-                    .put("extra", new JSONObject().put("recordHeaders", record.headers()))
+                    .put("record", new JSONObject().put("value", record.value()).put("headers", record.headers()))
             );
-
         write(log);
     }
 
