@@ -120,6 +120,12 @@ public class Monitor {
     public static void processRecord(ConsumerRecord<String, String> record) {
         messageLatency.labels(record.topic()).observe(((double) (new Date().getTime() - record.timestamp())) / 1000);
         processMessageStarted.inc();
+
+        JSONObject log = new JSONObject()
+            .put("level", "info")
+            .put("message", "process message started")
+            .put("extra", new JSONObject().put("record", record.value()));
+        write(log);
     }
 
     public static void callTargetLatency(long latency) {
