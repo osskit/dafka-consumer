@@ -22,6 +22,7 @@ public class Monitor {
     private static Counter deadLetterProduced;
     private static Counter produceError;
     private static Counter targetExecutionRetry;
+    private static Counter targetExecutionTimeout;
     private static Histogram messageLatency;
     private static Histogram processBatchExecutionTime;
     private static Histogram processMessageExecutionTime;
@@ -318,6 +319,28 @@ public class Monitor {
         write(log);
 
         targetExecutionRetry.labels(String.valueOf(attempt)).inc();
+    }
+
+    public static void targetExecutionTimeout(ConsumerRecord<String, String> record) {
+        targetExecutionTimeout.inc();
+
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "target execution timeout")
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put(
+                            "record",
+                            new JSONObject()
+                                .put("value", record.value())
+                                .put("topic", record.topic())
+                                .put("partition", record.partition())
+                                .put("offset", record.offset())
+                        )
+                )
+        );
     }
 
     public static void targetHealthcheckFailed(int targetHealthcheckStatusCode) {
