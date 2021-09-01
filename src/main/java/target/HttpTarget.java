@@ -5,11 +5,13 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.Date;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import monitoring.Monitor;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.function.CheckedSupplier;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -41,8 +43,15 @@ public class HttpTarget implements ITarget {
 
         final long startTime = (new Date()).getTime();
         final CheckedSupplier<CompletionStage<HttpResponse<String>>> completionStageCheckedSupplier = () ->
-            client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-
+            client
+                .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .whenComplete(
+                    (__, throwable) -> {
+                        if (throwable instanceof HttpTimeoutException) {
+                            Monitor.targetExecutionTimeout(record);
+                        }
+                    }
+                );
         return Failsafe
             .with(retryPolicy.<HttpResponse<String>>get(record, r -> r.statusCode()))
             .getStageAsync(completionStageCheckedSupplier)
