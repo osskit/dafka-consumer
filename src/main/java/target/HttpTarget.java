@@ -36,7 +36,7 @@ public class HttpTarget implements ITarget {
             .header("x-record-original-topic", this.getOriginalTopic(record))
             .header("x-record-headers", this.getRecordHeaders(record))
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
-            .timeout(Duration.ofSeconds(30))
+            .timeout(Duration.ofSeconds(Config.TARGET_TIMEOUT))
             .build();
 
         final long startTime = (new Date()).getTime();

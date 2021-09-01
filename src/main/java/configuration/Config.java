@@ -31,6 +31,7 @@ public class Config {
     public static String PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static String PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static List<Integer> RETRY_POLICY_EXPONENTIAL_BACKOFF;
+    public static long TARGET_TIMEOUT;
 
     //Authentication
     public static boolean USE_SASL_AUTH;
@@ -43,7 +44,7 @@ public class Config {
     public static int MONITORING_SERVER_PORT;
     public static boolean USE_PROMETHEUS;
     public static String PROMETHEUS_BUCKETS;
-    public static boolean LOG_RECORD;
+    public static boolean DEBUG;
     public static String TARGET_HEALTHCHECK;
 
     public static void init() throws Exception {
@@ -53,6 +54,7 @@ public class Config {
         GROUP_ID = getString(dotenv, "GROUP_ID");
         TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
         TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
+        TARGET_TIMEOUT = getOptionalLong(dotenv, "TARGET_TIMEOUT", Long.MAX_VALUE);
 
         POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 50);
@@ -86,7 +88,7 @@ public class Config {
 
         USE_PROMETHEUS = getOptionalBool(dotenv, "USE_PROMETHEUS", false);
         PROMETHEUS_BUCKETS = getOptionalString(dotenv, "PROMETHEUS_BUCKETS", "0.003,0.03,0.1,0.3,1.5,10");
-        LOG_RECORD = getOptionalBool(dotenv, "LOG_RECORD", false);
+        DEBUG = getOptionalBool(dotenv, "DEBUG", false);
     }
 
     private static String getString(Dotenv dotenv, String name) throws Exception {
@@ -154,6 +156,14 @@ public class Config {
         try {
             return Integer.parseInt(dotenv.get(name));
         } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+
+    private static long getOptionalLong(Dotenv dotenv, String name, long fallback) {
+        try {
+            return Long.parseLong(getString(dotenv, name));
+        } catch (Exception e) {
             return fallback;
         }
     }

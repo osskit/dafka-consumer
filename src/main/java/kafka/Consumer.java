@@ -33,7 +33,7 @@ public class Consumer {
                         .flatMap(
                             partition ->
                                 partition
-                                    .doOnNext(record -> Monitor.processRecord(record))
+                                    .doOnNext(record -> Monitor.processMessageStarted(record))
                                     .concatMap(
                                         record ->
                                             Mono
