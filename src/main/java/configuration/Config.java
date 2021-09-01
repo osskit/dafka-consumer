@@ -54,7 +54,7 @@ public class Config {
         GROUP_ID = getString(dotenv, "GROUP_ID");
         TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
         TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
-        TARGET_TIMEOUT_MS = getOptionalLong(dotenv, "TARGET_TIMEOUT_MS", Long.MAX_VALUE);
+        TARGET_TIMEOUT_MS = getOptionalLong(dotenv, "TARGET_TIMEOUT_MS", Integer.MAX_VALUE);
 
         POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 50);
