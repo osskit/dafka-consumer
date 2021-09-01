@@ -117,26 +117,29 @@ public class Monitor {
         processBatchExecutionTime.observe((double) executionTimeMs / 1000);
     }
 
-    public static void processRecord(ConsumerRecord<String, String> record) {
+    public static void processMessageStarted(ConsumerRecord<String, String> record) {
         messageLatency.labels(record.topic()).observe(((double) (new Date().getTime() - record.timestamp())) / 1000);
         processMessageStarted.inc();
 
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "process message started")
-            .put(
-                "extra",
+        if (Config.DEBUG) {
+            write(
                 new JSONObject()
+                    .put("level", "info")
+                    .put("message", "process message started")
                     .put(
-                        "record",
+                        "extra",
                         new JSONObject()
-                            .put("value", record.value())
-                            .put("topic", record.topic())
-                            .put("partition", record.partition())
-                            .put("offset", record.offset())
+                            .put(
+                                "record",
+                                new JSONObject()
+                                    .put("value", record.value())
+                                    .put("topic", record.topic())
+                                    .put("partition", record.partition())
+                                    .put("offset", record.offset())
+                            )
                     )
             );
-        write(log);
+        }
     }
 
     public static void callTargetLatency(long latency) {
@@ -158,7 +161,7 @@ public class Monitor {
 
     public static void retryProduced(ConsumerRecord<String, String> consumerRecord) {
         var extra = new JSONObject().put("message", new JSONObject().put("key", consumerRecord.key()));
-        if (Config.LOG_RECORD) {
+        if (Config.DEBUG) {
             extra.put("value", consumerRecord.value());
         }
         JSONObject log = new JSONObject().put("level", "info").put("message", "retry produced").put("extra", extra);
@@ -169,7 +172,7 @@ public class Monitor {
 
     public static void deadLetterProcdued(ConsumerRecord<String, String> consumerRecord) {
         var extra = new JSONObject().put("message", new JSONObject().put("key", consumerRecord.key()));
-        if (Config.LOG_RECORD) {
+        if (Config.DEBUG) {
             extra.put("value", consumerRecord.value());
         }
         JSONObject log = new JSONObject()
@@ -272,7 +275,7 @@ public class Monitor {
 
     public static void produceError(String topic, ConsumerRecord<String, String> consumerRecord, Throwable exception) {
         var extra = new JSONObject().put("message", new JSONObject().put("key", consumerRecord.key()));
-        if (Config.LOG_RECORD) {
+        if (Config.DEBUG) {
             extra.put("value", consumerRecord.value());
         }
         JSONObject log = new JSONObject()
@@ -294,7 +297,7 @@ public class Monitor {
     ) {
         var extra = new JSONObject();
         extra.put("message", new JSONObject().put("key", consumerRecord.key()));
-        if (Config.LOG_RECORD) {
+        if (Config.DEBUG) {
             extra.put("value", consumerRecord.value());
         }
         if (responseBody.isPresent()) {
