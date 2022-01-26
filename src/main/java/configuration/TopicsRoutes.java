@@ -1,14 +1,15 @@
 package configuration;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class TopicsRoutes {
 
     public Map<String, String> topicsRoutes;
 
-    public TopicsRoutes(Map<String, String> _topicsRoutes) {
-        topicsRoutes = _topicsRoutes;
+    public TopicsRoutes(Map<String, String> topicsRoutes) {
+        this.topicsRoutes = topicsRoutes;
     }
 
     public String getRoute(String topic) {
@@ -24,5 +25,9 @@ public class TopicsRoutes {
         }
 
         return topicsRoutes.get(route);
+    }
+
+    public Set<String> getTopics() {
+        return this.topicsRoutes.keySet();
     }
 }

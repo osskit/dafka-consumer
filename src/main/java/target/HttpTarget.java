@@ -1,6 +1,7 @@
 package target;
 
 import configuration.Config;
+import configuration.TopicsRoutes;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -20,16 +21,18 @@ public class HttpTarget implements ITarget {
 
     private final HttpClient client = HttpClient.newHttpClient();
     private TargetRetryPolicy retryPolicy;
+    private TopicsRoutes topicsRoutes;
 
-    public HttpTarget(final TargetRetryPolicy retryPolicy) {
+    public HttpTarget(final TargetRetryPolicy retryPolicy, TopicsRoutes topicsRoutes) {
         this.retryPolicy = retryPolicy;
+        this.topicsRoutes = topicsRoutes;
     }
 
     public CompletableFuture<TargetResponse> call(final ConsumerRecord<String, String> record) {
         final var request = HttpRequest
             .newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
-            .uri(URI.create(Config.TARGET_BASE_URL + Config.TOPICS_ROUTES.getRoute(record.topic())))
+            .uri(URI.create(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(record.topic())))
             .header("Content-Type", "application/json")
             .header("x-record-topic", record.topic())
             .header("x-record-partition", String.valueOf(record.partition()))
