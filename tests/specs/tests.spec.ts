@@ -74,7 +74,7 @@ describe('tests', () => {
 
         await produce('http://localhost:6000/produce', [
             {
-                topic: 'lol.bar.baz',
+                topic: 'lol.bar',
                 key: 'thekey',
                 value: {data: 'foo'},
                 headers: {eventType: 'test1', source: 'test-service1'},
@@ -96,7 +96,7 @@ describe('tests', () => {
         expect(madeCalls.length).toBe(2);
 
         const actualHeaders1 = JSON.parse(madeCalls[0].headers['x-record-headers']);
-        expect(madeCalls[0].headers['x-record-topic']).toBe('lol.bar.baz');
+        expect(madeCalls[0].headers['x-record-topic']).toBe('lol.bar');
         expect(actualHeaders1!.eventType).toEqual('test1');
         expect(actualHeaders1!.source).toEqual('test-service1');
 

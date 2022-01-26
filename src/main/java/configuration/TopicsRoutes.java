@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 public class TopicsRoutes {
 
-    public Map<String, String> topicsRoutes;
+    private Map<String, String> topicsRoutes;
 
     public TopicsRoutes(Map<String, String> topicsRoutes) {
         this.topicsRoutes = topicsRoutes;
