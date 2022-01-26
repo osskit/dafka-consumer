@@ -18,7 +18,7 @@ public class Config {
     public static String KAFKA_BROKER;
     public static String GROUP_ID;
     public static String TARGET_BASE_URL;
-    public static Map<String, String> TOPICS_ROUTES;
+    public static TopicsRoutes TOPICS_ROUTES;
 
     //Optional
     public static int POLL_TIMEOUT;
@@ -53,7 +53,7 @@ public class Config {
         KAFKA_BROKER = getString(dotenv, "KAFKA_BROKER");
         GROUP_ID = getString(dotenv, "GROUP_ID");
         TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
-        TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
+        TOPICS_ROUTES = new TopicsRoutes(getStringMap(dotenv, "TOPICS_ROUTES"));
         TARGET_TIMEOUT_MS = getOptionalLong(dotenv, "TARGET_TIMEOUT_MS", Integer.MAX_VALUE);
 
         POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);

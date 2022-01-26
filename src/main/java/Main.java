@@ -46,7 +46,7 @@ public class Main {
         return new Consumer(
             new ReactiveKafkaClient<String, String>(
                 new KafkaClientFactory().createConsumer(),
-                Config.TOPICS_ROUTES.keySet(),
+                Config.TOPICS_ROUTES.topicsRoutes.keySet(),
                 new ConsumerRebalanceListener() {
                     @Override
                     public void onPartitionsAssigned(Collection<TopicPartition> partitions) {

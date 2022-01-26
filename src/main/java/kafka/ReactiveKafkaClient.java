@@ -2,19 +2,23 @@ package kafka;
 
 import configuration.Config;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Pattern;
 import org.apache.kafka.clients.consumer.CommitFailedException;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.RetriableCommitFailedException;
 import org.apache.kafka.common.errors.WakeupException;
+import org.apache.kafka.common.header.Header;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
@@ -145,7 +149,12 @@ public class ReactiveKafkaClient<K, V> extends Flux<ConsumerRecords<K, V>> imple
         @Override
         public void run() {
             try {
-                consumer.subscribe(topics, consumerRebalanceListener);
+                List<String> patterns = new ArrayList<>();
+                topics.forEach(topic -> patterns.add(String.format("^%s$", topic)));
+
+                String topicsPattern = String.join("|", patterns);
+
+                consumer.subscribe(Pattern.compile(topicsPattern), consumerRebalanceListener);
             } catch (Exception e) {
                 if (isActive.get()) {
                     actual.onError(e);
