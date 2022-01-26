@@ -14,12 +14,14 @@ public class Main {
     static Disposable consumer;
     static MonitoringServer monitoringServer;
     static CountDownLatch latch = new CountDownLatch(1);
+    static TopicsRoutes topicsRoutes;
 
     public static void main(String[] args) {
         try {
             Config.init();
             Monitor.init();
 
+            topicsRoutes = new TopicsRoutes(Config.TOPICS_ROUTES);
             monitoringServer = new MonitoringServer(waitForTargetHealthcheck()).start();
             consumer = createConsumer(monitoringServer);
             onShutdown(consumer, monitoringServer);
@@ -46,7 +48,7 @@ public class Main {
         return new Consumer(
             new ReactiveKafkaClient<String, String>(
                 new KafkaClientFactory().createConsumer(),
-                Config.TOPICS_ROUTES.keySet(),
+                topicsRoutes.getTopics(),
                 new ConsumerRebalanceListener() {
                     @Override
                     public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
@@ -65,7 +67,8 @@ public class Main {
                     new Producer(new KafkaClientFactory().createProducer()),
                     Config.RETRY_TOPIC,
                     Config.DEAD_LETTER_TOPIC
-                )
+                ),
+                topicsRoutes
             )
         )
             .stream()

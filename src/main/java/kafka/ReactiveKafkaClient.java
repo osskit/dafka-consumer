@@ -9,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.kafka.clients.consumer.CommitFailedException;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
@@ -145,12 +147,16 @@ public class ReactiveKafkaClient<K, V> extends Flux<ConsumerRecords<K, V>> imple
         @Override
         public void run() {
             try {
-                consumer.subscribe(topics, consumerRebalanceListener);
+                consumer.subscribe(Pattern.compile(getTopicsPattern()), consumerRebalanceListener);
             } catch (Exception e) {
                 if (isActive.get()) {
                     actual.onError(e);
                 }
             }
+        }
+
+        private String getTopicsPattern() {
+            return topics.stream().map(topic -> String.format("^%s$", topic)).collect(Collectors.joining("|"));
         }
     }
 
