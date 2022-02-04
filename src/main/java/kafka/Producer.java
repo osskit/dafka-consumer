@@ -1,6 +1,7 @@
 package kafka;
 
 import configuration.Config;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import monitoring.Monitor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -26,6 +27,7 @@ public class Producer {
         } else {
             headersToSend = new RecordHeaders();
             headersToSend.add(Config.ORIGINAL_TOPIC, record.topic().getBytes());
+            headersToSend.add(Config.CORRELATION_HEADER_KEY, "x-correlation-id".getBytes());
         }
 
         producer.send(

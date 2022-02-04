@@ -13,6 +13,8 @@ services:
             - DEAD_LETTER_TOPIC=dead-letter
             - GROUP_ID=consumer_1
             - MONITORING_SERVER_PORT=4001
+            - USE_CORRELATION_ID=true
+            - CORRELATION_HEADER_KEY=x-correlation-id
              
     dead_letter_consumer:
         build: ../
@@ -21,6 +23,8 @@ services:
             - TARGET_BASE_URL=http://target:2000/
             - TOPICS_ROUTES=dead-letter:deadLetter
             - GROUP_ID=consumer_dead_letter
+            - USE_CORRELATION_ID=true
+            - CORRELATION_HEADER_KEY=x-correlation-id
 
     retry_consumer:
         build: ../
@@ -29,6 +33,8 @@ services:
             - TARGET_BASE_URL=http://target:2000/
             - TOPICS_ROUTES=retry:retry
             - GROUP_ID=consumer_retry
+            - USE_CORRELATION_ID=true
+            - CORRELATION_HEADER_KEY=x-correlation-id
 
     unexpected_consumer:
         build: ../
@@ -39,7 +45,9 @@ services:
             - TARGET_BASE_URL=nothing
             - TOPICS_ROUTES=unexpected:bla
             - GROUP_ID=consumer_no_target
-            - MONITORING_SERVER_PORT=4002          
+            - MONITORING_SERVER_PORT=4002
+            - CORRELATION_HEADER_KEY=x-correlation-id
+            - USE_CORRELATION_ID=true
 
     producer:
         image: osskit/dafka-producer:1.0.0

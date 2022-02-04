@@ -41,7 +41,7 @@ describe('tests', () => {
                 topic: 'foo',
                 key: 'thekey',
                 value: {data: 'foo'},
-                headers: {eventType: 'test1', source: 'test-service1'},
+                headers: {eventType: 'test1', source: 'test-service1', 'x-correlation-id': 'correlationId'},
             },
         ]);
         await delay(1000);
@@ -50,7 +50,7 @@ describe('tests', () => {
                 topic: 'bar',
                 key: 'thekey',
                 value: {data: 'bar'},
-                headers: {eventType: 'test2', source: 'test-service2'},
+                headers: {eventType: 'test2', source: 'test-service2', 'x-correlation-id': 'correlationId'},
             },
         ]);
         await delay(1000);
@@ -77,7 +77,7 @@ describe('tests', () => {
                 topic: 'lol.bar',
                 key: 'thekey',
                 value: {data: 'foo'},
-                headers: {eventType: 'test1', source: 'test-service1'},
+                headers: {eventType: 'test1', source: 'test-service1', 'x-correlation-id': 'correlationId'},
             },
         ]);
         await delay(1000);
@@ -86,7 +86,7 @@ describe('tests', () => {
                 topic: 'bar',
                 key: 'thekey',
                 value: {data: 'bar'},
-                headers: {eventType: 'test2', source: 'test-service2'},
+                headers: {eventType: 'test2', source: 'test-service2', 'x-correlation-id': 'correlationId'},
             },
         ]);
         await delay(1000);
@@ -114,6 +114,7 @@ describe('tests', () => {
             topic: 'foo',
             key: uuid(),
             value: {data: 'foo'},
+            headers: {'x-correlation-id': 'correlationId'},
         }));
 
         await produce('http://localhost:6000/produce', records);
@@ -123,11 +124,13 @@ describe('tests', () => {
         expect(madeCalls.length).toBe(recordsCount);
     });
 
-    it('consumer should produce to dead letter topic when target response is 400', async () => {
+    it.only('consumer should produce to dead letter topic when target response is 400', async () => {
         await mockHttpTarget('/consume', 400);
         const callId = await mockHttpTarget('/deadLetter', 200);
 
-        await produce('http://localhost:6000/produce', [{topic: 'foo', key: uuid(), value: {data: 'foo'}}]);
+        await produce('http://localhost:6000/produce', [
+            {topic: 'foo', key: uuid(), value: {data: 'foo'}, headers: {'x-correlation-id': 'correlationId'}},
+        ]);
         await delay(5000);
 
         const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
@@ -135,11 +138,13 @@ describe('tests', () => {
         expect(madeCalls[0].headers['x-record-original-topic']).toEqual('foo');
     });
 
-    it('consumer should produce to retry topic when target response is 500', async () => {
+    it.only('consumer should produce to retry topic when target response is 500', async () => {
         await mockHttpTarget('/consume', 500);
         const callId = await mockHttpTarget('/retry', 200);
 
-        await produce('http://localhost:6000/produce', [{topic: 'foo', key: uuid(), value: {data: 'foo'}}]);
+        await produce('http://localhost:6000/produce', [
+            {topic: 'foo', key: uuid(), value: {data: 'foo'}, headers: {'x-correlation-id': 'correlationId'}},
+        ]);
         await delay(5000);
 
         const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
@@ -153,12 +158,58 @@ describe('tests', () => {
         expect(consumerLiveliness.ok).toBeTruthy();
 
         await produce('http://localhost:6000/produce', [
-            {topic: 'unexpected', key: uuid(), value: {data: 'unexpected'}},
+            {
+                topic: 'unexpected',
+                key: uuid(),
+                value: {data: 'unexpected'},
+                headers: {'x-correlation-id': 'correlationId'},
+            },
         ]);
         await delay(10000);
 
         consumerLiveliness = await fetch('http://localhost:4002/healthcheck');
         expect(consumerLiveliness.ok).toBeFalsy();
+    });
+
+    it('consumer should ignore records without correlation id', async () => {
+        const callId = await mockHttpTarget('/consume', 200);
+
+        await produce('http://localhost:6000/produce', [
+            {
+                topic: 'bar',
+                key: 'thekey',
+                value: {data: 'foo'},
+                headers: {eventType: 'test1', source: 'test-service1'},
+            },
+        ]);
+        await delay(1000);
+
+        const {hasBeenMade} = await fakeHttpServer.getCall(callId);
+        expect(hasBeenMade).toBeFalsy();
+    });
+
+    it('consumer should propagate correlation id', async () => {
+        const callId = await mockHttpTarget('/consume', 200);
+
+        await produce('http://localhost:6000/produce', [
+            {
+                topic: 'bar',
+                key: 'thekey',
+                value: {data: 'foo'},
+                headers: {eventType: 'test1', source: 'test-service1', 'x-correlation-id': 'correlationId'},
+            },
+        ]);
+        await delay(1000);
+
+        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
+        expect(hasBeenMade).toBeTruthy();
+        expect(madeCalls.length).toBe(1);
+
+        const actualHeaders = JSON.parse(madeCalls[0].headers['x-record-headers']);
+        expect(madeCalls[0].headers['x-record-topic']).toBe('bar');
+        expect(madeCalls[0].headers['x-correlation-id']).toBe('correlationId');
+        expect(actualHeaders!.eventType).toEqual('test1');
+        expect(actualHeaders!.source).toEqual('test-service1');
     });
 });
 
