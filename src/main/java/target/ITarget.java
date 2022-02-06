@@ -35,7 +35,7 @@ public interface ITarget {
             Iterator<Header> headers = record.headers().iterator();
             while (headers.hasNext()) {
                 Header header = headers.next();
-                if (header.key().equals(Config.CORRELATION_HEADER_KEY)) {
+                if (header.key().equals(Config.CORRELATION_ID_HEADER_KEY)) {
                     return new String(header.value());
                 }
             }

@@ -31,8 +31,7 @@ public class HttpTarget implements ITarget {
     public CompletableFuture<TargetResponse> call(final ConsumerRecord<String, String> record) {
         if (this.getRecordCorrelationId(record) == null) {
             Monitor.missingCorrelationId(record);
-
-            return new CompletableFuture<>();
+            return CompletableFuture.<TargetResponse>completedFuture(new TargetResponse());
         }
 
         final var request = HttpRequest
@@ -45,7 +44,7 @@ public class HttpTarget implements ITarget {
             .header("x-record-offset", String.valueOf(record.offset()))
             .header("x-record-timestamp", String.valueOf(record.timestamp()))
             .header("x-record-original-topic", this.getOriginalTopic(record))
-            .header(Config.CORRELATION_HEADER_KEY, this.getRecordCorrelationId(record))
+            .header(Config.CORRELATION_ID_HEADER_KEY, this.getRecordCorrelationId(record))
             .header("x-record-headers", this.getRecordHeaders(record))
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
             .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS))

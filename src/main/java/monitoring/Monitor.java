@@ -222,12 +222,11 @@ public class Monitor {
     }
 
     public static void missingCorrelationId(ConsumerRecord<String, String> record) {
-        var extra = new JSONObject()
-            .put("message", new JSONObject().put("key", record.key()).put("value", record.value()));
         JSONObject log = new JSONObject()
             .put("level", "warning")
             .put("message", "missing correlationId on record")
-            .put("extra", extra);
+            .put("extra", new JSONObject().put("key", record.key()).put("value", record.value()));
+
         write(log);
     }
 
