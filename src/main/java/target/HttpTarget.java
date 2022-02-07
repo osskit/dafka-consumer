@@ -29,7 +29,7 @@ public class HttpTarget implements ITarget {
     }
 
     public CompletableFuture<TargetResponse> call(final ConsumerRecord<String, String> record) {
-        if (Config.USE_CORRELATION_ID && this.getRecordCorrelationId(record) == null) {
+        if (Config.ENFORCE_CORRELATION_ID && this.getRecordCorrelationId(record) == null) {
             Monitor.missingCorrelationId(record);
             return CompletableFuture.<TargetResponse>completedFuture(
                 new TargetResponse(OptionalLong.empty(), OptionalLong.empty())
@@ -50,7 +50,7 @@ public class HttpTarget implements ITarget {
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
             .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
 
-        if (Config.USE_CORRELATION_ID) {
+        if (Config.ENFORCE_CORRELATION_ID) {
             builder.header(Config.CORRELATION_ID_HEADER_KEY, this.getRecordCorrelationId(record));
         }
 
