@@ -171,7 +171,7 @@ describe('tests', () => {
         expect(consumerLiveliness.ok).toBeFalsy();
     });
 
-    it.only('consumer should ignore records without correlation id', async () => {
+    it('consumer should ignore records without correlation id', async () => {
         const callId = await mockHttpTarget('/consume', 200);
 
         await produce('http://localhost:6000/produce', [
@@ -205,7 +205,7 @@ describe('tests', () => {
         expect(actualHeaders!.source).toEqual('test-service1');
     });
 
-    it.skip('consumer should propagate correlation id', async () => {
+    it('consumer should propagate correlation id', async () => {
         const callId = await mockHttpTarget('/consume', 200);
 
         await produce('http://localhost:6000/produce', [

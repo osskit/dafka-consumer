@@ -31,7 +31,9 @@ public class HttpTarget implements ITarget {
     public CompletableFuture<TargetResponse> call(final ConsumerRecord<String, String> record) {
         if (Config.USE_CORRELATION_ID && this.getRecordCorrelationId(record) == null) {
             Monitor.missingCorrelationId(record);
-            return CompletableFuture.<TargetResponse>completedFuture(new TargetResponse());
+            return CompletableFuture.<TargetResponse>completedFuture(
+                new TargetResponse(OptionalLong.empty(), OptionalLong.empty())
+            );
         }
 
         final var builder = HttpRequest
