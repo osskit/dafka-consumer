@@ -29,12 +29,12 @@ public class HttpTarget implements ITarget {
     }
 
     public CompletableFuture<TargetResponse> call(final ConsumerRecord<String, String> record) {
-        if (this.getRecordCorrelationId(record) == null) {
+        if (Config.USE_CORRELATION_ID && this.getRecordCorrelationId(record) == null) {
             Monitor.missingCorrelationId(record);
             return CompletableFuture.<TargetResponse>completedFuture(new TargetResponse());
         }
 
-        final var request = HttpRequest
+        final var builder = HttpRequest
             .newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
             .uri(URI.create(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(record.topic())))
@@ -44,11 +44,15 @@ public class HttpTarget implements ITarget {
             .header("x-record-offset", String.valueOf(record.offset()))
             .header("x-record-timestamp", String.valueOf(record.timestamp()))
             .header("x-record-original-topic", this.getOriginalTopic(record))
-            .header(Config.CORRELATION_ID_HEADER_KEY, this.getRecordCorrelationId(record))
             .header("x-record-headers", this.getRecordHeaders(record))
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
-            .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS))
-            .build();
+            .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
+
+        if (Config.USE_CORRELATION_ID) {
+            builder.header(Config.CORRELATION_ID_HEADER_KEY, this.getRecordCorrelationId(record));
+        }
+
+        final var request = builder.build();
 
         final long startTime = (new Date()).getTime();
         final CheckedSupplier<CompletionStage<HttpResponse<String>>> completionStageCheckedSupplier = () ->

@@ -18,19 +18,29 @@ public class Producer {
         this.producer = producer;
     }
 
-    public void produce(String topic, ConsumerRecord<String, String> record) {
-        Iterator<Header> headers = record.headers().headers(Config.ORIGINAL_TOPIC).iterator();
-        Headers headersToSend;
-        if (headers.hasNext()) {
-            headersToSend = record.headers();
-        } else {
-            headersToSend = new RecordHeaders();
-            headersToSend.add(Config.ORIGINAL_TOPIC, record.topic().getBytes());
-            headersToSend.add(Config.CORRELATION_ID_HEADER_KEY, "x-correlation-id".getBytes());
+    public Headers getHeaders(ConsumerRecord<String, String> record) {
+        Headers headers = record.headers();
+        Header originalTopic = headers.lastHeader(Config.ORIGINAL_TOPIC);
+        Headers headersToSend = new RecordHeaders();
+
+        for (Header header : headers) {
+            headersToSend.add(header);
         }
 
+        if (originalTopic != null) {
+            return headersToSend;
+        }
+
+        headersToSend.add(Config.ORIGINAL_TOPIC, record.topic().getBytes());
+
+        return headersToSend;
+    }
+
+    public void produce(String topic, ConsumerRecord<String, String> record) {
+        Headers headers = getHeaders(record);
+
         producer.send(
-            new ProducerRecord<String, String>(topic, null, record.key(), record.value(), headersToSend),
+            new ProducerRecord<String, String>(topic, null, record.key(), record.value(), headers),
             (metadata, err) -> {
                 if (err != null) {
                     Monitor.produceError(topic, record, err);

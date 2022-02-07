@@ -124,7 +124,7 @@ describe('tests', () => {
         expect(madeCalls.length).toBe(recordsCount);
     });
 
-    it.only('consumer should produce to dead letter topic when target response is 400', async () => {
+    it('consumer should produce to dead letter topic when target response is 400', async () => {
         await mockHttpTarget('/consume', 400);
         const callId = await mockHttpTarget('/deadLetter', 200);
 
@@ -138,7 +138,7 @@ describe('tests', () => {
         expect(madeCalls[0].headers['x-record-original-topic']).toEqual('foo');
     });
 
-    it.only('consumer should produce to retry topic when target response is 500', async () => {
+    it('consumer should produce to retry topic when target response is 500', async () => {
         await mockHttpTarget('/consume', 500);
         const callId = await mockHttpTarget('/retry', 200);
 
@@ -171,7 +171,7 @@ describe('tests', () => {
         expect(consumerLiveliness.ok).toBeFalsy();
     });
 
-    it('consumer should ignore records without correlation id', async () => {
+    it.only('consumer should ignore records without correlation id', async () => {
         const callId = await mockHttpTarget('/consume', 200);
 
         await produce('http://localhost:6000/produce', [
@@ -182,13 +182,30 @@ describe('tests', () => {
                 headers: {eventType: 'test1', source: 'test-service1'},
             },
         ]);
+
+        await produce('http://localhost:6000/produce', [
+            {
+                topic: 'foo',
+                key: 'thekey',
+                value: {data: 'foo'},
+                headers: {eventType: 'test1', source: 'test-service1', 'x-correlation-id': 'correlationId'},
+            },
+        ]);
+
         await delay(1000);
 
-        const {hasBeenMade} = await fakeHttpServer.getCall(callId);
-        expect(hasBeenMade).toBeFalsy();
+        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
+        expect(hasBeenMade).toBeTruthy();
+        expect(madeCalls.length).toBe(1);
+
+        const actualHeaders = JSON.parse(madeCalls[0].headers['x-record-headers']);
+        expect(madeCalls[0].headers['x-record-topic']).toBe('foo');
+        expect(madeCalls[0].headers['x-correlation-id']).toBe('correlationId');
+        expect(actualHeaders!.eventType).toEqual('test1');
+        expect(actualHeaders!.source).toEqual('test-service1');
     });
 
-    it('consumer should propagate correlation id', async () => {
+    it.skip('consumer should propagate correlation id', async () => {
         const callId = await mockHttpTarget('/consume', 200);
 
         await produce('http://localhost:6000/produce', [
