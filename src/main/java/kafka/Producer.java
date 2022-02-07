@@ -18,7 +18,7 @@ public class Producer {
         this.producer = producer;
     }
 
-    public Headers getHeaders(ConsumerRecord<String, String> record) {
+    private Headers getHeaders(ConsumerRecord<String, String> record) {
         Headers headers = record.headers();
         Header originalTopic = headers.lastHeader(Config.ORIGINAL_TOPIC);
         Headers headersToSend = new RecordHeaders();
