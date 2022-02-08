@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
-import org.json.JSONObject;
 
 public interface ITarget {
     CompletableFuture<TargetResponse> call(ConsumerRecord<String, String> record);
@@ -27,19 +26,5 @@ public interface ITarget {
                 httpBuilder.setHeader(header.key(), header.value().toString());
             }
         }
-    }
-
-    default String getRecordCorrelationId(ConsumerRecord<String, String> record) {
-        if (record.headers() != null) {
-            Iterator<Header> headers = record.headers().iterator();
-            while (headers.hasNext()) {
-                Header header = headers.next();
-                if (header.key().equals(Config.CORRELATION_ID_HEADER_KEY)) {
-                    return new String(header.value());
-                }
-            }
-        }
-
-        return null;
     }
 }

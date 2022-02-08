@@ -29,13 +29,6 @@ public class HttpTarget implements ITarget {
     }
 
     public CompletableFuture<TargetResponse> call(final ConsumerRecord<String, String> record) {
-        if (Config.ENFORCE_CORRELATION_ID && this.getRecordCorrelationId(record) == null) {
-            Monitor.missingCorrelationId(record);
-            return CompletableFuture.<TargetResponse>completedFuture(
-                new TargetResponse(OptionalLong.empty(), OptionalLong.empty())
-            );
-        }
-
         final var builder = HttpRequest
             .newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
@@ -50,10 +43,6 @@ public class HttpTarget implements ITarget {
             .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
 
         copyRecordHeaders(builder, record);
-
-        if (Config.ENFORCE_CORRELATION_ID) {
-            builder.header(Config.CORRELATION_ID_HEADER_KEY, this.getRecordCorrelationId(record));
-        }
 
         final var request = builder.build();
 

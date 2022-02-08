@@ -32,8 +32,6 @@ public class Config {
     public static String PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static List<Integer> RETRY_POLICY_EXPONENTIAL_BACKOFF;
     public static long TARGET_TIMEOUT_MS;
-    public static boolean ENFORCE_CORRELATION_ID;
-    public static String CORRELATION_ID_HEADER_KEY;
 
     //Authentication
     public static boolean USE_SASL_AUTH;
@@ -58,8 +56,6 @@ public class Config {
         TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
         TARGET_TIMEOUT_MS = getOptionalLong(dotenv, "TARGET_TIMEOUT_MS", Integer.MAX_VALUE);
 
-        ENFORCE_CORRELATION_ID = getOptionalBool(dotenv, "ENFORCE_CORRELATION_ID", false);
-        CORRELATION_ID_HEADER_KEY = getOptionalString(dotenv, "CORRELATION_ID_HEADER_KEY", "x-correlation-id");
         POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 50);
         SESSION_TIMEOUT = getOptionalInt(dotenv, "SESSION_TIMEOUT", 10000);
