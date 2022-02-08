@@ -46,9 +46,10 @@ public class HttpTarget implements ITarget {
             .header("x-record-offset", String.valueOf(record.offset()))
             .header("x-record-timestamp", String.valueOf(record.timestamp()))
             .header("x-record-original-topic", this.getOriginalTopic(record))
-            .header("x-record-headers", this.getRecordHeaders(record))
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
             .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
+
+        copyRecordHeaders(builder, record);
 
         if (Config.ENFORCE_CORRELATION_ID) {
             builder.header(Config.CORRELATION_ID_HEADER_KEY, this.getRecordCorrelationId(record));

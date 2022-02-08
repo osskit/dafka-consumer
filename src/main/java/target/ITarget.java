@@ -1,6 +1,7 @@
 package target;
 
 import configuration.Config;
+import java.net.http.HttpRequest.Builder;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -18,16 +19,14 @@ public interface ITarget {
         return record.topic();
     }
 
-    default String getRecordHeaders(ConsumerRecord<String, String> record) {
-        JSONObject headersJson = new JSONObject();
+    default void copyRecordHeaders(Builder httpBuilder, ConsumerRecord<String, String> record) {
         if (record.headers() != null) {
             Iterator<Header> headers = record.headers().iterator();
             while (headers.hasNext()) {
                 Header header = headers.next();
-                headersJson.put(header.key(), new String(header.value()));
+                httpBuilder.setHeader(header.key(), header.value().toString());
             }
         }
-        return headersJson.toString();
     }
 
     default String getRecordCorrelationId(ConsumerRecord<String, String> record) {
