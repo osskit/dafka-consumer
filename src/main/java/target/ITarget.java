@@ -24,7 +24,7 @@ public interface ITarget {
             Iterator<Header> headers = record.headers().iterator();
             while (headers.hasNext()) {
                 Header header = headers.next();
-                httpBuilder.setHeader(header.key(), header.value().toString());
+                httpBuilder.setHeader(header.key(), new String(header.value(), StandardCharsets.UTF_8));
             }
         }
     }
