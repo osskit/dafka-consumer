@@ -2,6 +2,7 @@ package target;
 
 import configuration.Config;
 import java.net.http.HttpRequest.Builder;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
