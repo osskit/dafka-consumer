@@ -19,13 +19,11 @@ public interface ITarget {
     }
 
     default String getRecordHeader(ConsumerRecord<String, String> record, String key) {
-        System.out.println("looking for header " + key);
         if (record.headers() != null) {
             Iterator<Header> headers = record.headers().iterator();
             while (headers.hasNext()) {
                 Header header = headers.next();
                 if (header.key().equals(key)) {
-                    System.out.println("found " + key + " " + new String(header.value(), StandardCharsets.UTF_8));
                     return new String(header.value(), StandardCharsets.UTF_8);
                 }
             }
