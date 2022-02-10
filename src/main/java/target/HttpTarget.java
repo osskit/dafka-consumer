@@ -50,13 +50,29 @@ public class HttpTarget implements ITarget {
             .header("x-record-original-topic", this.getOriginalTopic(record))
             .header("x-record-original-topic", this.getOriginalTopic(record))
             .header("x-record-original-topic", this.getOriginalTopic(record))
-            .header("x-b3-traceid", this.getRecordHeader(record, "x-b3-traceid"))
-            .header("x-b3-spanid", this.getRecordHeader(record, "x-b3-spanid"))
-            .header("x-b3-parentspanid", this.getRecordHeader(record, "x-b3-parentspanid"))
-            .header("x-b3-sampled", this.getRecordHeader(record, "x-b3-sampled"))
-            .header("x-request-id", this.getRecordHeader(record, "x-request-id"))
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
             .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
+
+        var traceIdheader = this.getRecordHeader(record, "x-b3-traceid");
+        if (traceIdheader != null) {
+            builder.header("x-b3-traceid", traceIdheader);
+        }
+        var spanIdHeader = this.getRecordHeader(record, "x-b3-spanid");
+        if (spanIdHeader != null) {
+            builder.header("x-b3-spanid", spanIdHeader);
+        }
+        var parentSpanIdHeader = this.getRecordHeader(record, "x-b3-parentspanid");
+        if (parentSpanIdHeader != null) {
+            builder.header("x-b3-parentspanid", parentSpanIdHeader);
+        }
+        var sampledHeader = this.getRecordHeader(record, "x-b3-sampled");
+        if (sampledHeader != null) {
+            builder.header("x-b3-sampled", sampledHeader);
+        }
+        var requestIdHeader = this.getRecordHeader(record, "x-request-id");
+        if (requestIdHeader != null) {
+            builder.header("x-request-id", requestIdHeader);
+        }
 
         if (Config.ENFORCE_CORRELATION_ID) {
             builder.header(

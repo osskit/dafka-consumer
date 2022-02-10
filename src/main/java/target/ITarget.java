@@ -24,6 +24,7 @@ public interface ITarget {
             while (headers.hasNext()) {
                 Header header = headers.next();
                 if (header.key().equals(key)) {
+                    System.out.println(key + " " + new String(header.value(), StandardCharsets.UTF_8));
                     return new String(header.value(), StandardCharsets.UTF_8);
                 }
             }
