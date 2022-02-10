@@ -53,6 +53,10 @@ public class HttpTarget implements ITarget {
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
             .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
 
+        var requestIdHeader = this.getRecordHeader(record, "x-request-id");
+        if (requestIdHeader != null) {
+            builder.header("x-request-id", requestIdHeader);
+        }
         var traceIdheader = this.getRecordHeader(record, "x-b3-traceid");
         if (traceIdheader != null) {
             builder.header("x-b3-traceid", traceIdheader);
@@ -69,11 +73,14 @@ public class HttpTarget implements ITarget {
         if (sampledHeader != null) {
             builder.header("x-b3-sampled", sampledHeader);
         }
-        var requestIdHeader = this.getRecordHeader(record, "x-request-id");
-        if (requestIdHeader != null) {
-            builder.header("x-request-id", requestIdHeader);
+        var flagsHeader = this.getRecordHeader(record, "x-b3-flags");
+        if (flagsHeader != null) {
+            builder.header("x-b3-flags", flagsHeader);
         }
-
+        var spanContext = this.getRecordHeader(record, "x-ot-span-context");
+        if (spanContext != null) {
+            builder.header("x-ot-span-context", spanContext);
+        }
         if (Config.ENFORCE_CORRELATION_ID) {
             builder.header(
                 Config.CORRELATION_ID_HEADER_KEY,
