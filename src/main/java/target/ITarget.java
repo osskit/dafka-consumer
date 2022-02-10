@@ -19,6 +19,7 @@ public interface ITarget {
     }
 
     default String getRecordHeader(ConsumerRecord<String, String> record, String key) {
+        System.out.println("looking for header " + key);
         if (record.headers() != null) {
             Iterator<Header> headers = record.headers().iterator();
             while (headers.hasNext()) {
