@@ -29,7 +29,7 @@ public class HttpTarget implements ITarget {
     }
 
     public CompletableFuture<TargetResponse> call(final ConsumerRecord<String, String> record) {
-        if (Config.ENFORCE_CORRELATION_ID && this.getRecordCorrelationId(record) == null) {
+        if (Config.ENFORCE_CORRELATION_ID && this.getRecordHeader(record, Config.CORRELATION_ID_HEADER_KEY) == null) {
             Monitor.missingCorrelationId(record);
             return CompletableFuture.<TargetResponse>completedFuture(
                 new TargetResponse(OptionalLong.empty(), OptionalLong.empty())
@@ -46,13 +46,23 @@ public class HttpTarget implements ITarget {
             .header("x-record-offset", String.valueOf(record.offset()))
             .header("x-record-timestamp", String.valueOf(record.timestamp()))
             .header("x-record-original-topic", this.getOriginalTopic(record))
+            .header("x-record-original-topic", this.getOriginalTopic(record))
+            .header("x-record-original-topic", this.getOriginalTopic(record))
+            .header("x-record-original-topic", this.getOriginalTopic(record))
+            .header("x-record-original-topic", this.getOriginalTopic(record))
+            .header("x-b3-traceid", this.getRecordHeader(record, "x-b3-traceid"))
+            .header("x-b3-spanid", this.getRecordHeader(record, "x-b3-spanid"))
+            .header("x-b3-parentspanid", this.getRecordHeader(record, "x-b3-parentspanid"))
+            .header("x-b3-sampled", this.getRecordHeader(record, "x-b3-sampled"))
+            .header("x-request-id", this.getRecordHeader(record, "x-request-id"))
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
             .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
 
-        copyRecordHeaders(builder, record);
-
         if (Config.ENFORCE_CORRELATION_ID) {
-            builder.header(Config.CORRELATION_ID_HEADER_KEY, this.getRecordCorrelationId(record));
+            builder.header(
+                Config.CORRELATION_ID_HEADER_KEY,
+                this.getRecordHeader(record, Config.CORRELATION_ID_HEADER_KEY)
+            );
         }
 
         final var request = builder.build();
