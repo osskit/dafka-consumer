@@ -1,0 +1,50 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`tests should add tracing headers 1`] = `
+Object {
+  "body": Object {
+    "data": "foo",
+  },
+  "headers": Object {
+    "content-length": "14",
+    "content-type": "application/json",
+    "host": "target:2000",
+    "user-agent": "Java-http-client/13-ea",
+    "x-b3-flags": "1",
+    "x-b3-parentspanid": "101112",
+    "x-b3-sampled": "1",
+    "x-b3-spanid": "789",
+    "x-b3-traceid": "456",
+    "x-ot-span-context": "foo",
+    "x-record-offset": Any<String>,
+    "x-record-original-topic": "foo",
+    "x-record-partition": "3",
+    "x-record-timestamp": Any<String>,
+    "x-record-topic": "foo",
+    "x-request-id": "123",
+  },
+  "method": "POST",
+  "path": "/consume",
+}
+`;
+
+exports[`tests should produce and consume 1`] = `
+Object {
+  "body": Object {
+    "data": "foo",
+  },
+  "headers": Object {
+    "content-length": "14",
+    "content-type": "application/json",
+    "host": "target:2000",
+    "user-agent": "Java-http-client/13-ea",
+    "x-record-offset": Any<String>,
+    "x-record-original-topic": "foo",
+    "x-record-partition": "3",
+    "x-record-timestamp": Any<String>,
+    "x-record-topic": "foo",
+  },
+  "method": "POST",
+  "path": "/consume",
+}
+`;

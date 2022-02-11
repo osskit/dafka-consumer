@@ -15,7 +15,6 @@ const fakeHttpServer = new Server({
 
 describe('tests', () => {
     beforeAll(async () => {
-        // delay(120000);
         await expect(
             checkReadiness(['foo', 'bar', 'lol.bar', 'retry', 'dead-letter', 'unexpected'])
         ).resolves.toBeTruthy();
@@ -27,7 +26,7 @@ describe('tests', () => {
 
     it('liveliness', async () => {
         await delay(1000);
-        const producer = await fetch('http://localhost:6000/isAlive');
+        const producer = await fetch('http://localhost:6000/healthcheck');
         const consumer = await fetch('http://localhost:4001/healthcheck');
         expect(producer.ok).toBeTruthy();
         expect(consumer.ok).toBeTruthy();
@@ -41,32 +40,16 @@ describe('tests', () => {
                 topic: 'foo',
                 key: 'thekey',
                 value: {data: 'foo'},
-                headers: {eventType: 'test1', source: 'test-service1'},
-            },
-        ]);
-        await delay(1000);
-        await produce('http://localhost:6000/produce', [
-            {
-                topic: 'bar',
-                key: 'thekey',
-                value: {data: 'bar'},
-                headers: {eventType: 'test2', source: 'test-service2'},
             },
         ]);
         await delay(1000);
 
         const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
         expect(hasBeenMade).toBeTruthy();
-        expect(madeCalls.length).toBe(2);
-        const actualHeaders1 = JSON.parse(madeCalls[0].headers['x-record-headers']);
-        expect(madeCalls[0].headers['x-record-topic']).toBe('foo');
-        expect(actualHeaders1!.eventType).toEqual('test1');
-        expect(actualHeaders1!.source).toEqual('test-service1');
-
-        const actualHeaders2 = JSON.parse(madeCalls[1].headers['x-record-headers']);
-        expect(madeCalls[1].headers['x-record-topic']).toBe('bar');
-        expect(actualHeaders2!.eventType).toEqual('test2');
-        expect(actualHeaders2!.source).toEqual('test-service2');
+        expect(madeCalls.length).toBe(1);
+        expect(madeCalls[0]).toMatchSnapshot({
+            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
+        });
     });
 
     it('should produce and consume with regex patterns', async () => {
@@ -77,7 +60,6 @@ describe('tests', () => {
                 topic: 'lol.bar',
                 key: 'thekey',
                 value: {data: 'foo'},
-                headers: {eventType: 'test1', source: 'test-service1'},
             },
         ]);
         await delay(1000);
@@ -86,7 +68,6 @@ describe('tests', () => {
                 topic: 'bar',
                 key: 'thekey',
                 value: {data: 'bar'},
-                headers: {eventType: 'test2', source: 'test-service2'},
             },
         ]);
         await delay(1000);
@@ -94,16 +75,37 @@ describe('tests', () => {
         const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
         expect(hasBeenMade).toBeTruthy();
         expect(madeCalls.length).toBe(2);
+    });
 
-        const actualHeaders1 = JSON.parse(madeCalls[0].headers['x-record-headers']);
-        expect(madeCalls[0].headers['x-record-topic']).toBe('lol.bar');
-        expect(actualHeaders1!.eventType).toEqual('test1');
-        expect(actualHeaders1!.source).toEqual('test-service1');
+    it('should add tracing headers', async () => {
+        const callId = await mockHttpTarget('/consume', 200);
 
-        const actualHeaders2 = JSON.parse(madeCalls[1].headers['x-record-headers']);
-        expect(madeCalls[1].headers['x-record-topic']).toBe('bar');
-        expect(actualHeaders2!.eventType).toEqual('test2');
-        expect(actualHeaders2!.source).toEqual('test-service2');
+        await produce(
+            'http://localhost:6000/produce',
+            [
+                {
+                    topic: 'foo',
+                    key: 'thekey',
+                    value: {data: 'foo'},
+                },
+            ],
+            {
+                'x-request-id': '123',
+                'x-b3-traceid': '456',
+                'x-b3-spanid': '789',
+                'x-b3-parentspanid': '101112',
+                'x-b3-sampled': '1',
+                'x-b3-flags': '1',
+                'x-ot-span-context': 'foo',
+            }
+        );
+        await delay(1000);
+
+        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
+        expect(hasBeenMade).toBeTruthy();
+        expect(madeCalls[0]).toMatchSnapshot({
+            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
+        });
     });
 
     it('should consume bursts of records', async () => {
@@ -153,7 +155,11 @@ describe('tests', () => {
         expect(consumerLiveliness.ok).toBeTruthy();
 
         await produce('http://localhost:6000/produce', [
-            {topic: 'unexpected', key: uuid(), value: {data: 'unexpected'}},
+            {
+                topic: 'unexpected',
+                key: uuid(),
+                value: {data: 'unexpected'},
+            },
         ]);
         await delay(10000);
 
@@ -162,11 +168,11 @@ describe('tests', () => {
     });
 });
 
-const produce = (url: string, batch: any[]) =>
+const produce = (url: string, batch: any[], headers?: object) =>
     fetch(url, {
         method: 'post',
         body: JSON.stringify(batch),
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json', ...headers},
     });
 
 const mockHttpTarget = (route: string, statusCode: number) =>

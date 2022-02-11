@@ -29,7 +29,7 @@ public class HttpTarget implements ITarget {
     }
 
     public CompletableFuture<TargetResponse> call(final ConsumerRecord<String, String> record) {
-        final var request = HttpRequest
+        final var builder = HttpRequest
             .newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
             .uri(URI.create(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(record.topic())))
@@ -39,10 +39,39 @@ public class HttpTarget implements ITarget {
             .header("x-record-offset", String.valueOf(record.offset()))
             .header("x-record-timestamp", String.valueOf(record.timestamp()))
             .header("x-record-original-topic", this.getOriginalTopic(record))
-            .header("x-record-headers", this.getRecordHeaders(record))
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
-            .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS))
-            .build();
+            .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
+
+        var requestIdHeader = this.getRecordHeader(record, "x-request-id");
+        if (requestIdHeader != null) {
+            builder.header("x-request-id", requestIdHeader);
+        }
+        var traceIdheader = this.getRecordHeader(record, "x-b3-traceid");
+        if (traceIdheader != null) {
+            builder.header("x-b3-traceid", traceIdheader);
+        }
+        var spanIdHeader = this.getRecordHeader(record, "x-b3-spanid");
+        if (spanIdHeader != null) {
+            builder.header("x-b3-spanid", spanIdHeader);
+        }
+        var parentSpanIdHeader = this.getRecordHeader(record, "x-b3-parentspanid");
+        if (parentSpanIdHeader != null) {
+            builder.header("x-b3-parentspanid", parentSpanIdHeader);
+        }
+        var sampledHeader = this.getRecordHeader(record, "x-b3-sampled");
+        if (sampledHeader != null) {
+            builder.header("x-b3-sampled", sampledHeader);
+        }
+        var flagsHeader = this.getRecordHeader(record, "x-b3-flags");
+        if (flagsHeader != null) {
+            builder.header("x-b3-flags", flagsHeader);
+        }
+        var spanContext = this.getRecordHeader(record, "x-ot-span-context");
+        if (spanContext != null) {
+            builder.header("x-ot-span-context", spanContext);
+        }
+
+        final var request = builder.build();
 
         final long startTime = (new Date()).getTime();
         final CheckedSupplier<CompletionStage<HttpResponse<String>>> completionStageCheckedSupplier = () ->
