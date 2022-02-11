@@ -29,13 +29,6 @@ public class HttpTarget implements ITarget {
     }
 
     public CompletableFuture<TargetResponse> call(final ConsumerRecord<String, String> record) {
-        if (Config.ENFORCE_CORRELATION_ID && this.getRecordHeader(record, Config.CORRELATION_ID_HEADER_KEY) == null) {
-            Monitor.missingCorrelationId(record);
-            return CompletableFuture.<TargetResponse>completedFuture(
-                new TargetResponse(OptionalLong.empty(), OptionalLong.empty())
-            );
-        }
-
         final var builder = HttpRequest
             .newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
@@ -45,10 +38,6 @@ public class HttpTarget implements ITarget {
             .header("x-record-partition", String.valueOf(record.partition()))
             .header("x-record-offset", String.valueOf(record.offset()))
             .header("x-record-timestamp", String.valueOf(record.timestamp()))
-            .header("x-record-original-topic", this.getOriginalTopic(record))
-            .header("x-record-original-topic", this.getOriginalTopic(record))
-            .header("x-record-original-topic", this.getOriginalTopic(record))
-            .header("x-record-original-topic", this.getOriginalTopic(record))
             .header("x-record-original-topic", this.getOriginalTopic(record))
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
             .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
@@ -80,12 +69,6 @@ public class HttpTarget implements ITarget {
         var spanContext = this.getRecordHeader(record, "x-ot-span-context");
         if (spanContext != null) {
             builder.header("x-ot-span-context", spanContext);
-        }
-        if (Config.ENFORCE_CORRELATION_ID) {
-            builder.header(
-                Config.CORRELATION_ID_HEADER_KEY,
-                this.getRecordHeader(record, Config.CORRELATION_ID_HEADER_KEY)
-            );
         }
 
         final var request = builder.build();
