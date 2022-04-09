@@ -44,7 +44,6 @@ public class Config {
     public static int MONITORING_SERVER_PORT;
     public static boolean USE_PROMETHEUS;
     public static String PROMETHEUS_BUCKETS;
-    public static boolean DEBUG;
     public static String TARGET_HEALTHCHECK;
 
     public static void init() throws Exception {
@@ -88,7 +87,6 @@ public class Config {
 
         USE_PROMETHEUS = getOptionalBool(dotenv, "USE_PROMETHEUS", false);
         PROMETHEUS_BUCKETS = getOptionalString(dotenv, "PROMETHEUS_BUCKETS", "0.003,0.03,0.1,0.3,1.5,10");
-        DEBUG = getOptionalBool(dotenv, "DEBUG", false);
     }
 
     private static String getString(Dotenv dotenv, String name) throws Exception {
