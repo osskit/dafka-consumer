@@ -127,7 +127,7 @@ public class Monitor {
                 .put("level", "info")
                 .put("message", "process message started")
                 .put(
-                   "extra",
+                    "extra",
                     new JSONObject()
                         .put(
                             "record",
@@ -160,9 +160,7 @@ public class Monitor {
 
     public static void retryProduced(ConsumerRecord<String, String> consumerRecord) {
         var extra = new JSONObject().put("message", new JSONObject().put("key", consumerRecord.key()));
-        if (Config.DEBUG) {
-            extra.put("value", consumerRecord.value());
-        }
+        extra.put("value", consumerRecord.value());
         JSONObject log = new JSONObject().put("level", "info").put("message", "retry produced").put("extra", extra);
         write(log);
 
@@ -171,9 +169,7 @@ public class Monitor {
 
     public static void deadLetterProcdued(ConsumerRecord<String, String> consumerRecord) {
         var extra = new JSONObject().put("message", new JSONObject().put("key", consumerRecord.key()));
-        if (Config.DEBUG) {
-            extra.put("value", consumerRecord.value());
-        }
+        extra.put("value", consumerRecord.value());
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "dead letter produced")
@@ -274,9 +270,7 @@ public class Monitor {
 
     public static void produceError(String topic, ConsumerRecord<String, String> consumerRecord, Throwable exception) {
         var extra = new JSONObject().put("message", new JSONObject().put("key", consumerRecord.key()));
-        if (Config.DEBUG) {
-            extra.put("value", consumerRecord.value());
-        }
+        extra.put("value", consumerRecord.value());
         JSONObject log = new JSONObject()
             .put("level", "error")
             .put("message", String.format("failed producing message to %s topic", topic))
@@ -296,9 +290,7 @@ public class Monitor {
     ) {
         var extra = new JSONObject();
         extra.put("message", new JSONObject().put("key", consumerRecord.key()));
-        if (Config.DEBUG) {
-            extra.put("value", consumerRecord.value());
-        }
+        extra.put("value", consumerRecord.value());
         if (responseBody.isPresent()) {
             extra.put("response", responseBody.get());
         }
