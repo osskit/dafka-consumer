@@ -122,25 +122,23 @@ public class Monitor {
         messageLatency.labels(record.topic()).observe(((double) (new Date().getTime() - record.timestamp())) / 1000);
         processMessageStarted.inc();
 
-        if (Config.DEBUG) {
-            write(
-                new JSONObject()
-                    .put("level", "info")
-                    .put("message", "process message started")
-                    .put(
-                        "extra",
-                        new JSONObject()
-                            .put(
-                                "record",
-                                new JSONObject()
-                                    .put("value", record.value())
-                                    .put("topic", record.topic())
-                                    .put("partition", record.partition())
-                                    .put("offset", record.offset())
-                            )
-                    )
-            );
-        }
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "process message started")
+                .put(
+                   "extra",
+                    new JSONObject()
+                        .put(
+                            "record",
+                            new JSONObject()
+                                .put("value", record.value())
+                                .put("topic", record.topic())
+                                .put("partition", record.partition())
+                                .put("offset", record.offset())
+                        )
+                )
+        );
     }
 
     public static void callTargetLatency(long latency) {
