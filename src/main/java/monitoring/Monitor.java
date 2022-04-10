@@ -136,6 +136,7 @@ public class Monitor {
                                 .put("topic", record.topic())
                                 .put("partition", record.partition())
                                 .put("offset", record.offset())
+                                .put("headers", record.headers())
                         )
                 )
         );
