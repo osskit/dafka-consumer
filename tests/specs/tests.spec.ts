@@ -24,10 +24,10 @@ describe('tests', () => {
         await fakeHttpServer.clear();
     });
 
-    it('liveliness', async () => {
+    it('readiness', async () => {
         await delay(1000);
-        const producer = await fetch('http://localhost:6000/healthcheck');
-        const consumer = await fetch('http://localhost:4001/healthcheck');
+        const producer = await fetch('http://localhost:6000/ready');
+        const consumer = await fetch('http://localhost:4001/ready');
         expect(producer.ok).toBeTruthy();
         expect(consumer.ok).toBeTruthy();
     });
@@ -151,8 +151,8 @@ describe('tests', () => {
 
     it('consumer should terminate on an unexpected error', async () => {
         await delay(1000);
-        let consumerLiveliness = await fetch('http://localhost:4002/healthcheck');
-        expect(consumerLiveliness.ok).toBeTruthy();
+        let consumerReadiness = await fetch('http://localhost:4002/ready');
+        expect(consumerReadiness.ok).toBeTruthy();
 
         await produce('http://localhost:6000/produce', [
             {
@@ -163,8 +163,8 @@ describe('tests', () => {
         ]);
         await delay(10000);
 
-        consumerLiveliness = await fetch('http://localhost:4002/healthcheck');
-        expect(consumerLiveliness.ok).toBeFalsy();
+        consumerReadiness = await fetch('http://localhost:4002/ready');
+        expect(consumerReadiness.ok).toBeFalsy();
     });
 });
 

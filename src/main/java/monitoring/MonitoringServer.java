@@ -28,7 +28,6 @@ public class MonitoringServer {
         }
 
         server = HttpServer.create(new InetSocketAddress(Config.MONITORING_SERVER_PORT), 0);
-        healthCheckRoute(server);
         aliveRoute(server);
         readyRoute(server);
         if (Config.USE_PROMETHEUS) {
@@ -54,39 +53,6 @@ public class MonitoringServer {
 
     public void close() {
         server.stop(0);
-    }
-
-    private void healthCheckRoute(final HttpServer server) {
-        final var httpContext = server.createContext("/healthcheck");
-
-        httpContext.setHandler(
-            new HttpHandler() {
-                @Override
-                public void handle(final HttpExchange exchange) throws IOException {
-                    if (!exchange.getRequestMethod().equals("GET")) {
-                        exchange.sendResponseHeaders(404, -1);
-                        return;
-                    }
-
-                    if (!consumerAssigned) {
-                        writeResponse(500, exchange);
-                        return;
-                    }
-
-                    if (consumerDisposed) {
-                        writeResponse(500, exchange);
-                        return;
-                    }
-
-                    if (!targetHealthcheck(exchange)) {
-                        writeResponse(500, exchange);
-                        return;
-                    }
-
-                    writeResponse(200, exchange);
-                }
-            }
-        );
     }
 
     private void aliveRoute(final HttpServer server) {
