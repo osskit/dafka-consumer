@@ -151,7 +151,7 @@ describe('tests', () => {
 
     it('consumer should terminate on an unexpected error', async () => {
         await delay(1000);
-        let consumerReadiness = await fetch('http://localhost:4002/ready');
+        const consumerReadiness = await fetch('http://localhost:4002/ready');
         expect(consumerReadiness.ok).toBeTruthy();
 
         await produce('http://localhost:6000/produce', [
@@ -163,8 +163,8 @@ describe('tests', () => {
         ]);
         await delay(10000);
 
-        consumerReadiness = await fetch('http://localhost:4002/alive');
-        expect(consumerReadiness.ok).toBeFalsy();
+        const consumerLiveness = await fetch('http://localhost:4002/alive');
+        expect(consumerLiveness.ok).toBeFalsy();
     });
 });
 
