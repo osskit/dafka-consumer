@@ -29,6 +29,8 @@ public class MonitoringServer {
 
         server = HttpServer.create(new InetSocketAddress(Config.MONITORING_SERVER_PORT), 0);
         healthCheckRoute(server);
+        aliveRoute(server);
+        readyRoute(server);
         if (Config.USE_PROMETHEUS) {
             DefaultExports.initialize();
             new HTTPServer(server, CollectorRegistry.defaultRegistry, false);
@@ -82,6 +84,55 @@ public class MonitoringServer {
                     }
 
                     writeResponse(200, exchange);
+                }
+            }
+        );
+    }
+
+    private void aliveRoute(final HttpServer server) {
+        final var httpContext = server.createContext("/alive");
+
+        httpContext.setHandler(
+            new HttpHandler() {
+                @Override
+                public void handle(final HttpExchange exchange) throws IOException {
+                    if (!exchange.getRequestMethod().equals("GET")) {
+                        exchange.sendResponseHeaders(404, -1);
+                        return;
+                    }
+
+                    if (!targetHealthcheck(exchange)) {
+                        writeResponse(500, exchange);
+                        return;
+                    }
+
+                    if (consumerDisposed) {
+                        writeResponse(500, exchange);
+                        return;
+                    }
+
+                    writeResponse(200, exchange);
+                }
+            }
+        );
+    }
+
+    private void readyRoute(final HttpServer server) {
+        final var httpContext = server.createContext("/ready");
+
+        httpContext.setHandler(
+            new HttpHandler() {
+                @Override
+                public void handle(final HttpExchange exchange) throws IOException {
+                    if (!exchange.getRequestMethod().equals("GET")) {
+                        exchange.sendResponseHeaders(404, -1);
+                        return;
+                    }
+
+                    if (!consumerAssigned) {
+                        writeResponse(500, exchange);
+                        return;
+                    }
                 }
             }
         );
