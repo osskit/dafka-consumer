@@ -133,6 +133,8 @@ public class MonitoringServer {
                         writeResponse(500, exchange);
                         return;
                     }
+
+                    writeResponse(200, exchange);
                 }
             }
         );
