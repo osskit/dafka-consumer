@@ -163,7 +163,7 @@ describe('tests', () => {
         ]);
         await delay(10000);
 
-        consumerReadiness = await fetch('http://localhost:4002/ready');
+        consumerReadiness = await fetch('http://localhost:4002/alive');
         expect(consumerReadiness.ok).toBeFalsy();
     });
 });
