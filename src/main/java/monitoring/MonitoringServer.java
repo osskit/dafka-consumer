@@ -111,7 +111,7 @@ public class MonitoringServer {
                         return;
                     }
 
-                    writeResponse(200, exchange);
+                    writeResponse(204, exchange);
                 }
             }
         );
@@ -134,7 +134,7 @@ public class MonitoringServer {
                         return;
                     }
 
-                    writeResponse(200, exchange);
+                    writeResponse(204, exchange);
                 }
             }
         );
