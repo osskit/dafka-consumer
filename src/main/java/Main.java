@@ -24,10 +24,10 @@ public class Main {
             topicsRoutes = new TopicsRoutes(Config.TOPICS_ROUTES);
             var targetHealthcheck = new TargetHealthcheck();
             monitoringServer = new MonitoringServer(targetHealthcheck).start();
+            waitForTargetHealthcheck(targetHealthcheck);
             consumer = createConsumer(monitoringServer);
             onShutdown(consumer, monitoringServer);
             Monitor.started();
-            waitForTargetHealthcheck(targetHealthcheck);
             latch.await();
         } catch (Exception e) {
             Monitor.initializationError(e);
