@@ -67,11 +67,6 @@ public class MonitoringServer {
                         return;
                     }
 
-                    if (!targetHealthcheck(exchange)) {
-                        writeResponse(500, exchange);
-                        return;
-                    }
-
                     if (consumerDisposed) {
                         writeResponse(500, exchange);
                         return;
@@ -92,6 +87,11 @@ public class MonitoringServer {
                 public void handle(final HttpExchange exchange) throws IOException {
                     if (!exchange.getRequestMethod().equals("GET")) {
                         exchange.sendResponseHeaders(404, -1);
+                        return;
+                    }
+
+                    if (!targetHealthcheck(exchange)) {
+                        writeResponse(500, exchange);
                         return;
                     }
 

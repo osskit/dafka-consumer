@@ -22,11 +22,12 @@ public class Main {
             Monitor.init();
 
             topicsRoutes = new TopicsRoutes(Config.TOPICS_ROUTES);
-            monitoringServer = new MonitoringServer(waitForTargetHealthcheck()).start();
+            var targetHealthcheck = new TargetHealthcheck();
+            monitoringServer = new MonitoringServer(targetHealthcheck).start();
             consumer = createConsumer(monitoringServer);
             onShutdown(consumer, monitoringServer);
-
             Monitor.started();
+            waitForTargetHealthcheck(targetHealthcheck);
             latch.await();
         } catch (Exception e) {
             Monitor.initializationError(e);
@@ -34,14 +35,13 @@ public class Main {
         Monitor.serviceTerminated();
     }
 
-    private static TargetHealthcheck waitForTargetHealthcheck() throws InterruptedException, IOException {
-        var targetHealthcheck = new TargetHealthcheck();
+    private static void waitForTargetHealthcheck(TargetHealthcheck targetHealthcheck)
+        throws InterruptedException, IOException {
         do {
             System.out.printf("waiting for target healthcheck %s%n", targetHealthcheck.getEndpoint());
             Thread.sleep(1000);
         } while (!targetHealthcheck.check());
         System.out.println("target healthcheck pass successfully");
-        return targetHealthcheck;
     }
 
     private static Disposable createConsumer(MonitoringServer monitoringServer) {
