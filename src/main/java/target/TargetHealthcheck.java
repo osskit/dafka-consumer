@@ -33,7 +33,6 @@ public class TargetHealthcheck {
                 }
                 return true;
             } catch (Exception e) {
-                Monitor.initializationError(e);
                 return false;
             }
         }

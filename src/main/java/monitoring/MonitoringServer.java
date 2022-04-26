@@ -9,6 +9,7 @@ import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
 import target.TargetHealthcheck;
 
 public class MonitoringServer {
@@ -30,6 +31,7 @@ public class MonitoringServer {
         server = HttpServer.create(new InetSocketAddress(Config.MONITORING_SERVER_PORT), 0);
         aliveRoute(server);
         readyRoute(server);
+        server.setExecutor(Executors.newCachedThreadPool());
         if (Config.USE_PROMETHEUS) {
             DefaultExports.initialize();
             new HTTPServer(server, CollectorRegistry.defaultRegistry, false);
@@ -62,6 +64,7 @@ public class MonitoringServer {
             new HttpHandler() {
                 @Override
                 public void handle(final HttpExchange exchange) throws IOException {
+                    System.out.println("calling /alive");
                     if (!exchange.getRequestMethod().equals("GET")) {
                         exchange.sendResponseHeaders(404, -1);
                         return;
@@ -77,7 +80,7 @@ public class MonitoringServer {
                         return;
                     }
 
-                    writeResponse(204, exchange);
+                    writeResponse(200, exchange);
                 }
             }
         );
