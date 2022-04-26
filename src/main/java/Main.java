@@ -23,7 +23,7 @@ public class Main {
 
             topicsRoutes = new TopicsRoutes(Config.TOPICS_ROUTES);
             var targetHealthcheck = new TargetHealthcheck();
-            waitForTargetHealthcheck(targetHealthcheck);
+            //waitForTargetHealthcheck(targetHealthcheck);
             monitoringServer = new MonitoringServer(targetHealthcheck).start();
             consumer = createConsumer(monitoringServer);
             onShutdown(consumer, monitoringServer);
