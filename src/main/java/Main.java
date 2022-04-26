@@ -1,5 +1,4 @@
 import configuration.*;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import kafka.*;
@@ -24,7 +23,6 @@ public class Main {
             topicsRoutes = new TopicsRoutes(Config.TOPICS_ROUTES);
             var targetHealthcheck = new TargetHealthcheck();
             monitoringServer = new MonitoringServer(targetHealthcheck).start();
-            waitForTargetHealthcheck(targetHealthcheck);
             consumer = createConsumer(monitoringServer);
             onShutdown(consumer, monitoringServer);
             Monitor.started();
@@ -33,15 +31,6 @@ public class Main {
             Monitor.initializationError(e);
         }
         Monitor.serviceTerminated();
-    }
-
-    private static void waitForTargetHealthcheck(TargetHealthcheck targetHealthcheck)
-        throws InterruptedException, IOException {
-        do {
-            System.out.printf("waiting for target healthcheck %s%n", targetHealthcheck.getEndpoint());
-            Thread.sleep(1000);
-        } while (!targetHealthcheck.check());
-        System.out.println("target healthcheck pass successfully");
     }
 
     private static Disposable createConsumer(MonitoringServer monitoringServer) {
