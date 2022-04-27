@@ -52,8 +52,8 @@ public class Main {
                 new ConsumerRebalanceListener() {
                     @Override
                     public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-                        Monitor.assignedToPartition(partitions);
                         if (partitions.size() > 0) {
+                            Monitor.assignedToPartition(partitions);
                             monitoringServer.consumerAssigned();
                         }
                     }
