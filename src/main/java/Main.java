@@ -58,7 +58,7 @@ public class Main {
                             monitoringServer.consumerAssigned();
                             return;
                         }
-                        x.enforceRebalance();
+                        consumer.enforceRebalance();
                     }
 
                     @Override
