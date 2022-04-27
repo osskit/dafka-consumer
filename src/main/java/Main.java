@@ -53,7 +53,9 @@ public class Main {
                     @Override
                     public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
                         Monitor.assignedToPartition(partitions);
-                        monitoringServer.consumerAssigned();
+                        if (partitions.size() > 0) {
+                            monitoringServer.consumerAssigned();
+                        }
                     }
 
                     @Override
