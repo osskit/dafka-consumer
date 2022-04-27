@@ -45,10 +45,9 @@ public class Main {
     }
 
     private static Disposable createConsumer(MonitoringServer monitoringServer) {
-        var consumer = new KafkaClientFactory().<String, String>createConsumer();
         return new Consumer(
             new ReactiveKafkaClient<String, String>(
-                consumer,
+                new KafkaClientFactory().createConsumer(),
                 topicsRoutes.getTopics(),
                 new ConsumerRebalanceListener() {
                     @Override
@@ -56,9 +55,7 @@ public class Main {
                         if (partitions.size() > 0) {
                             Monitor.assignedToPartition(partitions);
                             monitoringServer.consumerAssigned();
-                            return;
                         }
-                        consumer.enforceRebalance();
                     }
 
                     @Override
