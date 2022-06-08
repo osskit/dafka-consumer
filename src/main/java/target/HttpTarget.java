@@ -70,25 +70,25 @@ public class HttpTarget implements ITarget {
         if (spanContext != null) {
             builder.header("x-ot-span-context", spanContext);
         }
-        var ceSpecVersion = this.getRecordHeader(record, "ce_specversion");
+        var ceSpecVersion = this.getRecordHeader(record, "ce-specversion");
         if (ceSpecVersion != null) {
-            builder.header("ce_specversion", ceSpecVersion);
+            builder.header("ce-specversion", ceSpecVersion);
         }
-        var ceTime = this.getRecordHeader(record, "ce_time");
+        var ceTime = this.getRecordHeader(record, "ce-time");
         if (ceTime != null) {
-            builder.header("ce_time", ceTime);
+            builder.header("ce-time", ceTime);
         }
-        var ceType = this.getRecordHeader(record, "ce_type");
+        var ceType = this.getRecordHeader(record, "ce-type");
         if (ceType != null) {
-            builder.header("ce_type", ceType);
+            builder.header("ce-type", ceType);
         }
-        var ceId = this.getRecordHeader(record, "ce_id");
+        var ceId = this.getRecordHeader(record, "ce-id");
         if (ceId != null) {
-            builder.header("ce_id", ceId);
+            builder.header("ce-id", ceId);
         }
-        var ceSource = this.getRecordHeader(record, "ce_source");
+        var ceSource = this.getRecordHeader(record, "ce-source");
         if (ceSource != null) {
-            builder.header("ce_source", ceSource);
+            builder.header("ce-source", ceSource);
         }
 
         final var request = builder.build();

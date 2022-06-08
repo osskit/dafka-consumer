@@ -121,11 +121,11 @@ describe('tests', () => {
                 },
             ],
             {
-                ce_time: '123',
-                ce_specversion: '1.0',
-                ce_id: 'uuid',
-                ce_source: 'source',
-                ce_type: 'test.consumer',
+                'ce-time': '123',
+                'ce-specversion': '1.0',
+                'ce-id': 'uuid',
+                'ce-source': 'source',
+                'ce-type': 'test.consumer',
             }
         );
         await delay(1000);
