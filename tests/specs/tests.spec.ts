@@ -108,6 +108,35 @@ describe('tests', () => {
         });
     });
 
+    it('should add cloudevents headers', async () => {
+        const callId = await mockHttpTarget('/consume', 200);
+
+        await produce(
+            'http://localhost:6000/produce',
+            [
+                {
+                    topic: 'foo',
+                    key: 'thekey',
+                    value: {data: 'foo'},
+                },
+            ],
+            {
+                ce_time: '123',
+                ce_specversion: '1.0',
+                ce_id: 'uuid',
+                ce_source: 'source',
+                ce_type: 'test.consumer',
+            }
+        );
+        await delay(1000);
+
+        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
+        expect(hasBeenMade).toBeTruthy();
+        expect(madeCalls[0]).toMatchSnapshot({
+            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
+        });
+    });
+
     it('should consume bursts of records', async () => {
         const callId = await mockHttpTarget('/consume', 200);
 

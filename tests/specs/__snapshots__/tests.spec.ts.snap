@@ -1,5 +1,26 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`tests should add cloudevents headers 1`] = `
+Object {
+  "body": Object {
+    "data": "foo",
+  },
+  "headers": Object {
+    "content-length": "14",
+    "content-type": "application/json",
+    "host": "target:2000",
+    "user-agent": "Java-http-client/13-ea",
+    "x-record-offset": Any<String>,
+    "x-record-original-topic": "foo",
+    "x-record-partition": "3",
+    "x-record-timestamp": Any<String>,
+    "x-record-topic": "foo",
+  },
+  "method": "POST",
+  "path": "/consume",
+}
+`;
+
 exports[`tests should add tracing headers 1`] = `
 Object {
   "body": Object {
