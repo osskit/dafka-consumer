@@ -6,6 +6,11 @@ Object {
     "data": "foo",
   },
   "headers": Object {
+    "ce-id": "uuid",
+    "ce-source": "source",
+    "ce-specversion": "1.0",
+    "ce-time": "123",
+    "ce-type": "test.consumer",
     "content-length": "14",
     "content-type": "application/json",
     "host": "target:2000",
