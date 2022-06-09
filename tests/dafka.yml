@@ -42,7 +42,7 @@ services:
             - MONITORING_SERVER_PORT=4002
 
     producer:
-        image: osskit/dafka-producer:4
+        image: osskit/dafka-producer:4.0.11
         ports:
             - 6000:6000
         environment:
