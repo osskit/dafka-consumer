@@ -42,54 +42,15 @@ public class HttpTarget implements ITarget {
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
             .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
 
-        var requestIdHeader = this.getRecordHeader(record, "x-request-id");
-        if (requestIdHeader != null) {
-            builder.header("x-request-id", requestIdHeader);
-        }
-        var traceIdheader = this.getRecordHeader(record, "x-b3-traceid");
-        if (traceIdheader != null) {
-            builder.header("x-b3-traceid", traceIdheader);
-        }
-        var spanIdHeader = this.getRecordHeader(record, "x-b3-spanid");
-        if (spanIdHeader != null) {
-            builder.header("x-b3-spanid", spanIdHeader);
-        }
-        var parentSpanIdHeader = this.getRecordHeader(record, "x-b3-parentspanid");
-        if (parentSpanIdHeader != null) {
-            builder.header("x-b3-parentspanid", parentSpanIdHeader);
-        }
-        var sampledHeader = this.getRecordHeader(record, "x-b3-sampled");
-        if (sampledHeader != null) {
-            builder.header("x-b3-sampled", sampledHeader);
-        }
-        var flagsHeader = this.getRecordHeader(record, "x-b3-flags");
-        if (flagsHeader != null) {
-            builder.header("x-b3-flags", flagsHeader);
-        }
-        var spanContext = this.getRecordHeader(record, "x-ot-span-context");
-        if (spanContext != null) {
-            builder.header("x-ot-span-context", spanContext);
-        }
-        var ceSpecVersion = this.getRecordHeader(record, "ce_specversion");
-        if (ceSpecVersion != null) {
-            builder.header("ce-specversion", ceSpecVersion);
-        }
-        var ceTime = this.getRecordHeader(record, "ce_time");
-        if (ceTime != null) {
-            builder.header("ce-time", ceTime);
-        }
-        var ceType = this.getRecordHeader(record, "ce_type");
-        if (ceType != null) {
-            builder.header("ce-type", ceType);
-        }
-        var ceId = this.getRecordHeader(record, "ce_id");
-        if (ceId != null) {
-            builder.header("ce-id", ceId);
-        }
-        var ceSource = this.getRecordHeader(record, "ce_source");
-        if (ceSource != null) {
-            builder.header("ce-source", ceSource);
-        }
+        var passthroughHeaders = Config.PASSTHROUGH_HEADERS;
+        passthroughHeaders.forEach(
+            header -> {
+                var recordHeader = this.getRecordHeader(record, header);
+                if (recordHeader != null) {
+                    builder.header(header, recordHeader);
+                }
+            }
+        );
 
         final var request = builder.build();
 

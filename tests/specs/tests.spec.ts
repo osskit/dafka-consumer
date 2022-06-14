@@ -77,7 +77,7 @@ describe('tests', () => {
         expect(madeCalls.length).toBe(2);
     });
 
-    it('should add tracing headers', async () => {
+    it('should add passthrough headers', async () => {
         const callId = await mockHttpTarget('/consume', 200);
 
         await produce(
@@ -97,35 +97,6 @@ describe('tests', () => {
                 'x-b3-sampled': '1',
                 'x-b3-flags': '1',
                 'x-ot-span-context': 'foo',
-            }
-        );
-        await delay(1000);
-
-        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
-        expect(hasBeenMade).toBeTruthy();
-        expect(madeCalls[0]).toMatchSnapshot({
-            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
-        });
-    });
-
-    it('should add cloudevents headers', async () => {
-        const callId = await mockHttpTarget('/consume', 200);
-
-        await produce(
-            'http://localhost:6000/produce',
-            [
-                {
-                    topic: 'foo',
-                    key: 'thekey',
-                    value: {data: 'foo'},
-                },
-            ],
-            {
-                'ce-time': '123',
-                'ce-specversion': '1.0',
-                'ce-id': 'uuid',
-                'ce-source': 'source',
-                'ce-type': 'test.consumer',
             }
         );
         await delay(1000);

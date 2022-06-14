@@ -3,6 +3,7 @@ package configuration;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,7 @@ public class Config {
     public static String PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static List<Integer> RETRY_POLICY_EXPONENTIAL_BACKOFF;
     public static long TARGET_TIMEOUT_MS;
+    public static List<String> PASSTHROUGH_HEADERS;
 
     //Authentication
     public static boolean USE_SASL_AUTH;
@@ -58,6 +60,7 @@ public class Config {
         POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 50);
         SESSION_TIMEOUT = getOptionalInt(dotenv, "SESSION_TIMEOUT", 10000);
+        PASSTHROUGH_HEADERS = getOptionalStringList(dotenv, "PASSTHROUGH_HEADERS", new ArrayList<String>());
 
         RETRY_PROCESS_WHEN_STATUS_CODE_MATCH =
             getOptionalString(dotenv, "RETRY_PROCESS_WHEN_STATUS_CODE_MATCH", "5[0-9][0-9]");
@@ -104,6 +107,16 @@ public class Config {
 
         if (value == null) {
             throw new Exception("missing env var: " + name);
+        }
+
+        return Arrays.asList(value.replaceAll(" ", "").split(","));
+    }
+
+    private static List<String> getOptionalStringList(Dotenv dotenv, String name, List<String> fallback) {
+        String value = dotenv.get(name);
+
+        if (value == null) {
+            return fallback;
         }
 
         return Arrays.asList(value.replaceAll(" ", "").split(","));
