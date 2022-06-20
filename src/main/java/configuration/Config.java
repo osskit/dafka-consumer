@@ -48,6 +48,24 @@ public class Config {
     public static String PROMETHEUS_BUCKETS;
     public static String TARGET_HEALTHCHECK;
 
+    // Default values
+    public static ArrayList<String> DEFAULT_PASSTHROUGH_HEADERS = new ArrayList<String>() {
+        {
+            add("x-request-id");
+            add("x-b3-traceid");
+            add("x-b3-spanid");
+            add("x-b3-parentspanid");
+            add("x-b3-sampled");
+            add("x-b3-flags");
+            add("x-ot-span-context");
+            add("ce_id");
+            add("ce_type");
+            add("ce_time");
+            add("ce_source");
+            add("ce_specversion");
+        }
+    };
+
     public static void init() throws Exception {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
