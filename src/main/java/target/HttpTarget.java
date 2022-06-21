@@ -8,7 +8,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
@@ -42,20 +41,6 @@ public class HttpTarget implements ITarget {
             .header("x-record-original-topic", this.getOriginalTopic(record))
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
             .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
-
-        var passthroughHeaders = new ArrayList<String>();
-
-        passthroughHeaders.addAll(Config.PASSTHROUGH_HEADERS);
-        passthroughHeaders.addAll(Config.DEFAULT_PASSTHROUGH_HEADERS);
-
-        passthroughHeaders.forEach(
-            header -> {
-                var recordHeader = this.getRecordHeader(record, header);
-                if (recordHeader != null) {
-                    builder.header(header, recordHeader);
-                }
-            }
-        );
 
         final var request = builder.build();
 

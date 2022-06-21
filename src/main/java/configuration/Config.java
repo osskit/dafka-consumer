@@ -48,24 +48,6 @@ public class Config {
     public static String PROMETHEUS_BUCKETS;
     public static String TARGET_HEALTHCHECK;
 
-    // Default values
-    public static ArrayList<String> DEFAULT_PASSTHROUGH_HEADERS = new ArrayList<String>() {
-        {
-            add("x-request-id");
-            add("x-b3-traceid");
-            add("x-b3-spanid");
-            add("x-b3-parentspanid");
-            add("x-b3-sampled");
-            add("x-b3-flags");
-            add("x-ot-span-context");
-            add("ce_id");
-            add("ce_type");
-            add("ce_time");
-            add("ce_source");
-            add("ce_specversion");
-        }
-    };
-
     public static void init() throws Exception {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
@@ -78,7 +60,6 @@ public class Config {
         POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 50);
         SESSION_TIMEOUT = getOptionalInt(dotenv, "SESSION_TIMEOUT", 10000);
-        PASSTHROUGH_HEADERS = getOptionalStringList(dotenv, "PASSTHROUGH_HEADERS", new ArrayList<String>());
 
         RETRY_PROCESS_WHEN_STATUS_CODE_MATCH =
             getOptionalString(dotenv, "RETRY_PROCESS_WHEN_STATUS_CODE_MATCH", "5[0-9][0-9]");
@@ -125,16 +106,6 @@ public class Config {
 
         if (value == null) {
             throw new Exception("missing env var: " + name);
-        }
-
-        return Arrays.asList(value.replaceAll(" ", "").split(","));
-    }
-
-    private static List<String> getOptionalStringList(Dotenv dotenv, String name, List<String> fallback) {
-        String value = dotenv.get(name);
-
-        if (value == null) {
-            return fallback;
         }
 
         return Arrays.asList(value.replaceAll(" ", "").split(","));

@@ -13,7 +13,6 @@ services:
             - DEAD_LETTER_TOPIC=dead-letter
             - GROUP_ID=consumer_1
             - MONITORING_SERVER_PORT=4001
-            - PASSTHROUGH_HEADERS=x-custom-header
 
     dead_letter_consumer:
         build: ../

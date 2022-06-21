@@ -80,25 +80,22 @@ describe('tests', () => {
     it('should add passthrough headers', async () => {
         const callId = await mockHttpTarget('/consume', 200);
 
-        await produce(
-            'http://localhost:6000/produce',
-            [
-                {
-                    topic: 'foo',
-                    key: 'thekey',
-                    value: {data: 'foo'},
-                },
-            ],
+        await produce('http://localhost:6000/produce', [
             {
-                'x-request-id': '123',
-                'x-b3-traceid': '456',
-                'x-b3-spanid': '789',
-                'x-b3-parentspanid': '101112',
-                'x-b3-sampled': '1',
-                'x-b3-flags': '1',
-                'x-ot-span-context': 'foo',
-            }
-        );
+                topic: 'foo',
+                key: 'thekey',
+                value: {data: 'foo'},
+                headers: {
+                    'x-request-id': '123',
+                    'x-b3-traceid': '456',
+                    'x-b3-spanid': '789',
+                    'x-b3-parentspanid': '101112',
+                    'x-b3-sampled': '1',
+                    'x-b3-flags': '1',
+                    'x-ot-span-context': 'foo',
+                },
+            },
+        ]);
         await delay(1000);
 
         const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
