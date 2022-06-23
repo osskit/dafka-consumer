@@ -8,7 +8,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -28,6 +30,16 @@ public class HttpTarget implements ITarget {
         this.topicsRoutes = topicsRoutes;
     }
 
+    List<String> cloudEventHeaders = new ArrayList<String>() {
+        {
+            add("ce_id");
+            add("ce_time");
+            add("ce_specversion");
+            add("ce_type");
+            add("ce_source");
+        }
+    };
+
     public CompletableFuture<TargetResponse> call(final ConsumerRecord<String, String> record) {
         final var builder = HttpRequest
             .newBuilder()
@@ -43,6 +55,20 @@ public class HttpTarget implements ITarget {
             .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
 
         final var request = builder.build();
+
+        record
+            .headers()
+            .forEach(
+                header -> {
+                    String headerValue = header.value().toString();
+
+                    if (cloudEventHeaders.contains(header.key())) {
+                        headerValue = header.value().toString().replace("_", "-");
+                    }
+
+                    builder.header(header.key(), headerValue);
+                }
+            );
 
         final long startTime = (new Date()).getTime();
         final CheckedSupplier<CompletionStage<HttpResponse<String>>> completionStageCheckedSupplier = () ->
