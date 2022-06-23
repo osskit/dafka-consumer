@@ -13,7 +13,6 @@ services:
             - DEAD_LETTER_TOPIC=dead-letter
             - GROUP_ID=consumer_1
             - MONITORING_SERVER_PORT=4001
-            - PASSTHROUGH_HEADERS=x-request-id,x-b3-traceid,x-b3-spanid,x-b3-parentspanid,x-b3-sampled,x-b3-flags,x-ot-span-context
 
     dead_letter_consumer:
         build: ../
@@ -22,8 +21,7 @@ services:
             - TARGET_BASE_URL=http://target:2000/
             - TOPICS_ROUTES=dead-letter:deadLetter
             - GROUP_ID=consumer_dead_letter
-            - PASSTHROUGH_HEADERS=x-request-id,x-b3-traceid,x-b3-spanid,x-b3-parentspanid,x-b3-sampled,x-b3-flags,x-ot-span-context
-
+            
     retry_consumer:
         build: ../
         environment:
@@ -31,7 +29,6 @@ services:
             - TARGET_BASE_URL=http://target:2000/
             - TOPICS_ROUTES=retry:retry
             - GROUP_ID=consumer_retry
-            - PASSTHROUGH_HEADERS=x-request-id,x-b3-traceid,x-b3-spanid,x-b3-parentspanid,x-b3-sampled,x-b3-flags,x-ot-span-context
 
     unexpected_consumer:
         build: ../
@@ -43,11 +40,9 @@ services:
             - TOPICS_ROUTES=unexpected:bla
             - GROUP_ID=consumer_no_target
             - MONITORING_SERVER_PORT=4002
-            - PASSTHROUGH_HEADERS=x-request-id,x-b3-traceid,x-b3-spanid,x-b3-parentspanid,x-b3-sampled,x-b3-flags,x-ot-span-context
-
 
     producer:
-        image: osskit/dafka-producer:4.0.11
+        image: osskit/dafka-producer:5
         ports:
             - 6000:6000
         environment:
