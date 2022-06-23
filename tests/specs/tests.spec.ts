@@ -77,7 +77,7 @@ describe('tests', () => {
         expect(madeCalls.length).toBe(2);
     });
 
-    it('should add passthrough headers', async () => {
+    it('should add record headers to target call', async () => {
         const callId = await mockHttpTarget('/consume', 200);
 
         await produce('http://localhost:6000/produce', [
@@ -93,6 +93,34 @@ describe('tests', () => {
                     'x-b3-sampled': '1',
                     'x-b3-flags': '1',
                     'x-ot-span-context': 'foo',
+                },
+            },
+        ]);
+        await delay(1000);
+
+        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
+        expect(hasBeenMade).toBeTruthy();
+        expect(madeCalls[0]).toMatchSnapshot({
+            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
+        });
+    });
+
+    it('should transform and add cloud event headers to target call', async () => {
+        const callId = await mockHttpTarget('/consume', 200);
+
+        await produce('http://localhost:6000/produce', [
+            {
+                topic: 'foo',
+                key: 'thekey',
+                value: {data: 'foo'},
+                headers: {
+                    'x-request-id': 'bla',
+                    random_header: 'random',
+                    ce_type: 'type',
+                    ce_id: 'id',
+                    ce_specversion: '1',
+                    ce_source: 'source',
+                    ce_time: '123456',
                 },
             },
         ]);

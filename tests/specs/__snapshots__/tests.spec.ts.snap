@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`tests should add passthrough headers 1`] = `
+exports[`tests should add record headers to target call 1`] = `
 Object {
   "body": Object {
     "data": "foo",
@@ -43,6 +43,34 @@ Object {
     "x-record-partition": "3",
     "x-record-timestamp": Any<String>,
     "x-record-topic": "foo",
+  },
+  "method": "POST",
+  "path": "/consume",
+}
+`;
+
+exports[`tests should transform and add cloud event headers to target call 1`] = `
+Object {
+  "body": Object {
+    "data": "foo",
+  },
+  "headers": Object {
+    "ce-id": "id",
+    "ce-source": "source",
+    "ce-specversion": "1",
+    "ce-time": "123456",
+    "ce-type": "type",
+    "content-length": "14",
+    "content-type": "application/json",
+    "host": "target:2000",
+    "random_header": "random",
+    "user-agent": "Java-http-client/13-ea",
+    "x-record-offset": Any<String>,
+    "x-record-original-topic": "foo",
+    "x-record-partition": "3",
+    "x-record-timestamp": Any<String>,
+    "x-record-topic": "foo",
+    "x-request-id": "bla",
   },
   "method": "POST",
   "path": "/consume",

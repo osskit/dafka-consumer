@@ -7,6 +7,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
@@ -54,22 +55,21 @@ public class HttpTarget implements ITarget {
             .POST(HttpRequest.BodyPublishers.ofString(record.value()))
             .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
 
-        final var request = builder.build();
-
         record
             .headers()
             .forEach(
                 header -> {
-                    String headerValue = header.value().toString();
+                    String headerKey = header.key();
 
-                    if (cloudEventHeaders.contains(header.key())) {
-                        headerValue = header.value().toString().replace("_", "-");
+                    if (cloudEventHeaders.contains(headerKey)) {
+                        headerKey = headerKey.replace("_", "-");
                     }
 
-                    builder.header(header.key(), headerValue);
+                    builder.header(headerKey, new String(header.value(), StandardCharsets.UTF_8));
                 }
             );
 
+        final var request = builder.build();
         final long startTime = (new Date()).getTime();
         final CheckedSupplier<CompletionStage<HttpResponse<String>>> completionStageCheckedSupplier = () ->
             client
