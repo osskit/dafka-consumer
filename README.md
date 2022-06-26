@@ -1,10 +1,12 @@
 <p align="center">
-  <img width="300" height="300" src="https://user-images.githubusercontent.com/15312980/175078334-f284f44e-0366-4e24-8f09-5301b098ea64.svg"/>
+  <img width="300" height="200" src="https://user-images.githubusercontent.com/15312980/175078334-f284f44e-0366-4e24-8f09-5301b098ea64.svg"/>
 
   </p>
  
-# dafka-consumer
+<div align="center">
 Dockerized kafka consumer
+  
+</div>
 
 ## Overview
 Dafka-consumer is a dockerized Kafka producer used to abstract consuming messages from a kafka topic.
