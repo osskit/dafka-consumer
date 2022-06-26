@@ -89,22 +89,22 @@ Container images are configured using parameters passed at runtime.
 | `POLL_TIMEOUT` | `1000` | |
 | `MAX_POLL_RECORDS` | `50` | |
 | `SESSION_TIMEOUT` | `10000` | |
-| `RETRY_PROCESS_WHEN_STATUS_CODE_MATCH` | `5[0-9][0-9]` | |
-| `PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH` | `408` | |
-| `PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH` | `4[0-9][0-79]` | |
+| `RETRY_PROCESS_WHEN_STATUS_CODE_MATCH` | `5[0-9][0-9]` | Retry to process the record if the returning status code matches the regex |
+| `PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH` | `408` | Produce to retry topic on matching status code |
+| `PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH` | `4[0-9][0-79]` | Produce to dead letter topic when matching status code regex |
 | `RETRY_POLICY_EXPONENTIAL_BACKOFF` | `50,5000,10` | |
-| `RETRY_TOPIC` | `null` | |
-| `DEAD_LETTER_TOPIC` | `null` | |
+| `RETRY_TOPIC` | `null` | Retry topic name |
+| `DEAD_LETTER_TOPIC` | `null` | Dead letter topic name |
 | `PROCESSING_DELAY` | `0` | |
 | `MONITORING_SERVER_PORT` | `0` | | 
-| `TARGET_HEALTHCHECK` | `null` | | 
-| `USE_SASL_AUTH=false` | `false` | |
-| `SASL_USERNAME` | `required` if `USE_SASL_AUTH=true` | | 
-| `SASL_PASSWORD` | `required` if `USE_SASL_AUTH=true` | | 
+| `TARGET_HEALTHCHECK` | `null` | Target's healthcheck endpoint to verify it's alive | 
+| `USE_SASL_AUTH=false` | `false` | use SASL authentication |
+| `SASL_USERNAME` | `required` if `USE_SASL_AUTH=true` | SASL username to authenticate | 
+| `SASL_PASSWORD` | `required` if `USE_SASL_AUTH=true` | SASL password to authenticate | 
 | `TRUSTSTORE_FILE_PATH` | `null` | |
 | `TRUSTSTORE_PASSWORD` | `required` if `TRUSTSTORE_FILE_PATH != null` | | 
-| `USE_PROMETHEUS` | `false` | |
-| `PROMETHEUS_BUCKETS` | `0.003,0.03,0.1,0.3,1.5,10` | |
+| `USE_PROMETHEUS` | `false` | Export metrics to Prometheus |
+| `PROMETHEUS_BUCKETS` | `0.003,0.03,0.1,0.3,1.5,10` | A list of Prometheus buckets to use |
 
 
 
