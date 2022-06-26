@@ -78,30 +78,30 @@ Container images are configured using parameters passed at runtime.
 
 | Parameter | Default Values | Description |
 | :----: | --- | ---- |
-| `KAFKA_BROKER=https://kafka-broker.com` | URL for the Kafka Broker | |
-| `TARGET_BASE_URL=` | | |
-| `GROUP_ID=0` |  #optional | | 
-| `TOPICS_ROUTES="none"` | #optional | |
-| `TARGET_TIMEOUT_MS=false` | #optional | |
-| `POLL_TIMEOUT=1000` | #optional | |
-| `MAX_POLL_RECORDS=50` | #optional | |
-| `SESSION_TIMEOUT=10000` | #optional | |
-| `RETRY_PROCESS_WHEN_STATUS_CODE_MATCH=5[0-9][0-9]` | #optional | |
-| `PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH=408` | #optional | |
-| `PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH=4[0-9][0-79]` | #optional | |
-| `RETRY_POLICY_EXPONENTIAL_BACKOFF=50,5000,10` | #optional | |
-| `RETRY_TOPIC=null` | #optional | |
-| `DEAD_LETTER_TOPIC=null` | #optional | |
-| `PROCESSING_DELAY=0` | #optional | |
-| `MONITORING_SERVER_PORT=0` | #optional | | 
-| `TARGET_HEALTHCHECK=null` | #optional | | 
-| `USE_SASL_AUTH=false` | #optional | |
-| `SASL_USERNAME` | #optional | | 
-| `SASL_PASSWORD` | #optional | | 
-| `TRUSTSTORE_FILE_PATH=null` | #optional | |
-| `TRUSTSTORE_PASSWORD=null` | #optional | | 
-| `USE_PROMETHEUS=false` | #optional | |
-| `PROMETHEUS_BUCKETS=0.003,0.03,0.1,0.3,1.5,10` | #optional | |
+| `KAFKA_BROKER` | `required` | URL for the Kafka Broker |
+| `TARGET_BASE_URL` | `required` | The target's HTTP POST endpoint |
+| `GROUP_ID` |  `required` | | 
+| `TOPICS_ROUTES` | `required` | A map between topics and their endpoint routes (e.g `topic:/consume`) |
+| `TARGET_TIMEOUT_MS` | `2147483647` | |
+| `POLL_TIMEOUT` | `1000` | |
+| `MAX_POLL_RECORDS` | `50` | |
+| `SESSION_TIMEOUT` | `10000` | |
+| `RETRY_PROCESS_WHEN_STATUS_CODE_MATCH` | `5[0-9][0-9]` | |
+| `PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH` | `408` | |
+| `PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH` | `4[0-9][0-79]` | |
+| `RETRY_POLICY_EXPONENTIAL_BACKOFF` | `50,5000,10` | |
+| `RETRY_TOPIC` | `null` | |
+| `DEAD_LETTER_TOPIC` | `null` | |
+| `PROCESSING_DELAY` | `0` | |
+| `MONITORING_SERVER_PORT` | `0` | | 
+| `TARGET_HEALTHCHECK` | `null` | | 
+| `USE_SASL_AUTH=false` | `false` | |
+| `SASL_USERNAME` | `required` if `USE_SASL_AUTH=true` | | 
+| `SASL_PASSWORD` | `required` if `USE_SASL_AUTH=true` | | 
+| `TRUSTSTORE_FILE_PATH` | `null` | |
+| `TRUSTSTORE_PASSWORD` | `required` if `TRUSTSTORE_FILE_PATH != null` | | 
+| `USE_PROMETHEUS` | `false` | |
+| `PROMETHEUS_BUCKETS` | `0.003,0.03,0.1,0.3,1.5,10` | |
 
 
 
