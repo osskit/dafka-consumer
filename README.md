@@ -6,8 +6,15 @@
 # dafka-consumer
 Dockerized kafka consumer
 
-## Introduction
-Dafka-consumer is a dockerized Kafka consumer used to abstract consuming messages from a kafka topic.
+## Overview
+Dafka-consumer is a dockerized Kafka producer used to abstract consuming messages from a kafka topic.
+Using dafka-consumer, consuming messages is as simple as getting a POST request to your service, with the body of the request being the kafka message.
+
+### Motivation
+Why use this over just a Kafka client?
+* Abstracts away the messaging layer, could be replaced with RabbitMQ or any other producer.
+* Separates configuration, everything that's related to Kafka is encapsulated in Dafka and not the service itself.
+* When testing your service you only test your service's logic and not the messaging layer implementation details.
 
 <img width="754" alt="image" src="https://user-images.githubusercontent.com/15312980/175814180-7ca374ac-da3b-4ea4-a482-9396bfbe11c4.png">
 
@@ -59,6 +66,11 @@ services:
             - PORT=6000
             - KAFKA_BROKER=kafka:9092
 ```
+
+### Kubernetes
+You can use the provided [Helm Chart](https://github.com/osskit/dafka-consumer-helm-chart), this gives you a `Deployment` separated from your service's `Pod`.
+
+It's also possible to use this as a `Sidecar`.
 
 ## Parameters
 
