@@ -12,11 +12,11 @@ Dockerized kafka consumer
 
 ### docker-compose
 ```
-version: '2.3'
+version: '3.9'
 
 services:
     consumer:
-        build: osskit/dafka-consumer:5.1
+        image: osskit/dafka-consumer
         ports:
             - 4001:4001
         environment:
@@ -32,11 +32,11 @@ services:
 In joint with `dafka-producer`:
 
 ```
-version: '2.3'
+version: '3.9'
 
 services:
     consumer:
-        build: osskit/dafka-consumer:5.1
+        image: osskit/dafka-consumer
         ports:
             - 4001:4001
         environment:
@@ -49,7 +49,7 @@ services:
             - MONITORING_SERVER_PORT=4001
 
     producer:
-        image: osskit/dafka-producer:5
+        image: osskit/dafka-producer
         ports:
             - 6000:6000
         environment:
