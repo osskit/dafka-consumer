@@ -5,6 +5,8 @@ on:
     paths-ignore:
       - ".github/**"
       - "README.md"
+      - "CODE_OF_CONDUCT.md"
+      - "LICENSE"
     branches: [main]
 
 jobs:
