@@ -80,7 +80,7 @@ It's also possible to use this as a `Sidecar`.
 Container images are configured using parameters passed at runtime.
 
 | Parameter | Default Values | Description |
-| :----: | --- | ---- |
+| :----: | - | - |
 | `KAFKA_BROKER` | `required` | URL for the Kafka Broker |
 | `TARGET_BASE_URL` | `required` | The target's HTTP POST endpoint |
 | `GROUP_ID` |  `required` | A unique id for the consumer group | 
