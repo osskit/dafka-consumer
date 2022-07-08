@@ -30,13 +30,23 @@ public class KafkaClientFactory {
         props.put(
             "sasl.jaas.config",
             String.format(
-                "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";",
+                "org.apache.kafka.common.security.\"%s\" required username=\"%s\" password=\"%s\";",
+                getSaslType()
                 Config.SASL_USERNAME,
                 Config.SASL_PASSWORD
             )
         );
 
         return props;
+    }
+
+    private String getSaslType() {
+        switch Config.SASL_TYPE {
+          case "plain":
+            return "plain.PlainLoginModule"
+          case "scram":
+            return "scram.ScramLoginModule"
+        }
     }
 
     public <K, V> org.apache.kafka.clients.consumer.Consumer<K, V> createConsumer() {

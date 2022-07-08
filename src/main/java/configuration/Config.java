@@ -81,6 +81,7 @@ public class Config {
         if (USE_SASL_AUTH) {
             SASL_USERNAME = getString(dotenv, "SASL_USERNAME");
             SASL_PASSWORD = getStringValueOrFromFile(dotenv, "SASL_PASSWORD");
+            SASL_TYPE = getOptionalString(dotenv, "SASL_TYPE", "plain");
             TRUSTSTORE_FILE_PATH = getOptionalString(dotenv, "TRUSTSTORE_FILE_PATH", null);
             if (TRUSTSTORE_FILE_PATH != null) {
                 TRUSTSTORE_PASSWORD = getStringValueOrFromFile(dotenv, "TRUSTSTORE_PASSWORD");
