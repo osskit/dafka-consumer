@@ -1,7 +1,6 @@
 package kafka;
 
 import configuration.Config;
-import java.util.Iterator;
 import monitoring.Monitor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.KafkaProducer;
