@@ -25,13 +25,13 @@ public class KafkaClientFactory {
             props.put("ssl.truststore.password", Config.TRUSTSTORE_PASSWORD);
         }
 
-        props.put("sasl.mechanism", "PLAIN");
+        props.put("sasl.mechanism", Config.SASL_MECHANISM.toUpperCase());
         props.put("ssl.endpoint.identification.algorithm", "");
         props.put(
             "sasl.jaas.config",
             String.format(
                 "org.apache.kafka.common.security.\"%s\" required username=\"%s\" password=\"%s\";",
-                getSaslType()
+                getSaslMechanism(),
                 Config.SASL_USERNAME,
                 Config.SASL_PASSWORD
             )
@@ -40,13 +40,14 @@ public class KafkaClientFactory {
         return props;
     }
 
-    private String getSaslType() {
-        switch Config.SASL_TYPE {
+    private String getSaslMechanism() {
+        switch (Config.SASL_MECHANISM) {
           case "plain":
-            return "plain.PlainLoginModule"
+            return "plain.PlainLoginModule";
           case "scram":
-            return "scram.ScramLoginModule"
+            return "scram.ScramLoginModule";
         }
+        return "";
     }
 
     public <K, V> org.apache.kafka.clients.consumer.Consumer<K, V> createConsumer() {
