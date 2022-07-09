@@ -38,6 +38,7 @@ public class Config {
     public static boolean USE_SASL_AUTH;
     public static String SASL_USERNAME;
     public static String SASL_PASSWORD;
+    public static String SASL_MECHANISM;
     public static String TRUSTSTORE_FILE_PATH;
     public static String TRUSTSTORE_PASSWORD;
 
@@ -80,6 +81,7 @@ public class Config {
         if (USE_SASL_AUTH) {
             SASL_USERNAME = getString(dotenv, "SASL_USERNAME");
             SASL_PASSWORD = getStringValueOrFromFile(dotenv, "SASL_PASSWORD");
+            SASL_MECHANISM = getOptionalString(dotenv, "SASL_MECHANISM", "PLAIN");
             TRUSTSTORE_FILE_PATH = getOptionalString(dotenv, "TRUSTSTORE_FILE_PATH", null);
             if (TRUSTSTORE_FILE_PATH != null) {
                 TRUSTSTORE_PASSWORD = getStringValueOrFromFile(dotenv, "TRUSTSTORE_PASSWORD");
