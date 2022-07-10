@@ -334,11 +334,11 @@ public class Monitor {
         );
     }
 
-    public static void targetHealthcheckFailed(int targetHealthcheckStatusCode) {
+    public static void targetHealthcheckFailed(Exception exception) {
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "target healthcheck failed")
-            .put("targetHealthcheckStatusCode", targetHealthcheckStatusCode);
+            .put("exceptionMessage", exception.getMessage());
 
         write(log);
     }
