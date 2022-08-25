@@ -46,6 +46,7 @@ public class HttpTarget implements ITarget {
             .newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
             .uri(URI.create(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(record.topic())))
+            .headers("Connection", "close")
             .header("Content-Type", "application/json")
             .header("x-record-topic", record.topic())
             .header("x-record-partition", String.valueOf(record.partition()))
