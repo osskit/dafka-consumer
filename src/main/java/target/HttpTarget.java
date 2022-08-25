@@ -21,6 +21,8 @@ import net.jodah.failsafe.function.CheckedSupplier;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 public class HttpTarget implements ITarget {
+
+    private final HttpClient client = HttpClient.newHttpClient();
     private TargetRetryPolicy retryPolicy;
     private TopicsRoutes topicsRoutes;
 
@@ -70,7 +72,7 @@ public class HttpTarget implements ITarget {
         final var request = builder.build();
         final long startTime = (new Date()).getTime();
         final CheckedSupplier<CompletionStage<HttpResponse<String>>> completionStageCheckedSupplier = () ->
-            HttpClient.newHttpClient()
+            client
                 .sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .whenComplete(
                     (__, throwable) -> {
@@ -79,7 +81,6 @@ public class HttpTarget implements ITarget {
                         }
                     }
                 );
-                
         return Failsafe
             .with(retryPolicy.<HttpResponse<String>>get(record, r -> r.statusCode()))
             .getStageAsync(completionStageCheckedSupplier)
