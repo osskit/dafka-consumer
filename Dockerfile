@@ -17,4 +17,4 @@ WORKDIR /service
 
 COPY --from=build /service/build/libs/*-all.jar /service/application.jar
 
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=70.0","-jar","/service/application.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=70.0", "-Djdk.httpclient.keepalive.timeout=15", "-jar","/service/application.jar"]
