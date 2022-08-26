@@ -14,24 +14,20 @@ application {
     mainClassName = 'Main'
 }
 
-sourceCompatibility = 11
-targetCompatibility = 11
-
-
 dependencies {
-    compile group: 'org.apache.kafka', name: 'kafka-clients', version: '2.4.0'
-    compile group: 'io.github.cdimascio', name: 'java-dotenv', version: '3.1.7'
-    compile group: 'com.google.guava', name: 'guava', version: '27.0.1-jre'
-    compile group: 'org.json', name: 'json', version: '20180130'
-    compile group: 'com.spotify', name: 'futures-extra', version: '4.2.1'
-    compile group: 'com.google.protobuf', name: 'protobuf-gradle-plugin', version: '0.8.10'
-    compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.10.0'
-    compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: '3.0.0-beta-1'
-    compile group: 'net.jodah', name: 'failsafe', version: '2.0.1'
-    compile group: 'io.prometheus', name: 'simpleclient', version: '0.8.0'
-    compile group: 'io.prometheus', name: 'simpleclient_httpserver', version: '0.8.0'
-    compile group: 'io.prometheus', name: 'simpleclient_hotspot', version: '0.8.0'
-    compile group: 'io.projectreactor.addons', name: 'reactor-extra', version: '3.3.3.RELEASE'
+    implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '2.4.0'
+    implementation group: 'io.github.cdimascio', name: 'java-dotenv', version: '3.1.7'
+    implementation group: 'com.google.guava', name: 'guava', version: '27.0.1-jre'
+    implementation group: 'org.json', name: 'json', version: '20180130'
+    implementation group: 'com.spotify', name: 'futures-extra', version: '4.2.1'
+    implementation group: 'com.google.protobuf', name: 'protobuf-gradle-plugin', version: '0.8.10'
+    implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '3.10.0'
+    implementation group: 'com.google.protobuf', name: 'protobuf-java-util', version: '3.0.0-beta-1'
+    implementation group: 'net.jodah', name: 'failsafe', version: '2.0.1'
+    implementation group: 'io.prometheus', name: 'simpleclient', version: '0.8.0'
+    implementation group: 'io.prometheus', name: 'simpleclient_httpserver', version: '0.8.0'
+    implementation group: 'io.prometheus', name: 'simpleclient_hotspot', version: '0.8.0'
+    implementation group: 'io.projectreactor.addons', name: 'reactor-extra', version: '3.3.3.RELEASE'
     testImplementation('org.junit.jupiter:junit-jupiter:5.4.2')
 }
 
