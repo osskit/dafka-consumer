@@ -1,4 +1,4 @@
-FROM openjdk:18 AS base
+FROM --platform=linux/amd64 openjdk:18 AS base
 WORKDIR /service
 
 FROM base as dependencies
