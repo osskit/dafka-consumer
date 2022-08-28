@@ -22,7 +22,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 public class HttpTarget implements ITarget {
 
-    private final HttpClient client = HttpClient.newHttpClient();
     private TargetRetryPolicy retryPolicy;
     private TopicsRoutes topicsRoutes;
 
@@ -72,7 +71,7 @@ public class HttpTarget implements ITarget {
         final var request = builder.build();
         final long startTime = (new Date()).getTime();
         final CheckedSupplier<CompletionStage<HttpResponse<String>>> completionStageCheckedSupplier = () ->
-            client
+            HttpClient.newHttpClient()
                 .sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .whenComplete(
                     (__, throwable) -> {
