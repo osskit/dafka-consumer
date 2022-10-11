@@ -11,7 +11,7 @@ import org.apache.kafka.common.header.internals.RecordHeaders;
 
 public class Producer {
 
-    private KafkaProducer<String, String> producer;
+    private final KafkaProducer<String, String> producer;
 
     public Producer(KafkaProducer<String, String> producer) {
         this.producer = producer;
@@ -39,11 +39,10 @@ public class Producer {
         Headers headers = getHeaders(record);
 
         producer.send(
-            new ProducerRecord<String, String>(topic, null, record.key(), record.value(), headers),
+            new ProducerRecord<>(topic, null, record.key(), record.value(), headers),
             (metadata, err) -> {
                 if (err != null) {
                     Monitor.produceError(topic, record, err);
-                    return;
                 }
             }
         );

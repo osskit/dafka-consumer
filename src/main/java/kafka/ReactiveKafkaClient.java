@@ -17,6 +17,7 @@ import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.RetriableCommitFailedException;
 import org.apache.kafka.common.errors.WakeupException;
+import org.jetbrains.annotations.NotNull;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.core.Disposable;
@@ -55,7 +56,7 @@ public class ReactiveKafkaClient<K, V> extends Flux<ConsumerRecords<K, V>> imple
     }
 
     @Override
-    public void subscribe(CoreSubscriber<? super ConsumerRecords<K, V>> actual) {
+    public void subscribe(@NotNull CoreSubscriber<? super ConsumerRecords<K, V>> actual) {
         if (!isActive.compareAndSet(false, true)) {
             Operators.error(
                 actual,
@@ -136,7 +137,7 @@ public class ReactiveKafkaClient<K, V> extends Flux<ConsumerRecords<K, V>> imple
                         consumer.close();
                     }
                     isConsumerClosed = true;
-                } catch (Exception e) {}
+                } catch (Exception ignored) {}
             }
             isClosed.set(true);
         }
@@ -223,8 +224,8 @@ public class ReactiveKafkaClient<K, V> extends Flux<ConsumerRecords<K, V>> imple
             }
         }
 
-        void runIfRequired(boolean force) {
-            if (force) isPending.set(true);
+        void runIfRequired() {
+            isPending.set(true);
             if (isPending.get()) run();
         }
 
@@ -257,7 +258,7 @@ public class ReactiveKafkaClient<K, V> extends Flux<ConsumerRecords<K, V>> imple
                     int attempts = 3;
                     for (int i = 0; i < attempts; i++) {
                         try {
-                            commitEvent.runIfRequired(true);
+                            commitEvent.runIfRequired();
                             commitEvent.waitFor(closeEndTimeNanos);
                             long timeoutNanos = closeEndTimeNanos - System.nanoTime();
                             if (timeoutNanos < 0) timeoutNanos = 0;
@@ -317,7 +318,7 @@ class KafkaSchedulers {
         }
 
         @Override
-        public final Thread newThread(Runnable runnable) {
+        public Thread newThread(@NotNull Runnable runnable) {
             String newThreadName = PREFIX + groupId + "-" + COUNTER_REFERENCE.incrementAndGet();
             Thread t = new EmitterThread(runnable, newThreadName);
             t.setUncaughtExceptionHandler(KafkaSchedulers::defaultUncaughtException);

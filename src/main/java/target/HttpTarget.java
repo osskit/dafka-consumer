@@ -22,15 +22,15 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 public class HttpTarget implements ITarget {
 
-    private TargetRetryPolicy retryPolicy;
-    private TopicsRoutes topicsRoutes;
+    private final TargetRetryPolicy retryPolicy;
+    private final TopicsRoutes topicsRoutes;
 
     public HttpTarget(final TargetRetryPolicy retryPolicy, TopicsRoutes topicsRoutes) {
         this.retryPolicy = retryPolicy;
         this.topicsRoutes = topicsRoutes;
     }
 
-    List<String> cloudEventHeaders = new ArrayList<String>() {
+    List<String> cloudEventHeaders = new ArrayList<>() {
         {
             add("ce_id");
             add("ce_time");
@@ -71,7 +71,8 @@ public class HttpTarget implements ITarget {
         final var request = builder.build();
         final long startTime = (new Date()).getTime();
         final CheckedSupplier<CompletionStage<HttpResponse<String>>> completionStageCheckedSupplier = () ->
-            HttpClient.newHttpClient()
+            HttpClient
+                .newHttpClient()
                 .sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .whenComplete(
                     (__, throwable) -> {
@@ -81,16 +82,16 @@ public class HttpTarget implements ITarget {
                     }
                 );
         return Failsafe
-            .with(retryPolicy.<HttpResponse<String>>get(record, r -> r.statusCode()))
+            .with(retryPolicy.<HttpResponse<String>>get(record, HttpResponse::statusCode))
             .getStageAsync(completionStageCheckedSupplier)
             .thenApplyAsync(
                 response -> {
-                    var callLatency = !response.headers().firstValueAsLong("x-received-timestamp").isPresent()
+                    var callLatency = response.headers().firstValueAsLong("x-received-timestamp").isEmpty()
                         ? OptionalLong.empty()
                         : OptionalLong.of(
                             response.headers().firstValueAsLong("x-received-timestamp").getAsLong() - startTime
                         );
-                    var resultLatency = !response.headers().firstValueAsLong("x-completed-timestamp").isPresent()
+                    var resultLatency = response.headers().firstValueAsLong("x-completed-timestamp").isEmpty()
                         ? OptionalLong.empty()
                         : OptionalLong.of(
                             (new Date()).getTime() -

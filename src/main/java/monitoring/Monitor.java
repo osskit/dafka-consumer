@@ -98,6 +98,34 @@ public class Monitor {
                 .register();
     }
 
+    public static void waitingForTargetHealthcheck() {
+        JSONObject log = new JSONObject()
+            .put("level", "info")
+            .put("message", "waiting for target healthcheck")
+            .put(
+                "extra",
+                new JSONObject()
+                    .put("targetBaseUrl", Config.TARGET_BASE_URL)
+                    .put("targetHealthcheck", Config.TARGET_HEALTHCHECK)
+            );
+
+        write(log);
+    }
+
+    public static void targetHealthcheckPassedSuccessfully() {
+        JSONObject log = new JSONObject()
+            .put("level", "info")
+            .put("message", "target healthcheck passed successfully")
+            .put(
+                "extra",
+                new JSONObject()
+                    .put("targetBaseUrl", Config.TARGET_BASE_URL)
+                    .put("targetHealthcheck", Config.TARGET_HEALTHCHECK)
+            );
+
+        write(log);
+    }
+
     public static void batchProcessStarted(int count) {
         JSONObject log = new JSONObject()
             .put("level", "info")

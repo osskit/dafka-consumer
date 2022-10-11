@@ -12,31 +12,28 @@ public class TargetHealthcheck {
 
     private static final HttpClient client = HttpClient.newHttpClient();
 
-    public String getEndpoint() {
-        return Config.TARGET_HEALTHCHECK;
-    }
+    public static boolean check() {
+        if (Config.TARGET_HEALTHCHECK == null) {
+            return true;
+        }
 
-    public boolean check() throws IOException {
-        if (Config.TARGET_HEALTHCHECK != null) {
-            try {
-                final var request = HttpRequest
-                    .newBuilder()
-                    .version(HttpClient.Version.HTTP_1_1)
-                    .GET()
-                    .uri(URI.create(Config.TARGET_BASE_URL + Config.TARGET_HEALTHCHECK))
-                    .build();
+        try {
+            final var request = HttpRequest
+                .newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .GET()
+                .uri(URI.create(Config.TARGET_BASE_URL + Config.TARGET_HEALTHCHECK))
+                .build();
 
-                var targetHealthcheckResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-                if (targetHealthcheckResponse.statusCode() != 200) {
-                    Monitor.targetHealthcheckFailed(new Exception("received " + targetHealthcheckResponse.statusCode()));
-                    return false;
-                }
-                return true;
-            } catch (Exception e) {
-                Monitor.targetHealthcheckFailed(e);                
+            var targetHealthcheckResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if (targetHealthcheckResponse.statusCode() != 200) {
+                Monitor.targetHealthcheckFailed(new Exception("received " + targetHealthcheckResponse.statusCode()));
                 return false;
             }
+            return true;
+        } catch (Exception e) {
+            Monitor.targetHealthcheckFailed(e);
+            return false;
         }
-        return true;
     }
 }

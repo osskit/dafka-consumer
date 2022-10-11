@@ -1,7 +1,6 @@
 package monitoring;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import configuration.Config;
 import io.prometheus.client.CollectorRegistry;
@@ -14,14 +13,11 @@ import target.TargetHealthcheck;
 
 public class MonitoringServer {
 
-    private final TargetHealthcheck targetHealthcheck;
     private boolean consumerAssigned;
     private boolean consumerDisposed;
     private HttpServer server;
 
-    public MonitoringServer(TargetHealthcheck targetHealthcheck) {
-        this.targetHealthcheck = targetHealthcheck;
-    }
+    public MonitoringServer() {}
 
     public MonitoringServer start() throws IOException {
         if (Config.MONITORING_SERVER_PORT == 0) {
@@ -45,10 +41,6 @@ public class MonitoringServer {
         consumerAssigned = true;
     }
 
-    public void consumerRevoked() {
-        consumerAssigned = false;
-    }
-
     public void consumerDisposed() {
         consumerDisposed = true;
     }
@@ -61,26 +53,23 @@ public class MonitoringServer {
         final var httpContext = server.createContext("/alive");
 
         httpContext.setHandler(
-            new HttpHandler() {
-                @Override
-                public void handle(final HttpExchange exchange) throws IOException {
-                    if (!exchange.getRequestMethod().equals("GET")) {
-                        exchange.sendResponseHeaders(404, -1);
-                        return;
-                    }
-
-                    if (!targetHealthcheck(exchange)) {
-                        writeResponse(500, exchange);
-                        return;
-                    }
-
-                    if (consumerDisposed) {
-                        writeResponse(500, exchange);
-                        return;
-                    }
-
-                    writeResponse(200, exchange);
+            exchange -> {
+                if (!exchange.getRequestMethod().equals("GET")) {
+                    exchange.sendResponseHeaders(404, -1);
+                    return;
                 }
+
+                if (!TargetHealthcheck.check()) {
+                    writeResponse(500, exchange);
+                    return;
+                }
+
+                if (consumerDisposed) {
+                    writeResponse(500, exchange);
+                    return;
+                }
+
+                writeResponse(200, exchange);
             }
         );
     }
@@ -89,34 +78,20 @@ public class MonitoringServer {
         final var httpContext = server.createContext("/ready");
 
         httpContext.setHandler(
-            new HttpHandler() {
-                @Override
-                public void handle(final HttpExchange exchange) throws IOException {
-                    if (!exchange.getRequestMethod().equals("GET")) {
-                        exchange.sendResponseHeaders(404, -1);
-                        return;
-                    }
-
-                    if (!consumerAssigned) {
-                        writeResponse(500, exchange);
-                        return;
-                    }
-
-                    writeResponse(200, exchange);
+            exchange -> {
+                if (!exchange.getRequestMethod().equals("GET")) {
+                    exchange.sendResponseHeaders(404, -1);
+                    return;
                 }
+
+                if (!consumerAssigned) {
+                    writeResponse(500, exchange);
+                    return;
+                }
+
+                writeResponse(200, exchange);
             }
         );
-    }
-
-    private boolean targetHealthcheck(HttpExchange exchange) throws IOException {
-        if (Config.TARGET_HEALTHCHECK != null) {
-            try {
-                return this.targetHealthcheck.check();
-            } catch (Exception e) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private void writeResponse(int statusCode, HttpExchange exchange) throws IOException {

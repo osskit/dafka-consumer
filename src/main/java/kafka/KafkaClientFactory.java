@@ -10,7 +10,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 
 public class KafkaClientFactory {
 
-    private Properties getAuthProperties() {
+    private static Properties getAuthProperties() {
         var props = new Properties();
         props.put("bootstrap.servers", Config.KAFKA_BROKER);
 
@@ -40,17 +40,15 @@ public class KafkaClientFactory {
         return props;
     }
 
-    private String getSaslMechanism() {
-        switch (Config.SASL_MECHANISM.toUpperCase()) {
-          case "PLAIN":
-            return "plain.PlainLoginModule";
-          case "SCRAM-SHA-512":
-            return "scram.ScramLoginModule";
-        }
-        return "";
+    private static String getSaslMechanism() {
+        return switch (Config.SASL_MECHANISM.toUpperCase()) {
+            case "PLAIN" -> "plain.PlainLoginModule";
+            case "SCRAM-SHA-512" -> "scram.ScramLoginModule";
+            default -> "";
+        };
     }
 
-    public <K, V> org.apache.kafka.clients.consumer.Consumer<K, V> createConsumer() {
+    public static <K, V> org.apache.kafka.clients.consumer.Consumer<K, V> createConsumer() {
         var props = getAuthProperties();
         props.put(ConsumerConfig.GROUP_ID_CONFIG, Config.GROUP_ID);
         props.put(
@@ -72,7 +70,7 @@ public class KafkaClientFactory {
         return new KafkaConsumer<>(props);
     }
 
-    public <K, V> KafkaProducer<K, V> createProducer() {
+    public static <K, V> KafkaProducer<K, V> createProducer() {
         var props = getAuthProperties();
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
