@@ -30,6 +30,9 @@ dependencies {
     implementation group: 'io.projectreactor.addons', name: 'reactor-extra', version: '3.3.3.RELEASE'
     runtimeOnly("org.slf4j:slf4j-api:2.0.3")
     runtimeOnly("ch.qos.logback:logback-classic:1.4.4")
+    runtimeOnly("ch.qos.logback.contrib:logback-jackson:0.1.5")
+    runtimeOnly("ch.qos.logback.contrib:logback-json-classic:0.1.5")
+    runtimeOnly("com.fasterxml.jackson.core:jackson-databind:2.13.4")
     testImplementation('org.junit.jupiter:junit-jupiter:5.4.2')
 }
 
