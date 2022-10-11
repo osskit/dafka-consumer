@@ -42,10 +42,10 @@ public class KafkaClientFactory {
 
     private String getSaslMechanism() {
         switch (Config.SASL_MECHANISM.toUpperCase()) {
-          case "PLAIN":
-            return "plain.PlainLoginModule";
-          case "SCRAM-SHA-512":
-            return "scram.ScramLoginModule";
+            case "PLAIN":
+                return "plain.PlainLoginModule";
+            case "SCRAM-SHA-512":
+                return "scram.ScramLoginModule";
         }
         return "";
     }

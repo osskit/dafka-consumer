@@ -71,7 +71,8 @@ public class HttpTarget implements ITarget {
         final var request = builder.build();
         final long startTime = (new Date()).getTime();
         final CheckedSupplier<CompletionStage<HttpResponse<String>>> completionStageCheckedSupplier = () ->
-            HttpClient.newHttpClient()
+            HttpClient
+                .newHttpClient()
                 .sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .whenComplete(
                     (__, throwable) -> {

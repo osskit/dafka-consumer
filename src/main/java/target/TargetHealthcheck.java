@@ -28,12 +28,14 @@ public class TargetHealthcheck {
 
                 var targetHealthcheckResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
                 if (targetHealthcheckResponse.statusCode() != 200) {
-                    Monitor.targetHealthcheckFailed(new Exception("received " + targetHealthcheckResponse.statusCode()));
+                    Monitor.targetHealthcheckFailed(
+                        new Exception("received " + targetHealthcheckResponse.statusCode())
+                    );
                     return false;
                 }
                 return true;
             } catch (Exception e) {
-                Monitor.targetHealthcheckFailed(e);                
+                Monitor.targetHealthcheckFailed(e);
                 return false;
             }
         }
