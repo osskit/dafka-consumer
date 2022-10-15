@@ -15,7 +15,7 @@ public class Main {
     static CountDownLatch latch = new CountDownLatch(1);
     static TopicsRoutes topicsRoutes;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         try {
             Config.init();
             Monitor.init();
@@ -29,6 +29,7 @@ public class Main {
             latch.await();
         } catch (Exception e) {
             Monitor.initializationError(e);
+            throw e;
         }
         Monitor.serviceTerminated();
     }

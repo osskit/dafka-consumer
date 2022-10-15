@@ -152,7 +152,7 @@ public class Config {
 
     private static int getOptionalInt(Dotenv dotenv, String name, int fallback) {
         try {
-            return Integer.parseInt(Objects.requireNonNull(dotenv.get(name)));
+            return Integer.parseInt(dotenv.get(name));
         } catch (NumberFormatException e) {
             return fallback;
         }
@@ -183,14 +183,9 @@ public class Config {
     }
 
     private static Map<String, String> getStringMap(Dotenv dotenv, String name) throws Exception {
-        var list = getStringList(dotenv, name);
-        var map = new HashMap<String, String>();
-
-        for (String s : list) {
-            var left = s.split(":")[0];
-            var right = s.split(":")[1];
-            map.put(left, right);
-        }
-        return map;
+        return getStringList(dotenv, name)
+            .stream()
+            .map(x -> x.split(":"))
+            .collect(Collectors.toMap(x -> x[0], x -> x[1]));
     }
 }

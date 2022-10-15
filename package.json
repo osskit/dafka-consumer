@@ -15,7 +15,7 @@
     "homepage": "https://github.com/osskit/dafka-consumer#readme",
     "scripts": {
         "test:teardown": "docker-compose -f tests/kafka.yml down -v --remove-orphans && docker-compose -f tests/dafka.yml down -v --remove-orphans && docker-compose -f tests/target.yml down -v --remove-orphans",
-        "test:setup": " docker-compose -f tests/target.yml up -d && sleep 30 && docker-compose -f tests/kafka.yml up -d && sleep 30 && docker-compose -f tests/dafka.yml up --build -d && sleep 30",
+        "test:setup": "docker-compose -f tests/target.yml up -d && sleep 30 && docker-compose -f tests/kafka.yml up -d && sleep 30 && docker-compose -f tests/dafka.yml up --build -d && sleep 30",
         "test:start": "jest --runInBand --forceExit --config tests/jest.config.local.js --testResultsProcessor jest-teamcity-reporter",
         "test": "yarn && npm run test:teardown && npm run test:setup && npm run test:start && npm run test:teardown",
         "format": "prettier --write '**/*.{ts,js,json,java}'",
