@@ -4,6 +4,7 @@ import configuration.Config;
 import java.time.Duration;
 import java.util.Date;
 import monitoring.Monitor;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -11,7 +12,7 @@ import target.ITarget;
 
 public class Consumer {
 
-    private ReactiveKafkaClient<String, String> kafkaConsumer;
+    private final ReactiveKafkaClient<String, String> kafkaConsumer;
     private final ITarget target;
 
     public Consumer(ReactiveKafkaClient<String, String> kafkaConsumer, ITarget target) {
@@ -27,13 +28,13 @@ public class Consumer {
                     var batchStartTimestamp = new Date().getTime();
                     return Flux
                         .fromIterable(records)
-                        .groupBy(x -> x.partition())
+                        .groupBy(ConsumerRecord::partition)
                         .delayElements(Duration.ofMillis(Config.PROCESSING_DELAY))
                         .publishOn(Schedulers.parallel())
                         .flatMap(
                             partition ->
                                 partition
-                                    .doOnNext(record -> Monitor.processMessageStarted(record))
+                                    .doOnNext(Monitor::processMessageStarted)
                                     .concatMap(
                                         record ->
                                             Mono
@@ -58,7 +59,7 @@ public class Consumer {
                         .map(__ -> batchStartTimestamp);
                 }
             )
-            .doOnNext(batchStartTimestamp -> Monitor.batchProcessCompleted(batchStartTimestamp))
+            .doOnNext(Monitor::batchProcessCompleted)
             .map(
                 __ -> {
                     kafkaConsumer.commit();

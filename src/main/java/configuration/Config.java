@@ -3,10 +3,7 @@ package configuration;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Config {
@@ -32,7 +29,6 @@ public class Config {
     public static String PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static List<Integer> RETRY_POLICY_EXPONENTIAL_BACKOFF;
     public static long TARGET_TIMEOUT_MS;
-    public static List<String> PASSTHROUGH_HEADERS;
 
     //Authentication
     public static boolean USE_SASL_AUTH;
@@ -123,7 +119,8 @@ public class Config {
         if (value == null) {
             return fallback;
         }
-        var list = Arrays.asList(value.split(",")).stream().map(x -> Integer.parseInt(x)).collect(Collectors.toList());
+
+        var list = Arrays.stream(value.split(",")).map(Integer::parseInt).collect(Collectors.toList());
 
         if (expectedSize != -1 && expectedSize != list.size()) {
             throw new Exception(
@@ -186,13 +183,9 @@ public class Config {
     }
 
     private static Map<String, String> getStringMap(Dotenv dotenv, String name) throws Exception {
-        var list = getStringList(dotenv, name);
-        var map = new HashMap<String, String>();
-        for (var i = 0; i < list.size(); i++) {
-            var left = list.get(i).split(":")[0];
-            var right = list.get(i).split(":")[1];
-            map.put(left, right);
-        }
-        return map;
+        return getStringList(dotenv, name)
+            .stream()
+            .map(x -> x.split(":"))
+            .collect(Collectors.toMap(x -> x[0], x -> x[1]));
     }
 }

@@ -12,9 +12,9 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 public class TargetRetryPolicy {
 
-    private Producer producer;
-    private String retryTopic;
-    private String deadLetterTopic;
+    private final Producer producer;
+    private final String retryTopic;
+    private final String deadLetterTopic;
 
     public TargetRetryPolicy(Producer producer, String retryTopic, String deadLetterTopic) {
         this.producer = producer;
@@ -62,7 +62,7 @@ public class TargetRetryPolicy {
                 x ->
                     Monitor.targetExecutionRetry(
                         record,
-                        Optional.<String>ofNullable(String.valueOf(getStatusCode.applyAsInt(x.getLastResult()))),
+                        Optional.of(String.valueOf(getStatusCode.applyAsInt(x.getLastResult()))),
                         x.getLastFailure(),
                         x.getAttemptCount()
                     )

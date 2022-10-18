@@ -1,5 +1,4 @@
 import configuration.*;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import kafka.*;
@@ -16,46 +15,47 @@ public class Main {
     static CountDownLatch latch = new CountDownLatch(1);
     static TopicsRoutes topicsRoutes;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         try {
             Config.init();
             Monitor.init();
 
             topicsRoutes = new TopicsRoutes(Config.TOPICS_ROUTES);
-            var targetHealthcheck = new TargetHealthcheck();
-            waitForTargetHealthcheck(targetHealthcheck);
-            monitoringServer = new MonitoringServer(targetHealthcheck).start();
+            waitForTargetHealthcheck();
+            monitoringServer = new MonitoringServer().start();
             consumer = createConsumer(monitoringServer);
             onShutdown(consumer, monitoringServer);
             Monitor.started();
             latch.await();
         } catch (Exception e) {
             Monitor.initializationError(e);
+            throw e;
         }
         Monitor.serviceTerminated();
     }
 
-    private static void waitForTargetHealthcheck(TargetHealthcheck targetHealthcheck)
-        throws InterruptedException, IOException {
+    private static void waitForTargetHealthcheck() throws InterruptedException {
         do {
-            System.out.printf("waiting for target healthcheck %s%n", targetHealthcheck.getEndpoint());
+            Monitor.waitingForTargetHealthcheck();
             Thread.sleep(1000);
-        } while (!targetHealthcheck.check());
-        System.out.println("target healthcheck pass successfully");
+        } while (!TargetHealthcheck.check());
+        Monitor.targetHealthcheckPassedSuccessfully();
     }
 
     private static Disposable createConsumer(MonitoringServer monitoringServer) {
         return new Consumer(
-            new ReactiveKafkaClient<String, String>(
-                new KafkaClientFactory().createConsumer(),
+            new ReactiveKafkaClient<>(
+                KafkaClientFactory.createConsumer(),
                 topicsRoutes.getTopics(),
                 new ConsumerRebalanceListener() {
                     @Override
                     public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-                        if (partitions.size() > 0) {
-                            Monitor.assignedToPartition(partitions);
-                            monitoringServer.consumerAssigned();
+                        if (partitions.size() == 0) {
+                            return;
                         }
+
+                        Monitor.assignedToPartition(partitions);
+                        monitoringServer.consumerAssigned();
                     }
 
                     @Override
@@ -66,7 +66,7 @@ public class Main {
             ),
             new HttpTarget(
                 new TargetRetryPolicy(
-                    new Producer(new KafkaClientFactory().createProducer()),
+                    new Producer(KafkaClientFactory.createProducer()),
                     Config.RETRY_TOPIC,
                     Config.DEAD_LETTER_TOPIC
                 ),
@@ -74,11 +74,7 @@ public class Main {
             )
         )
             .stream()
-            .doOnError(
-                e -> {
-                    Monitor.consumerError(e);
-                }
-            )
+            .doOnError(Monitor::consumerError)
             .subscribe(
                 __ -> {},
                 exception -> {
