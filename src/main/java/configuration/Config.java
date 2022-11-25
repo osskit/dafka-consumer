@@ -21,6 +21,7 @@ public class Config {
     public static int POLL_TIMEOUT;
     public static int MAX_POLL_RECORDS;
     public static int PROCESSING_DELAY;
+    public static boolean DRAIN;
     public static int SESSION_TIMEOUT;
     public static String RETRY_TOPIC;
     public static String DEAD_LETTER_TOPIC;
@@ -70,6 +71,7 @@ public class Config {
 
         DEAD_LETTER_TOPIC = getOptionalString(dotenv, "DEAD_LETTER_TOPIC", null);
         PROCESSING_DELAY = getOptionalInt(dotenv, "PROCESSING_DELAY", 0);
+        DRAIN = getOptionalBool(dotenv, "DRAIN", false);
         MONITORING_SERVER_PORT = getOptionalInt(dotenv, "MONITORING_SERVER_PORT", 0);
         TARGET_HEALTHCHECK = getOptionalString(dotenv, "TARGET_HEALTHCHECK", null);
 
