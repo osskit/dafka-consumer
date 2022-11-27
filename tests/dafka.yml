@@ -41,17 +41,6 @@ services:
             - GROUP_ID=consumer_no_target
             - MONITORING_SERVER_PORT=4002
 
-    drain_consumer:
-        build: ../
-        ports:
-            - 4003:4003
-        environment:
-            - KAFKA_BROKER=kafka:9092
-            - TARGET_BASE_URL=http://target:2000/
-            - TOPICS_ROUTES=foo:consume
-            - GROUP_ID=drain_consumer
-            - MONITORING_SERVER_PORT=4003
-
     producer:
         image: osskit/dafka-producer:5
         ports:
