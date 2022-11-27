@@ -205,8 +205,7 @@ describe('tests', () => {
         await delay(1000);
 
         const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
-        expect(hasBeenMade).toBeTruthy();
-        expect(madeCalls.length).toBe(0);
+        expect(hasBeenMade).toBeFalsy();
     });
 });
 
