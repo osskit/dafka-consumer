@@ -11,7 +11,7 @@ services:
             - TOPICS_ROUTES=foo:consume,bar:consume,^([^.]+).bar:consume
             - RETRY_TOPIC=retry
             - DEAD_LETTER_TOPIC=dead-letter
-            - GROUP_ID=consumer_1
+            - GROUP_ID=consumer
             - MONITORING_SERVER_PORT=4001
 
     dead_letter_consumer:
@@ -40,6 +40,16 @@ services:
             - TOPICS_ROUTES=unexpected:bla
             - GROUP_ID=consumer_no_target
             - MONITORING_SERVER_PORT=4002
+
+    drain_consumer:
+        build: ../
+        ports:
+            - 4001:4001
+        environment:
+            - KAFKA_BROKER=kafka:9092
+            - TARGET_BASE_URL=http://target:2000/
+            - TOPICS_ROUTES=foo:consume
+            - GROUP_ID=consumer_drain
 
     producer:
         image: osskit/dafka-producer:5
