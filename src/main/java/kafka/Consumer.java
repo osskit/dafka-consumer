@@ -35,7 +35,6 @@ public class Consumer {
                             partition ->
                                 partition
                                     .doOnNext(Monitor::processMessageStarted)
-                                    .filter(__ -> Config.DRAIN)
                                     .concatMap(
                                         record ->
                                             Mono
