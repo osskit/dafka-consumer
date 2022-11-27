@@ -14,7 +14,7 @@ services:
             - '9092:9092'
         environment:
             - KAFKA_ADVERTISED_HOST_NAME=kafka
-            - KAFKA_CREATE_TOPICS=foo:10:1,bar:1:1,lol.bar:1:1,unexpected:1:1,dead-letter:1:1,retry:1:1
+            - KAFKA_CREATE_TOPICS=foo:10:1,bar:1:1,lol.bar:1:1,unexpected:1:1,dead-letter:1:1,retry:1:1,drain:1:1
             - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
             - LOG4J_LOGGER_KAFKA=WARN
         depends_on:

@@ -43,12 +43,10 @@ services:
 
     drain_consumer:
         build: ../
-        ports:
-            - 4001:4001
         environment:
             - KAFKA_BROKER=kafka:9092
             - TARGET_BASE_URL=http://target:2000/
-            - TOPICS_ROUTES=foo:consume
+            - TOPICS_ROUTES=drain:consume
             - GROUP_ID=consumer_drain
 
     producer:

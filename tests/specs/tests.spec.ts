@@ -16,7 +16,7 @@ const fakeHttpServer = new Server({
 describe('tests', () => {
     beforeAll(async () => {
         await expect(
-            checkReadiness(['foo', 'bar', 'lol.bar', 'retry', 'dead-letter', 'unexpected'])
+            checkReadiness(['foo', 'bar', 'lol.bar', 'retry', 'dead-letter', 'unexpected', 'drain'])
         ).resolves.toBeTruthy();
     });
 
@@ -190,6 +190,23 @@ describe('tests', () => {
 
         const consumerLiveness = await fetch('http://localhost:4002/alive');
         expect(consumerLiveness.ok).toBeFalsy();
+    });
+
+    it('should drain', async () => {
+        const callId = await mockHttpTarget('/consume', 200);
+
+        await produce('http://localhost:6000/produce', [
+            {
+                topic: 'drain',
+                key: 'thekey',
+                value: {data: 'drain'},
+            },
+        ]);
+        await delay(1000);
+
+        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
+        expect(hasBeenMade).toBeTruthy();
+        expect(madeCalls.length).toBe(0);
     });
 });
 
