@@ -11,7 +11,7 @@ services:
             - TOPICS_ROUTES=foo:consume,bar:consume,^([^.]+).bar:consume
             - RETRY_TOPIC=retry
             - DEAD_LETTER_TOPIC=dead-letter
-            - GROUP_ID=consumer
+            - GROUP_ID=consumer_1
             - MONITORING_SERVER_PORT=4001
 
     dead_letter_consumer:
