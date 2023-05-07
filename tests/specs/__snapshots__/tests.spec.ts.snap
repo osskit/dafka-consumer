@@ -1,15 +1,54 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`tests consumer should produce to dead letter topic when target response is 400 1`] = `
+{
+  "data": "foo",
+}
+`;
+
+exports[`tests consumer should produce to dead letter topic when target response is 400 2`] = `
+{
+  "original-topic": "foo",
+}
+`;
+
+exports[`tests consumer should produce to retry topic when target response is 500 1`] = `
+{
+  "data": "foo",
+}
+`;
+
+exports[`tests consumer should produce to retry topic when target response is 500 2`] = `
+{
+  "original-topic": "foo",
+}
+`;
+
+exports[`tests consumer should terminate on an unexpected error 1`] = `
+[
+  {
+    "partitions": [
+      {
+        "metadata": null,
+        "offset": "-1",
+        "partition": 0,
+      },
+    ],
+    "topic": "foo",
+  },
+]
+`;
+
 exports[`tests should add record headers to target call 1`] = `
-Object {
-  "body": Object {
+{
+  "body": {
     "data": "foo",
   },
-  "headers": Object {
-    "content-length": "14",
-    "content-type": "application/json",
-    "host": "target:2000",
-    "user-agent": "Java-http-client/18.0.2.1",
+  "headers": {
+    "Content-Length": "14",
+    "Content-Type": "application/json",
+    "Host": "mocks:8080",
+    "User-Agent": "Java-http-client/18.0.2.1",
     "x-b3-flags": "1",
     "x-b3-parentspanid": "101112",
     "x-b3-sampled": "1",
@@ -18,61 +57,67 @@ Object {
     "x-ot-span-context": "foo",
     "x-record-offset": Any<String>,
     "x-record-original-topic": "foo",
-    "x-record-partition": "3",
+    "x-record-partition": "0",
     "x-record-timestamp": Any<String>,
     "x-record-topic": "foo",
     "x-request-id": "123",
   },
+  "loggedDate": Any<Number>,
   "method": "POST",
-  "path": "/consume",
+  "queryParams": {},
+  "url": "/consume",
 }
 `;
 
 exports[`tests should produce and consume 1`] = `
-Object {
-  "body": Object {
+{
+  "body": {
     "data": "foo",
   },
-  "headers": Object {
-    "content-length": "14",
-    "content-type": "application/json",
-    "host": "target:2000",
-    "user-agent": "Java-http-client/18.0.2.1",
+  "headers": {
+    "Content-Length": "14",
+    "Content-Type": "application/json",
+    "Host": "mocks:8080",
+    "User-Agent": "Java-http-client/18.0.2.1",
     "x-record-offset": Any<String>,
     "x-record-original-topic": "foo",
-    "x-record-partition": "3",
+    "x-record-partition": "0",
     "x-record-timestamp": Any<String>,
     "x-record-topic": "foo",
   },
+  "loggedDate": Any<Number>,
   "method": "POST",
-  "path": "/consume",
+  "queryParams": {},
+  "url": "/consume",
 }
 `;
 
 exports[`tests should transform and add cloud event headers to target call 1`] = `
-Object {
-  "body": Object {
+{
+  "body": {
     "data": "foo",
   },
-  "headers": Object {
+  "headers": {
+    "Content-Length": "14",
+    "Content-Type": "application/json",
+    "Host": "mocks:8080",
+    "User-Agent": "Java-http-client/18.0.2.1",
     "ce-id": "id",
     "ce-source": "source",
     "ce-specversion": "1",
     "ce-time": "123456",
     "ce-type": "type",
-    "content-length": "14",
-    "content-type": "application/json",
-    "host": "target:2000",
     "random_header": "random",
-    "user-agent": "Java-http-client/18.0.2.1",
     "x-record-offset": Any<String>,
     "x-record-original-topic": "foo",
-    "x-record-partition": "3",
+    "x-record-partition": "0",
     "x-record-timestamp": Any<String>,
     "x-record-topic": "foo",
     "x-request-id": "bla",
   },
+  "loggedDate": Any<Number>,
   "method": "POST",
-  "path": "/consume",
+  "queryParams": {},
+  "url": "/consume",
 }
 `;

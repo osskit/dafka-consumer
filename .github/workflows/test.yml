@@ -1,20 +1,28 @@
 name: test
 
 on:
-  pull_request:
-    branches: [main]
+    pull_request:
+        branches: [main]
 
-  workflow_dispatch:
+    workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+    test:
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: "16.x"
-      - run: yarn
-      - run: yarn test
+        steps:
+            - uses: actions/checkout@v2
+            - name: Use Node.js
+              uses: actions/setup-node@v2
+              with:
+                  node-version: '16.x'
+
+            - name: Install bazelisk
+              run: |
+                  curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.1.0/bazelisk-linux-amd64"
+                  mkdir -p "${GITHUB_WORKSPACE}/bin/"
+                  mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
+                  chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
+
+            - run: yarn
+            - run: yarn test

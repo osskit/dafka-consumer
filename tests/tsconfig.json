@@ -1,0 +1,7 @@
+{
+    "extends": "@osskit/tsconfig",
+    "compilerOptions": {
+        "module": "ES2020"
+    },
+    "include": ["specs", "testcontainers"]
+}
