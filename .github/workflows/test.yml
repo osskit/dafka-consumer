@@ -30,3 +30,5 @@ jobs:
 
             - run: yarn
             - run: yarn test
+              env:
+                  MAX_RETRIES: 20

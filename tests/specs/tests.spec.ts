@@ -32,10 +32,6 @@ describe('tests', () => {
 
         await admin.createTopics({topics: topics.map((topic) => ({topic}))});
 
-        const metadata = await admin.fetchOffsets({groupId: 'test'});
-
-        console.error(JSON.stringify(metadata, null, 2));
-
         await orchestrator.consumerReady();
 
         producer = orchestrator.kafkaClient.producer();
