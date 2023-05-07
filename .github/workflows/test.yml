@@ -29,4 +29,4 @@ jobs:
                   chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
 
             - run: yarn
-            - run: yarn test
+            - run: DEBUG=testcontainers* yarn test
