@@ -245,8 +245,6 @@ describe('tests', () => {
 
         admin.disconnect();
 
-        console.error(metadata);
-
         expect(metadata).toMatchSnapshot();
     }, 1800000);
 });
