@@ -10,7 +10,9 @@ describe('tests', () => {
     let producer: Producer;
 
     afterEach(async () => {
-        await producer.disconnect();
+        if (producer) {
+            await producer.disconnect();
+        }
         await orchestrator.stop();
     });
 
