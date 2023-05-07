@@ -34,7 +34,7 @@ describe('tests', () => {
 
         const metadata = await admin.fetchTopicMetadata({topics});
 
-        console.error(metadata);
+        console.error(JSON.stringify(metadata, null, 2));
 
         await orchestrator.consumerReady();
 
