@@ -2,9 +2,10 @@ import {StartedNetwork, StoppedTestContainer, Wait} from 'testcontainers';
 import {GenericContainer} from 'testcontainers';
 import {withThrow, withRetry} from '@osskit/fetch-enhancers';
 
-const maxRetries = process.env.MAX_RETRIES ?? '10';
+const maxRetries = parseInt(process.env.MAX_RETRIES ?? '10');
+const startupTimeout = parseInt(process.env.STARTUP_TIMEOUT ?? '6000');
 
-const enhanchedFetch = withRetry(withThrow(fetch), {factor: 2, retries: parseInt(maxRetries)});
+const enhanchedFetch = withRetry(withThrow(fetch), {factor: 2, retries: maxRetries});
 
 export interface ServiceContainer {
     stop: () => Promise<StoppedTestContainer>;
@@ -24,6 +25,7 @@ export const dafkaConsumer = async (
             MONITORING_SERVER_PORT: '3000',
         })
         .withWaitStrategy(Wait.forLogMessage('kafka-consumer-test started'))
+        .withStartupTimeout(startupTimeout)
         .start();
 
     if (process.env.VERBOSE) {
