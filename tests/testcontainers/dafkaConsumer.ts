@@ -1,4 +1,4 @@
-import type {StartedNetwork, StoppedTestContainer} from 'testcontainers';
+import {StartedNetwork, StoppedTestContainer, Wait} from 'testcontainers';
 import {GenericContainer} from 'testcontainers';
 import {withThrow, withRetry} from '@osskit/fetch-enhancers';
 
@@ -21,6 +21,7 @@ export const dafkaConsumer = async (
             KAFKA_BROKER: 'kafka:9092',
             MONITORING_SERVER_PORT: '3000',
         })
+        .withWaitStrategy(Wait.forLogMessage('kafka-consumer-test started'))
         .start();
 
     if (process.env.VERBOSE) {
