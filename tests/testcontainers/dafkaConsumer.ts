@@ -2,7 +2,7 @@ import type {StartedNetwork, StoppedTestContainer} from 'testcontainers';
 import {GenericContainer} from 'testcontainers';
 import {withThrow, withRetry} from '@osskit/fetch-enhancers';
 
-const enhanchedFetch = withRetry(withThrow(fetch), {factor: 2, retries: 15});
+const enhanchedFetch = withRetry(withThrow(fetch), {factor: 2, retries: 10});
 
 export interface ServiceContainer {
     stop: () => Promise<StoppedTestContainer>;
