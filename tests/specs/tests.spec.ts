@@ -28,7 +28,13 @@ describe('tests', () => {
             ...consumerSettings,
         });
 
-        await orchestrator.kafkaClient.admin().createTopics({topics: topics.map((topic) => ({topic}))});
+        const admin = orchestrator.kafkaClient.admin();
+
+        await admin.createTopics({topics: topics.map((topic) => ({topic}))});
+
+        const metadata = await admin.fetchTopicMetadata({topics});
+
+        console.error(metadata);
 
         await orchestrator.consumerReady();
 
