@@ -3,7 +3,7 @@ import {KafkaContainer} from 'testcontainers';
 import {Kafka, logLevel} from 'kafkajs';
 
 export const kafka = async (network: StartedNetwork) => {
-    const container = await new KafkaContainer()
+    const container = await new KafkaContainer('confluentinc/cp-kafka:7.2.2')
         .withNetwork(network)
         .withNetworkAliases('kafka')
         .withWaitStrategy(
