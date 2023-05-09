@@ -122,7 +122,7 @@ describe('tests', () => {
         const consumerMapping = await mockHttpTarget('/consume', 200);
 
         await producer.send({
-            topic: 'foo',
+            topic: 'foo2',
             messages: [
                 {
                     value: JSON.stringify({data: 'foo'}),
@@ -212,14 +212,14 @@ describe('tests', () => {
 
     it('consumer should produce to retry topic when target response is 500', async () => {
         const retryTopic = 'retry';
-
-        await start(['foo', retryTopic], [{topic: 'foo', targetPath: '/consume'}], {
+        const topic = 'foo89';
+        await start([topic, retryTopic], [{topic, targetPath: '/consume'}], {
             RETRY_TOPIC: retryTopic,
         });
 
         const consumerMapping = await mockHttpTarget('/consume', 500);
 
-        await producer.send({topic: 'foo', messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
+        await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
 
         const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
 

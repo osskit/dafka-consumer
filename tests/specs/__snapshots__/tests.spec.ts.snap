@@ -8,7 +8,7 @@ exports[`tests consumer should produce to dead letter topic when target response
 
 exports[`tests consumer should produce to dead letter topic when target response is 400 2`] = `
 {
-  "original-topic": "foo",
+  "original-topic": "foo4",
 }
 `;
 
@@ -20,7 +20,7 @@ exports[`tests consumer should produce to retry topic when target response is 50
 
 exports[`tests consumer should produce to retry topic when target response is 500 2`] = `
 {
-  "original-topic": "foo",
+  "original-topic": "foo89",
 }
 `;
 
@@ -30,7 +30,7 @@ exports[`tests consumer should terminate on an unexpected error 1`] = `
     "partitions": [
       {
         "metadata": null,
-        "offset": "-1",
+        "offset": "1",
         "partition": 0,
       },
     ],
@@ -56,10 +56,10 @@ exports[`tests should add record headers to target call 1`] = `
     "x-b3-traceid": "456",
     "x-ot-span-context": "foo",
     "x-record-offset": Any<String>,
-    "x-record-original-topic": "foo",
+    "x-record-original-topic": "foo1",
     "x-record-partition": "0",
     "x-record-timestamp": Any<String>,
-    "x-record-topic": "foo",
+    "x-record-topic": "foo1",
     "x-request-id": "123",
   },
   "loggedDate": Any<Number>,
@@ -109,10 +109,10 @@ exports[`tests should transform and add cloud event headers to target call 1`] =
     "ce-type": "type",
     "random_header": "random",
     "x-record-offset": Any<String>,
-    "x-record-original-topic": "foo",
+    "x-record-original-topic": "foo2",
     "x-record-partition": "0",
     "x-record-timestamp": Any<String>,
-    "x-record-topic": "foo",
+    "x-record-topic": "foo2",
     "x-request-id": "bla",
   },
   "loggedDate": Any<Number>,
