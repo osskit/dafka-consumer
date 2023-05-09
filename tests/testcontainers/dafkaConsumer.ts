@@ -5,7 +5,7 @@ import {withThrow, withRetry} from '@osskit/fetch-enhancers';
 const maxRetries = parseInt(process.env.MAX_RETRIES ?? '10');
 const startupTimeout = parseInt(process.env.STARTUP_TIMEOUT ?? '6000');
 
-const enhanchedFetch = withRetry(withThrow(fetch), {factor: 1, retries: maxRetries});
+const enhanchedFetch = withRetry(withThrow(fetch), {factor: 2, retries: maxRetries});
 
 export interface ServiceContainer {
     stop: () => Promise<StoppedTestContainer>;
