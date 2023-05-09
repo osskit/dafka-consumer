@@ -85,12 +85,12 @@ describe('tests', () => {
     }, 1800000);
 
     it('should add record headers to target call', async () => {
-        await start(['foo'], [{topic: 'foo', targetPath: '/consume'}]);
+        await start(['foo1'], [{topic: 'foo1', targetPath: '/consume'}]);
 
         const consumerMapping = await mockHttpTarget('/consume', 200);
 
         await producer.send({
-            topic: 'foo',
+            topic: 'foo1',
             messages: [
                 {
                     value: JSON.stringify({data: 'foo'}),
@@ -117,7 +117,7 @@ describe('tests', () => {
     }, 1800000);
 
     it('should transform and add cloud event headers to target call', async () => {
-        await start(['foo'], [{topic: 'foo', targetPath: '/consume'}]);
+        await start(['foo2'], [{topic: 'foo2', targetPath: '/consume'}]);
 
         const consumerMapping = await mockHttpTarget('/consume', 200);
 
@@ -149,14 +149,14 @@ describe('tests', () => {
     }, 1800000);
 
     it('should consume bursts of records', async () => {
-        await start(['foo'], [{topic: 'foo', targetPath: '/consume'}]);
+        await start(['foo3'], [{topic: 'foo3', targetPath: '/consume'}]);
 
         const consumerMapping = await mockHttpTarget('/consume', 200);
 
         const recordsCount = 1000;
 
         await producer.send({
-            topic: 'foo',
+            topic: 'foo3',
             messages: range(recordsCount).map((_) => ({value: JSON.stringify({data: 'foo'})})),
         });
 
@@ -179,13 +179,13 @@ describe('tests', () => {
     it('consumer should produce to dead letter topic when target response is 400', async () => {
         const deadLetterTopic = 'dead-letter';
 
-        await start(['foo', deadLetterTopic], [{topic: 'foo', targetPath: '/consume'}], {
+        await start(['foo4', deadLetterTopic], [{topic: 'foo4', targetPath: '/consume'}], {
             DEAD_LETTER_TOPIC: deadLetterTopic,
         });
 
         const consumerMapping = await mockHttpTarget('/consume', 400);
 
-        await producer.send({topic: 'foo', messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
+        await producer.send({topic: 'foo4', messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
 
         const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
 
@@ -245,10 +245,10 @@ describe('tests', () => {
     }, 1800000);
 
     it('consumer should terminate on an unexpected error', async () => {
-        await start(['foo'], [{topic: 'foo', targetPath: '/consume'}], {
+        await start(['foo5'], [{topic: 'foo5', targetPath: '/consume'}], {
             TARGET_BASE_URL: 'dummy',
         });
-        await producer.send({topic: 'foo', messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
+        await producer.send({topic: 'foo5', messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
 
         const admin = kafkaOrchestrator.kafkaClient.admin();
 
