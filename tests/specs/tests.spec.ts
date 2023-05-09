@@ -1,13 +1,22 @@
 import {HttpMethod} from '@osskit/wiremock-client';
-import type {Orchestrator} from '../testcontainers/orchestrator.js';
-import {start as startOrchestrator} from '../testcontainers/orchestrator.js';
+import type {Orchestrator, KafkaOrchestrator} from '../testcontainers/orchestrator.js';
+import {start as startKafka} from '../testcontainers/orchestrator.js';
 import {range} from 'lodash-es';
 import pRetry from 'p-retry';
 import {KafkaMessage, Producer} from 'kafkajs';
 
 describe('tests', () => {
+    let kafkaOrchestrator: KafkaOrchestrator;
     let orchestrator: Orchestrator;
     let producer: Producer;
+
+    beforeAll(async () => {
+        kafkaOrchestrator = await startKafka();
+    });
+
+    afterAll(async () => {
+        await kafkaOrchestrator.stop();
+    });
 
     afterEach(async () => {
         if (producer) {
@@ -21,20 +30,20 @@ describe('tests', () => {
         topicRoutes: {topic: string; targetPath: string}[],
         consumerSettings?: Record<string, string>
     ) => {
-        orchestrator = await startOrchestrator({
+        orchestrator = await kafkaOrchestrator.startOrchestrator({
             GROUP_ID: 'test',
             TARGET_BASE_URL: 'http://mocks:8080',
             TOPICS_ROUTES: topicRoutes.map(({topic, targetPath}) => `${topic}:${targetPath}`).join(','),
             ...consumerSettings,
         });
 
-        const admin = orchestrator.kafkaClient.admin();
+        const admin = kafkaOrchestrator.kafkaClient.admin();
 
         await admin.createTopics({topics: topics.map((topic) => ({topic}))});
 
         await orchestrator.consumerReady();
 
-        producer = orchestrator.kafkaClient.producer();
+        producer = kafkaOrchestrator.kafkaClient.producer();
         await producer.connect();
     };
 
@@ -183,7 +192,7 @@ describe('tests', () => {
         expect(calls).toHaveLength(1);
 
         // because we need Hamsa Hamsa Hamsa for tests to work
-        const consumer = orchestrator.kafkaClient.consumer({groupId: 'test-555'});
+        const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
 
         await consumer.subscribe({topic: deadLetterTopic, fromBeginning: true});
 
@@ -217,7 +226,7 @@ describe('tests', () => {
         expect(calls).toHaveLength(2);
 
         // because we need Hamsa Hamsa Hamsa for tests to work
-        const consumer = orchestrator.kafkaClient.consumer({groupId: 'test-555'});
+        const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
 
         await consumer.subscribe({topic: retryTopic, fromBeginning: true});
 
@@ -241,7 +250,7 @@ describe('tests', () => {
         });
         await producer.send({topic: 'foo', messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
 
-        const admin = orchestrator.kafkaClient.admin();
+        const admin = kafkaOrchestrator.kafkaClient.admin();
 
         await admin.connect();
 
