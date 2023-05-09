@@ -3,7 +3,7 @@ import {GenericContainer} from 'testcontainers';
 import {withThrow, withRetry} from '@osskit/fetch-enhancers';
 
 const maxRetries = parseInt(process.env.MAX_RETRIES ?? '10');
-const startupTimeout = parseInt(process.env.STARTUP_TIMEOUT ?? '6000');
+const startupTimeout = parseInt(process.env.STARTUP_TIMEOUT ?? '60000');
 
 const enhanchedFetch = withRetry(withThrow(fetch), {factor: 2, retries: maxRetries});
 

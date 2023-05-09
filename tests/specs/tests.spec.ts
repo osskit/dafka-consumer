@@ -12,11 +12,11 @@ describe('tests', () => {
 
     beforeAll(async () => {
         kafkaOrchestrator = await startKafka();
-    });
+    }, 1800000);
 
     afterAll(async () => {
         await kafkaOrchestrator.stop();
-    });
+    }, 1800000);
 
     afterEach(async () => {
         if (producer) {
