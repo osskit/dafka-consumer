@@ -1,208 +1,263 @@
-import delay from 'delay';
-import fetch from 'node-fetch';
-import Server from 'simple-fake-server-server-client';
-import {range} from 'lodash';
-
-import checkReadiness from '../checkReadiness';
-import * as uuid from 'uuid';
-
-jest.setTimeout(180000);
-
-const fakeHttpServer = new Server({
-    baseUrl: `http://localhost`,
-    port: 3000,
-});
+import {HttpMethod} from '@osskit/wiremock-client';
+import type {Orchestrator, KafkaOrchestrator} from '../testcontainers/orchestrator.js';
+import {start as startKafka} from '../testcontainers/orchestrator.js';
+import {range} from 'lodash-es';
+import pRetry from 'p-retry';
+import {KafkaMessage, Producer} from 'kafkajs';
 
 describe('tests', () => {
+    let kafkaOrchestrator: KafkaOrchestrator;
+    let orchestrator: Orchestrator;
+    let producer: Producer;
+
     beforeAll(async () => {
-        await expect(
-            checkReadiness(['foo', 'bar', 'lol.bar', 'retry', 'dead-letter', 'unexpected'])
-        ).resolves.toBeTruthy();
-    });
+        kafkaOrchestrator = await startKafka();
+    }, 1800000);
+
+    afterAll(async () => {
+        await kafkaOrchestrator.stop();
+    }, 1800000);
 
     afterEach(async () => {
-        await fakeHttpServer.clear();
+        if (producer) {
+            await producer.disconnect();
+        }
+        await orchestrator.stop();
     });
 
-    it('readiness', async () => {
-        await delay(1000);
-        const producer = await fetch('http://localhost:6000/ready');
-        const consumer = await fetch('http://localhost:4001/ready');
-        expect(producer.ok).toBeTruthy();
-        expect(consumer.ok).toBeTruthy();
-    });
-
-    it('should produce and consume', async () => {
-        const callId = await mockHttpTarget('/consume', 200);
-
-        await produce('http://localhost:6000/produce', [
-            {
-                topic: 'foo',
-                key: 'thekey',
-                value: {data: 'foo'},
-            },
-        ]);
-        await delay(1000);
-
-        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
-        expect(hasBeenMade).toBeTruthy();
-        expect(madeCalls.length).toBe(1);
-        expect(madeCalls[0]).toMatchSnapshot({
-            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
+    const start = async (
+        topics: string[],
+        topicRoutes: {topic: string; targetPath: string}[],
+        consumerSettings?: Record<string, string>
+    ) => {
+        orchestrator = await kafkaOrchestrator.startOrchestrator({
+            GROUP_ID: 'test',
+            TARGET_BASE_URL: 'http://mocks:8080',
+            TOPICS_ROUTES: topicRoutes.map(({topic, targetPath}) => `${topic}:${targetPath}`).join(','),
+            ...consumerSettings,
         });
-    });
+
+        const admin = kafkaOrchestrator.kafkaClient.admin();
+
+        await admin.createTopics({topics: topics.map((topic) => ({topic}))});
+
+        await orchestrator.consumerReady();
+
+        producer = kafkaOrchestrator.kafkaClient.producer();
+        await producer.connect();
+    };
+
+    const mockHttpTarget = (url: string, status: number) =>
+        orchestrator.wireMockClient.createMapping({
+            request: {
+                url: url,
+                method: HttpMethod.Post,
+            },
+            response: {
+                status,
+            },
+        });
+    it('should produce and consume', async () => {
+        await start(['foo'], [{topic: 'foo', targetPath: '/consume'}]);
+
+        const consumerMapping = await mockHttpTarget('/consume', 200);
+
+        await producer.send({topic: 'foo', messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
+
+        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
+        expect(calls).toHaveLength(1);
+
+        expect(calls[0]).toMatchSnapshot({
+            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
+            loggedDate: expect.any(Number),
+        });
+    }, 1800000);
 
     it('should produce and consume with regex patterns', async () => {
-        const callId = await mockHttpTarget('/consume', 200);
+        await start(['lol.bar'], [{topic: '^([^.]+).bar', targetPath: '/consume'}]);
 
-        await produce('http://localhost:6000/produce', [
-            {
-                topic: 'lol.bar',
-                key: 'thekey',
-                value: {data: 'foo'},
-            },
-        ]);
-        await delay(1000);
-        await produce('http://localhost:6000/produce', [
-            {
-                topic: 'bar',
-                key: 'thekey',
-                value: {data: 'bar'},
-            },
-        ]);
-        await delay(1000);
+        const consumerMapping = await mockHttpTarget('/consume', 200);
 
-        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
-        expect(hasBeenMade).toBeTruthy();
-        expect(madeCalls.length).toBe(2);
-    });
+        await producer.send({topic: 'lol.bar', messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
+
+        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
+        expect(calls).toHaveLength(1);
+    }, 1800000);
 
     it('should add record headers to target call', async () => {
-        const callId = await mockHttpTarget('/consume', 200);
+        await start(['foo1'], [{topic: 'foo1', targetPath: '/consume'}]);
 
-        await produce('http://localhost:6000/produce', [
-            {
-                topic: 'foo',
-                key: 'thekey',
-                value: {data: 'foo'},
-                headers: {
-                    'x-request-id': '123',
-                    'x-b3-traceid': '456',
-                    'x-b3-spanid': '789',
-                    'x-b3-parentspanid': '101112',
-                    'x-b3-sampled': '1',
-                    'x-b3-flags': '1',
-                    'x-ot-span-context': 'foo',
+        const consumerMapping = await mockHttpTarget('/consume', 200);
+
+        await producer.send({
+            topic: 'foo1',
+            messages: [
+                {
+                    value: JSON.stringify({data: 'foo'}),
+                    key: 'thekey',
+                    headers: {
+                        'x-request-id': '123',
+                        'x-b3-traceid': '456',
+                        'x-b3-spanid': '789',
+                        'x-b3-parentspanid': '101112',
+                        'x-b3-sampled': '1',
+                        'x-b3-flags': '1',
+                        'x-ot-span-context': 'foo',
+                    },
                 },
-            },
-        ]);
-        await delay(1000);
-
-        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
-        expect(hasBeenMade).toBeTruthy();
-        expect(madeCalls[0]).toMatchSnapshot({
-            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
+            ],
         });
-    });
+
+        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
+        expect(calls).toHaveLength(1);
+        expect(calls[0]).toMatchSnapshot({
+            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
+            loggedDate: expect.any(Number),
+        });
+    }, 1800000);
 
     it('should transform and add cloud event headers to target call', async () => {
-        const callId = await mockHttpTarget('/consume', 200);
+        await start(['foo2'], [{topic: 'foo2', targetPath: '/consume'}]);
 
-        await produce('http://localhost:6000/produce', [
-            {
-                topic: 'foo',
-                key: 'thekey',
-                value: {data: 'foo'},
-                headers: {
-                    'x-request-id': 'bla',
-                    random_header: 'random',
-                    ce_type: 'type',
-                    ce_id: 'id',
-                    ce_specversion: '1',
-                    ce_source: 'source',
-                    ce_time: '123456',
+        const consumerMapping = await mockHttpTarget('/consume', 200);
+
+        await producer.send({
+            topic: 'foo2',
+            messages: [
+                {
+                    value: JSON.stringify({data: 'foo'}),
+                    key: 'thekey',
+                    headers: {
+                        'x-request-id': 'bla',
+                        random_header: 'random',
+                        ce_type: 'type',
+                        ce_id: 'id',
+                        ce_specversion: '1',
+                        ce_source: 'source',
+                        ce_time: '123456',
+                    },
                 },
-            },
-        ]);
-        await delay(1000);
-
-        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
-        expect(hasBeenMade).toBeTruthy();
-        expect(madeCalls[0]).toMatchSnapshot({
-            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
+            ],
         });
-    });
+
+        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
+        expect(calls).toHaveLength(1);
+        expect(calls[0]).toMatchSnapshot({
+            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
+            loggedDate: expect.any(Number),
+        });
+    }, 1800000);
 
     it('should consume bursts of records', async () => {
-        const callId = await mockHttpTarget('/consume', 200);
+        await start(['foo3'], [{topic: 'foo3', targetPath: '/consume'}]);
+
+        const consumerMapping = await mockHttpTarget('/consume', 200);
 
         const recordsCount = 1000;
-        const records = range(recordsCount).map(() => ({
-            topic: 'foo',
-            key: uuid(),
-            value: {data: 'foo'},
-        }));
 
-        await produce('http://localhost:6000/produce', records);
-        await delay(recordsCount * 10);
+        await producer.send({
+            topic: 'foo3',
+            messages: range(recordsCount).map((_) => ({value: JSON.stringify({data: 'foo'})})),
+        });
 
-        const {madeCalls} = await fakeHttpServer.getCall(callId);
-        expect(madeCalls.length).toBe(recordsCount);
-    });
+        const calls = await pRetry(
+            async () => {
+                const c = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
+
+                if (c.length !== recordsCount) {
+                    throw new Error(`invalid call count: ${c.length}`);
+                }
+
+                return c;
+            },
+            {retries: 10}
+        );
+
+        expect(calls).toHaveLength(recordsCount);
+    }, 1800000);
 
     it('consumer should produce to dead letter topic when target response is 400', async () => {
-        await mockHttpTarget('/consume', 400);
-        const callId = await mockHttpTarget('/deadLetter', 200);
+        const deadLetterTopic = 'dead-letter';
 
-        await produce('http://localhost:6000/produce', [{topic: 'foo', key: uuid(), value: {data: 'foo'}}]);
-        await delay(5000);
+        await start(['foo4', deadLetterTopic], [{topic: 'foo4', targetPath: '/consume'}], {
+            DEAD_LETTER_TOPIC: deadLetterTopic,
+        });
 
-        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
-        expect(hasBeenMade).toBeTruthy();
-        expect(madeCalls[0].headers['x-record-original-topic']).toEqual('foo');
-    });
+        const consumerMapping = await mockHttpTarget('/consume', 400);
+
+        await producer.send({topic: 'foo4', messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
+
+        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
+
+        expect(calls).toHaveLength(1);
+
+        // because we need Hamsa Hamsa Hamsa for tests to work
+        const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
+
+        await consumer.subscribe({topic: deadLetterTopic, fromBeginning: true});
+
+        const consumedMessage = await new Promise<KafkaMessage>((resolve) => {
+            consumer.run({
+                eachMessage: async ({message}) => resolve(message),
+            });
+        });
+
+        await consumer.disconnect();
+
+        expect(JSON.parse(consumedMessage.value?.toString() ?? '{}')).toMatchSnapshot();
+        expect(
+            Object.fromEntries(Object.entries(consumedMessage.headers!).map(([key, value]) => [key, value?.toString()]))
+        ).toMatchSnapshot();
+    }, 1800000);
 
     it('consumer should produce to retry topic when target response is 500', async () => {
-        await mockHttpTarget('/consume', 500);
-        const callId = await mockHttpTarget('/retry', 200);
+        const retryTopic = 'retry';
+        const topic = 'foo89';
+        await start([topic, retryTopic], [{topic, targetPath: '/consume'}], {
+            RETRY_TOPIC: retryTopic,
+        });
 
-        await produce('http://localhost:6000/produce', [{topic: 'foo', key: uuid(), value: {data: 'foo'}}]);
-        await delay(5000);
+        const consumerMapping = await mockHttpTarget('/consume', 500);
 
-        const {hasBeenMade, madeCalls} = await fakeHttpServer.getCall(callId);
-        expect(hasBeenMade).toBeTruthy();
-        expect(madeCalls[0].headers['x-record-original-topic']).toEqual('foo');
-    });
+        await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
+
+        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
+
+        expect(calls).toHaveLength(2);
+
+        // because we need Hamsa Hamsa Hamsa for tests to work
+        const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
+
+        await consumer.subscribe({topic: retryTopic, fromBeginning: true});
+
+        const consumedMessage = await new Promise<KafkaMessage>((resolve) => {
+            consumer.run({
+                eachMessage: async ({message}) => resolve(message),
+            });
+        });
+
+        await consumer.disconnect();
+
+        expect(JSON.parse(consumedMessage.value?.toString() ?? '{}')).toMatchSnapshot();
+        expect(
+            Object.fromEntries(Object.entries(consumedMessage.headers!).map(([key, value]) => [key, value?.toString()]))
+        ).toMatchSnapshot();
+    }, 1800000);
 
     it('consumer should terminate on an unexpected error', async () => {
-        await delay(1000);
-        const consumerReadiness = await fetch('http://localhost:4002/ready');
-        expect(consumerReadiness.ok).toBeTruthy();
+        await start(['foo5'], [{topic: 'foo5', targetPath: '/consume'}], {
+            TARGET_BASE_URL: 'dummy',
+        });
+        await producer.send({topic: 'foo5', messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
 
-        await produce('http://localhost:6000/produce', [
-            {
-                topic: 'unexpected',
-                key: uuid(),
-                value: {data: 'unexpected'},
-            },
-        ]);
-        await delay(10000);
+        const admin = kafkaOrchestrator.kafkaClient.admin();
 
-        const consumerLiveness = await fetch('http://localhost:4002/alive');
-        expect(consumerLiveness.ok).toBeFalsy();
-    });
+        await admin.connect();
+
+        const metadata = await admin.fetchOffsets({groupId: 'test', topics: ['foo']});
+
+        admin.disconnect();
+
+        expect(metadata).toMatchSnapshot();
+    }, 1800000);
 });
-
-const produce = (url: string, batch: any[], headers?: object) =>
-    fetch(url, {
-        method: 'post',
-        body: JSON.stringify(batch),
-        headers: {'Content-Type': 'application/json', ...headers},
-    });
-
-const mockHttpTarget = (route: string, statusCode: number) =>
-    fakeHttpServer.mock({
-        method: 'post',
-        url: route,
-        statusCode,
-    });

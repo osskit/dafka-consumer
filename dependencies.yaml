@@ -1,0 +1,100 @@
+options:
+  languages: [ "java", "scala:2.13.6" ]
+  resolverType: "coursier"
+  resolvers:
+    - id: "mavencentral"
+      type: "default"
+      url: https://repo.maven.apache.org/maven2/
+  strictVisibility: true
+  transitivity: runtime_deps
+  versionConflictPolicy: highest
+
+dependencies:
+  ch.qos.logback:
+    logback:
+      lang: java
+      modules: [ "classic", "core" ]
+      version: "1.3.5"
+
+  ch.qos.logback.contrib:
+    logback:
+      lang: java
+      modules: [ "jackson", "json-classic" ]
+      version: "0.1.5"
+
+  com.fasterxml.jackson.core:
+    jackson-databind:
+      lang: java
+      version: "2.9.3"
+
+  com.google.guava:
+    guava:
+      lang: java
+      version: "27.0.1-jre"
+
+  com.google.protobuf:
+    protobuf:
+      lang: java
+      modules: [ "java", "java-util" ]
+      version: "3.21.7"
+
+  com.spotify:
+    futures-extra:
+      lang: java
+      version: "4.2.1"
+
+  io.github.cdimascio:
+    java-dotenv:
+      lang: java
+      version: "3.1.7"
+
+  io.projectreactor:
+    reactor-core:
+      lang: java
+      version: "3.3.3.RELEASE"
+
+  io.projectreactor.addons:
+    reactor-extra:
+      lang: java
+      version: "3.3.3.RELEASE"
+
+  io.prometheus:
+    simpleclient:
+      lang: java
+      version: "0.8.0"
+    simpleclient_hotspot:
+      lang: java
+      version: "0.8.0"
+    simpleclient_httpserver:
+      lang: java
+      version: "0.8.0"
+
+  net.jodah:
+    failsafe:
+      lang: java
+      version: "2.0.1"
+
+  org.apache.kafka:
+    kafka-clients:
+      lang: java
+      version: "2.4.0"
+
+  org.jetbrains:
+    annotations:
+      lang: java
+      version: "24.0.1"
+
+  org.json:
+    json:
+      lang: java
+      version: "20180130"
+
+  org.reactivestreams:
+    reactive-streams:
+      lang: java
+      version: "1.0.4"
+
+  org.slf4j:
+    slf4j-api:
+      lang: java
+      version: "2.0.3"
