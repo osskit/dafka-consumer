@@ -37,6 +37,8 @@ public class TargetRetryPolicy {
                 x -> {
                     var statusCode = String.valueOf(getStatusCode.applyAsInt(x.getResult()));
 
+                    System.out.println("Status code: " + statusCode);
+
                     if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
                         Monitor.processMessageError();
                         if (retryTopic != null) {
@@ -69,6 +71,7 @@ public class TargetRetryPolicy {
             )
             .onRetriesExceeded(
                 __ -> {
+                    System.out.println("oh no");
                     if (retryTopic != null) {
                         producer.produce(retryTopic, record);
                         Monitor.retryProduced(record);

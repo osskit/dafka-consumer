@@ -47,15 +47,20 @@ describe('tests', () => {
         await producer.connect();
     };
 
-    const mockHttpTarget = (url: string, status: number) =>
+    const mockHttpTarget = (url: string, status: number, faulty = false) =>
         orchestrator.wireMockClient.createMapping({
             request: {
                 url: url,
                 method: HttpMethod.Post,
             },
-            response: {
-                status,
-            },
+            response: faulty
+                ? {
+                      //@ts-ignore
+                      fault: 'CONNECTION_RESET_BY_PEER',
+                  }
+                : {
+                      status,
+                  },
         });
     it('should produce and consume', async () => {
         await start(['foo'], [{topic: 'foo', targetPath: '/consume'}]);
@@ -244,17 +249,39 @@ describe('tests', () => {
         ).toMatchSnapshot();
     }, 1800000);
 
-    it('consumer should terminate on an unexpected error', async () => {
-        await start(['foo5'], [{topic: 'foo5', targetPath: '/consume'}], {
-            TARGET_BASE_URL: 'dummy',
+    it('consumer should produce to retry topic on an unexpected error', async () => {
+        const retryTopic = 'retry-345345';
+        const topic = `foo-45445`;
+        await start([topic, retryTopic], [{topic, targetPath: '/consume'}], {
+            RETRY_TOPIC: retryTopic,
         });
-        await producer.send({topic: 'foo5', messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
+
+        await mockHttpTarget('/consume', 200, true);
+
+        await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
+
+        // because we need Hamsa Hamsa Hamsa for tests to work
+        const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
+
+        await consumer.subscribe({topic: retryTopic, fromBeginning: true});
+
+        const consumedMessage = await new Promise<KafkaMessage>((resolve) => {
+            consumer.run({
+                eachMessage: async ({message}) => resolve(message),
+            });
+        });
+
+        await consumer.disconnect();
+        expect(JSON.parse(consumedMessage.value?.toString() ?? '{}')).toMatchSnapshot();
+        expect(
+            Object.fromEntries(Object.entries(consumedMessage.headers!).map(([key, value]) => [key, value?.toString()]))
+        ).toMatchSnapshot();
 
         const admin = kafkaOrchestrator.kafkaClient.admin();
 
         await admin.connect();
 
-        const metadata = await admin.fetchOffsets({groupId: 'test', topics: ['foo']});
+        const metadata = await admin.fetchOffsets({groupId: 'test', topics: [topic]});
 
         admin.disconnect();
 

@@ -11,8 +11,8 @@ java_library(
         "@third_party//3rdparty/jvm/ch/qos/logback:logback_core",
         "@third_party//3rdparty/jvm/ch/qos/logback/contrib:logback_jackson",
         "@third_party//3rdparty/jvm/ch/qos/logback/contrib:logback_json_classic",
-        "@third_party//3rdparty/jvm/com/google/guava",
         "@third_party//3rdparty/jvm/com/fasterxml/jackson/core:jackson_databind",
+        "@third_party//3rdparty/jvm/com/google/guava",
         "@third_party//3rdparty/jvm/com/google/protobuf:protobuf_java",
         "@third_party//3rdparty/jvm/com/google/protobuf:protobuf_java_util",
         "@third_party//3rdparty/jvm/com/spotify:futures_extra",
@@ -24,22 +24,16 @@ java_library(
         "@third_party//3rdparty/jvm/io/prometheus:simpleclient_httpserver",
         "@third_party//3rdparty/jvm/net/jodah:failsafe",
         "@third_party//3rdparty/jvm/org/apache/kafka:kafka_clients",
+        "@third_party//3rdparty/jvm/org/jetbrains:annotations",
         "@third_party//3rdparty/jvm/org/json",
         "@third_party//3rdparty/jvm/org/reactivestreams:reactive_streams",
         "@third_party//3rdparty/jvm/org/slf4j:slf4j_api",
-        "@third_party//3rdparty/jvm/org/jetbrains:annotations"
     ],
 )
 
 java_image(
     name = "image",
+    base = "@java_base_image//image",
     main_class = "Main",
     runtime_deps = [":lib"],
-    base = "@java_base_image//image",
-)
-
-sh_binary(
-    name = "load",
-    srcs = ["load-image.sh"],
-    deps = ["//src:image.tar"],
 )
