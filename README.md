@@ -93,6 +93,7 @@ Container images are configured using parameters passed at runtime.
 | `PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH` | `408` | Produce to retry topic on matching status code |
 | `PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH` | `4[0-9][0-79]` | Produce to dead letter topic when matching status code regex |
 | `RETRY_POLICY_EXPONENTIAL_BACKOFF` | `50,5000,10` | A list that represents the `[delay, maxDelay, delayFactor]` in retrying message processing |
+| `RETRY_POLICY_JITTER_FACTOR` | `0.1` | A Jitter factor used for backoff. |
 | `RETRY_TOPIC` | `null` | Retry topic name |
 | `DEAD_LETTER_TOPIC` | `null` | Dead letter topic name |
 | `PROCESSING_DELAY` | `0` | Delay the received batch processing |
