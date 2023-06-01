@@ -104,6 +104,21 @@ exports[`tests should produce and consume 1`] = `
 }
 `;
 
+exports[`tests should produce and consume 2`] = `
+[
+  {
+    "partitions": [
+      {
+        "metadata": null,
+        "offset": "1",
+        "partition": 0,
+      },
+    ],
+    "topic": "foo",
+  },
+]
+`;
+
 exports[`tests should transform and add cloud event headers to target call 1`] = `
 {
   "body": {

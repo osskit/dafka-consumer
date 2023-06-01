@@ -1,6 +1,7 @@
 package configuration;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import java.io.InvalidObjectException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -52,11 +53,21 @@ public class Config {
         GROUP_ID = getString(dotenv, "GROUP_ID");
         TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
         TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
-        TARGET_TIMEOUT_MS = getOptionalLong(dotenv, "TARGET_TIMEOUT_MS", Integer.MAX_VALUE);
 
         POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);
+        TARGET_TIMEOUT_MS = getOptionalLong(dotenv, "TARGET_TIMEOUT_MS", POLL_TIMEOUT - 100);
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 50);
         SESSION_TIMEOUT = getOptionalInt(dotenv, "SESSION_TIMEOUT", 10000);
+
+        if (POLL_TIMEOUT < TARGET_TIMEOUT_MS) {
+            throw new InvalidObjectException(
+                String.format(
+                    "POLL_TIMEOUT (%s) must be greater than TARGET_TIMEOUT_MS (%s)",
+                    POLL_TIMEOUT,
+                    TARGET_TIMEOUT_MS
+                )
+            );
+        }
 
         RETRY_PROCESS_WHEN_STATUS_CODE_MATCH =
             getOptionalString(dotenv, "RETRY_PROCESS_WHEN_STATUS_CODE_MATCH", "5[0-9][0-9]");
@@ -153,6 +164,11 @@ public class Config {
     }
 
     private static double getOptionalDouble(Dotenv dotenv, String name, double fallback) {
+        var raw = dotenv.get(name);
+
+        if (raw == null) {
+            return fallback;
+        }
         try {
             return Double.parseDouble(dotenv.get(name));
         } catch (NumberFormatException e) {

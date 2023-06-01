@@ -55,13 +55,25 @@ describe('tests', () => {
             },
             response: faulty
                 ? {
-                      //@ts-ignore
                       fault: 'CONNECTION_RESET_BY_PEER',
                   }
                 : {
                       status,
                   },
         });
+
+    const assertOffset = async (topic: string) => {
+        const admin = kafkaOrchestrator.kafkaClient.admin();
+
+        await admin.connect();
+
+        const metadata = await admin.fetchOffsets({groupId: 'test', topics: [topic]});
+
+        admin.disconnect();
+
+        expect(metadata).toMatchSnapshot();
+    };
+
     it('should produce and consume', async () => {
         await start(['foo'], [{topic: 'foo', targetPath: '/consume'}]);
 
@@ -76,6 +88,8 @@ describe('tests', () => {
             headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
             loggedDate: expect.any(Number),
         });
+
+        await assertOffset('foo');
     }, 1800000);
 
     it('should produce and consume with regex patterns', async () => {
@@ -277,14 +291,6 @@ describe('tests', () => {
             Object.fromEntries(Object.entries(consumedMessage.headers!).map(([key, value]) => [key, value?.toString()]))
         ).toMatchSnapshot();
 
-        const admin = kafkaOrchestrator.kafkaClient.admin();
-
-        await admin.connect();
-
-        const metadata = await admin.fetchOffsets({groupId: 'test', topics: [topic]});
-
-        admin.disconnect();
-
-        expect(metadata).toMatchSnapshot();
+        await assertOffset(topic);
     }, 1800000);
 });
