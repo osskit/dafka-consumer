@@ -629,10 +629,10 @@
   resolved "https://registry.yarnpkg.com/@osskit/tsconfig/-/tsconfig-0.0.6.tgz#9d5ade8a42289fdf2f9b53fc50f1104e97b0ef3b"
   integrity sha512-J6aNh0Jr17S/06r/6QkVJ34QIHS768qnT4zcDedJRXzsjVeQAbnh3LVDwaWyWK75YlFSBK5ef1FYjXroIFt+KA==
 
-"@osskit/wiremock-client@^4.3.0":
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/@osskit/wiremock-client/-/wiremock-client-4.3.0.tgz#a137b299aa9338f87d306aacdb816dcce98ab2d4"
-  integrity sha512-Ozzbqcgs59iizo8nIHI68jxxJyIvGxBvYhXZG0MbaRtxWwolsf94bPrVoDV3c/2iFOGXXkCnrL9PNCqMZVJHXw==
+"@osskit/wiremock-client@^4.3.1":
+  version "4.3.1"
+  resolved "https://registry.yarnpkg.com/@osskit/wiremock-client/-/wiremock-client-4.3.1.tgz#028124b75f63cc4e4afa8e78cb2395f2716cbf7e"
+  integrity sha512-pu1V1/nRj4LQGNvMUdA1R/XTwqHqMUPNmF2aInUH0vBoQszYrLRzS7WaZLvACn+f+UqEempe1SvGSwyo03dqvA==
   dependencies:
     p-wait-for "^5.0.0"
     wiremock-rest-client "^1.10.0"

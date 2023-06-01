@@ -20,7 +20,7 @@
         "logs": "docker-compose -f tests/dafka.yml logs"
     },
     "dependencies": {
-        "@osskit/wiremock-client": "^4.3.0",
+        "@osskit/wiremock-client": "^4.3.1",
         "@types/jest": "^24.0.12",
         "@types/lodash": "^4.14.149",
         "@types/node": "^18.16.3",

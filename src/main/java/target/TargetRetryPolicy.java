@@ -30,14 +30,13 @@ public class TargetRetryPolicy {
 
         return new RetryPolicy<T>()
             .withBackoff(delay, maxDelay, ChronoUnit.MILLIS, delayFactor)
+            .handleIf(e -> true)
             .handleResultIf(
                 r -> String.valueOf(getStatusCode.applyAsInt(r)).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH)
             )
             .onSuccess(
                 x -> {
                     var statusCode = String.valueOf(getStatusCode.applyAsInt(x.getResult()));
-
-                    System.out.println("Status code: " + statusCode);
 
                     if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
                         Monitor.processMessageError();
@@ -60,18 +59,19 @@ public class TargetRetryPolicy {
                     Monitor.processMessageSuccess(executionStart);
                 }
             )
-            .onFailedAttempt(
-                x ->
-                    Monitor.targetExecutionRetry(
-                        record,
-                        Optional.of(String.valueOf(getStatusCode.applyAsInt(x.getLastResult()))),
-                        x.getLastFailure(),
-                        x.getAttemptCount()
-                    )
+            .onRetry(
+                x -> {
+                    Optional<String> result = Optional.empty();
+
+                    if (x.getLastResult() != null) {
+                        result = Optional.of(String.valueOf(getStatusCode.applyAsInt(x.getLastResult())));
+                    }
+
+                    Monitor.targetExecutionRetry(record, result, x.getLastFailure(), x.getAttemptCount());
+                }
             )
             .onRetriesExceeded(
-                __ -> {
-                    System.out.println("oh no");
+                x -> {
                     if (retryTopic != null) {
                         producer.produce(retryTopic, record);
                         Monitor.retryProduced(record);

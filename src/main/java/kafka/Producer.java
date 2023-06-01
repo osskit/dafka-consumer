@@ -38,8 +38,6 @@ public class Producer {
     public void produce(String topic, ConsumerRecord<String, String> record) {
         Headers headers = getHeaders(record);
 
-        System.out.println("Producing :(");
-
         producer.send(
             new ProducerRecord<>(topic, null, record.key(), record.value(), headers),
             (metadata, err) -> {

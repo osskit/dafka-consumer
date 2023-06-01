@@ -100,16 +100,7 @@ public class HttpTarget implements ITarget {
         return Failsafe
             .with(
                 Fallback.of(defaultResponse),
-                retryPolicy.<Optional<HttpResponse<String>>>get(
-                    record,
-                    r -> {
-                        if (r.isEmpty()) {
-                            return -1;
-                        }
-
-                        return r.get().statusCode();
-                    }
-                )
+                retryPolicy.get(record, o -> o.map(r -> r.statusCode()).orElseGet(() -> -1))
             )
             .getStageAsync(completionStageCheckedSupplier)
             .thenApplyAsync(

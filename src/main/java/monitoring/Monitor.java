@@ -165,6 +165,7 @@ public class Monitor {
                                 .put("partition", record.partition())
                                 .put("offset", record.offset())
                                 .put("headers", record.headers())
+                                .put("key", record.key())
                         )
                 )
         );
@@ -336,7 +337,6 @@ public class Monitor {
         log.put("err", error);
 
         write(log);
-
         targetExecutionRetry.labels(String.valueOf(attempt)).inc();
     }
 
