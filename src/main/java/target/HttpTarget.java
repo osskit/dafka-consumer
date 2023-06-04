@@ -69,31 +69,32 @@ public class HttpTarget implements ITarget {
         final var request = builder.build();
         final long startTime = (new Date()).getTime();
 
-        var httpFuture = HttpClient
-            .newHttpClient()
-            .sendAsync(request, HttpResponse.BodyHandlers.ofString())
-            .whenComplete(
-                (__, throwable) -> {
-                    if (throwable instanceof HttpTimeoutException) {
-                        Monitor.targetExecutionTimeout(record);
+        final CheckedSupplier<CompletionStage<Optional<HttpResponse<String>>>> completionStageCheckedSupplier = () -> {
+            var httpFuture = HttpClient
+                .newHttpClient()
+                .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .whenComplete(
+                    (__, throwable) -> {
+                        if (throwable instanceof HttpTimeoutException) {
+                            Monitor.targetExecutionTimeout(record);
+                        }
+                    }
+                );
+
+            var result = new CompletableFuture<Optional<HttpResponse<String>>>();
+
+            httpFuture.whenComplete(
+                (ok, error) -> {
+                    if (error != null) {
+                        result.completeExceptionally(error);
+                    } else {
+                        result.complete(Optional.of(ok));
                     }
                 }
             );
 
-        var result = new CompletableFuture<Optional<HttpResponse<String>>>();
-
-        httpFuture.whenComplete(
-            (ok, error) -> {
-                if (error != null) {
-                    result.completeExceptionally(error);
-                } else {
-                    result.complete(Optional.of(ok));
-                }
-            }
-        );
-
-        final CheckedSupplier<CompletionStage<Optional<HttpResponse<String>>>> completionStageCheckedSupplier = () ->
-            result;
+            return result;
+        };
 
         Optional<HttpResponse<String>> defaultResponse = Optional.empty();
 

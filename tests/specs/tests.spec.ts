@@ -241,10 +241,6 @@ describe('tests', () => {
 
         await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
 
-        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
-
-        expect(calls).toHaveLength(1);
-
         // because we need Hamsa Hamsa Hamsa for tests to work
         const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
 
@@ -262,6 +258,10 @@ describe('tests', () => {
         expect(
             Object.fromEntries(Object.entries(consumedMessage.headers!).map(([key, value]) => [key, value?.toString()]))
         ).toMatchSnapshot();
+
+        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
+
+        expect(calls).toHaveLength(3);
     }, 1800000);
 
     it('consumer should produce to retry topic on an unexpected error', async () => {

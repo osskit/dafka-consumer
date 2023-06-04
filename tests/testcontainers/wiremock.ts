@@ -7,6 +7,7 @@ export const wiremock = async (network: StartedNetwork) => {
         .withExposedPorts(8080)
         .withNetworkMode(network.getName())
         .withNetworkAliases('mocks')
+        .withCommand(['--verbose'])
         .start();
 
     return {
