@@ -1,7 +1,6 @@
 package configuration;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import java.io.InvalidObjectException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -60,7 +59,7 @@ public class Config {
         SESSION_TIMEOUT = getOptionalInt(dotenv, "SESSION_TIMEOUT", 10000);
 
         if (POLL_TIMEOUT < TARGET_TIMEOUT_MS) {
-            throw new InvalidObjectException(
+            throw new IllegalArgumentException(
                 String.format(
                     "POLL_TIMEOUT (%s) must be greater than TARGET_TIMEOUT_MS (%s)",
                     POLL_TIMEOUT,

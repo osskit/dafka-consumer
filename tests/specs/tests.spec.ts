@@ -34,6 +34,7 @@ describe('tests', () => {
             GROUP_ID: 'test',
             TARGET_BASE_URL: 'http://mocks:8080',
             TOPICS_ROUTES: topicRoutes.map(({topic, targetPath}) => `${topic}:${targetPath}`).join(','),
+            RETRY_POLICY_EXPONENTIAL_BACKOFF: '1,5,2',
             ...consumerSettings,
         });
 
@@ -242,7 +243,7 @@ describe('tests', () => {
 
         const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
 
-        expect(calls).toHaveLength(2);
+        expect(calls).toHaveLength(1);
 
         // because we need Hamsa Hamsa Hamsa for tests to work
         const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
