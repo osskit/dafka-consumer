@@ -27,11 +27,9 @@ public class TargetRetryPolicy {
         var delay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
         var maxDelay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
         var delayFactor = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
-        var jitterFactor = Config.RETRY_POLICY_JITTER_FACTOR;
 
         return new RetryPolicy<T>()
             .withBackoff(delay, maxDelay, ChronoUnit.MILLIS, delayFactor)
-            .withJitter(jitterFactor)
             .handleIf(e -> true)
             .handleResultIf(
                 r -> String.valueOf(getStatusCode.applyAsInt(r)).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH)

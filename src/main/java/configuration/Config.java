@@ -77,7 +77,6 @@ public class Config {
             getOptionalString(dotenv, "PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH", "4[0-9][0-79]");
         RETRY_POLICY_EXPONENTIAL_BACKOFF =
             getOptionalIntList(dotenv, "RETRY_POLICY_EXPONENTIAL_BACKOFF", 3, List.of(50, 5000, 10));
-        RETRY_POLICY_JITTER_FACTOR = getOptionalDouble(dotenv, "RETRY_POLICY_JITTER_FACTOR", 0.1);
         RETRY_TOPIC = getOptionalString(dotenv, "RETRY_TOPIC", null);
 
         DEAD_LETTER_TOPIC = getOptionalString(dotenv, "DEAD_LETTER_TOPIC", null);
@@ -158,19 +157,6 @@ public class Config {
         try {
             return Boolean.parseBoolean(getString(dotenv, name));
         } catch (Exception e) {
-            return fallback;
-        }
-    }
-
-    private static double getOptionalDouble(Dotenv dotenv, String name, double fallback) {
-        var raw = dotenv.get(name);
-
-        if (raw == null) {
-            return fallback;
-        }
-        try {
-            return Double.parseDouble(dotenv.get(name));
-        } catch (NumberFormatException e) {
             return fallback;
         }
     }
