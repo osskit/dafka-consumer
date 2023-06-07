@@ -19,6 +19,7 @@ public class Config {
 
     //Optional
     public static int POLL_TIMEOUT;
+    public static int KAFKA_POLL_INTERVAL_MS;
     public static int MAX_POLL_RECORDS;
     public static int PROCESSING_DELAY;
     public static int SESSION_TIMEOUT;
@@ -28,6 +29,7 @@ public class Config {
     public static String PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static String PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static List<Integer> RETRY_POLICY_EXPONENTIAL_BACKOFF;
+    public static int RETRY_POLICY_MAX_DURATION_MS;
     public static long TARGET_TIMEOUT_MS;
 
     //Authentication
@@ -53,15 +55,29 @@ public class Config {
         TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
 
         POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);
-        TARGET_TIMEOUT_MS = getOptionalLong(dotenv, "TARGET_TIMEOUT_MS", POLL_TIMEOUT - 100);
+        KAFKA_POLL_INTERVAL_MS = getOptionalInt(dotenv, "KAFKA_POLL_INTERVAL_MS", 5 * 60 * 1000);
+
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 50);
         SESSION_TIMEOUT = getOptionalInt(dotenv, "SESSION_TIMEOUT", 10000);
+        RETRY_POLICY_MAX_DURATION_MS =
+            getOptionalInt(dotenv, "RETRY_POLICY_MAX_DURATION_MS", KAFKA_POLL_INTERVAL_MS - 1000);
+        TARGET_TIMEOUT_MS = getOptionalLong(dotenv, "TARGET_TIMEOUT_MS", RETRY_POLICY_MAX_DURATION_MS - 1000);
 
-        if (POLL_TIMEOUT < TARGET_TIMEOUT_MS) {
+        if (KAFKA_POLL_INTERVAL_MS < RETRY_POLICY_MAX_DURATION_MS) {
             throw new IllegalArgumentException(
                 String.format(
-                    "POLL_TIMEOUT (%s) must be greater than TARGET_TIMEOUT_MS (%s)",
-                    POLL_TIMEOUT,
+                    "KAFKA_POLL_INTERVAL_MS (%s) must be greater than RETRY_POLICY_MAX_DURATION_MS (%s)",
+                    KAFKA_POLL_INTERVAL_MS,
+                    RETRY_POLICY_MAX_DURATION_MS
+                )
+            );
+        }
+
+        if (RETRY_POLICY_MAX_DURATION_MS < TARGET_TIMEOUT_MS) {
+            throw new IllegalArgumentException(
+                String.format(
+                    "RETRY_POLICY_MAX_DURATION_MS (%s) must be greater than TARGET_TIMEOUT_MS (%s)",
+                    RETRY_POLICY_MAX_DURATION_MS,
                     TARGET_TIMEOUT_MS
                 )
             );
