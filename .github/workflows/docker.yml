@@ -17,10 +17,7 @@ jobs:
                   mkdir -p "${GITHUB_WORKSPACE}/bin/"
                   mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
                   chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
-            - run: |
-                  bazel build //src:image.tar 
-                  docker load -i bazel-bin/src/image.tar
-              name: Build base image with Bazel
+
             - name: Docker meta
               id: docker_meta
               uses: docker/metadata-action@v3
@@ -40,6 +37,10 @@ jobs:
               with:
                   username: ${{ secrets.DOCKERHUB_USERNAME }}
                   password: ${{ secrets.DOCKERHUB_TOKEN }}
+            - run: |
+                  bazel build //src:image.tar 
+                  docker load -i bazel-bin/src/image.tar
+              name: Build base image with Bazel
             - name: Build and push
               id: docker_build
               uses: docker/build-push-action@v2
