@@ -41,5 +41,5 @@ jobs:
                   echo $DOCKER_METADATA_OUTPUT_TAGS
                   for tag in $(jq -r '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON"); do
                     echo $tag
-                    docker tag bazel/src:image 
+                    docker tag bazel/src:image $tag
                   done
