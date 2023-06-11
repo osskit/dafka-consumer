@@ -2,8 +2,6 @@ name: docker
 
 on:
     push:
-        tags:
-            - 'v*'
 
 jobs:
     docker:
@@ -43,7 +41,8 @@ jobs:
                   
             - name: Push
               run: |
+                  
                   for tag in $(jq -r '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON"); do
+                    echo ${{github.repository}}:$tag
                     docker tag bazel/src:image ${{github.repository}}:$tag
                   done
-                  docker push ${{github.repository}}
