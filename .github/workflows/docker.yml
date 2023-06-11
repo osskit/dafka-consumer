@@ -20,7 +20,7 @@ jobs:
 
             - name: Docker meta
               id: docker_meta
-              uses: docker/metadata-action@v3
+              uses: docker/metadata-action@v4
               with:
                   images: |
                       ${{github.repository}}
@@ -36,6 +36,7 @@ jobs:
 
             - name: Push
               run: |
+                  env
                   echo $DOCKER_METADATA_OUTPUT_TAGS
                   for tag in $(jq -r '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON"); do
                     echo ${{github.repository}}:$tag
