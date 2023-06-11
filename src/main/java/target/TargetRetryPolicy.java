@@ -1,6 +1,7 @@
 package target;
 
 import configuration.Config;
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Optional;
@@ -27,9 +28,12 @@ public class TargetRetryPolicy {
         var delay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
         var maxDelay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
         var delayFactor = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
+        var maxDuration = Duration.ofMillis(Config.RETRY_POLICY_MAX_DURATION_MS);
 
         return new RetryPolicy<T>()
             .withBackoff(delay, maxDelay, ChronoUnit.MILLIS, delayFactor)
+            .withMaxDuration(maxDuration)
+            .handleIf(e -> true)
             .handleResultIf(
                 r -> String.valueOf(getStatusCode.applyAsInt(r)).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH)
             )
@@ -58,17 +62,19 @@ public class TargetRetryPolicy {
                     Monitor.processMessageSuccess(executionStart);
                 }
             )
-            .onFailedAttempt(
-                x ->
-                    Monitor.targetExecutionRetry(
-                        record,
-                        Optional.of(String.valueOf(getStatusCode.applyAsInt(x.getLastResult()))),
-                        x.getLastFailure(),
-                        x.getAttemptCount()
-                    )
+            .onRetry(
+                x -> {
+                    Optional<String> result = Optional.empty();
+
+                    if (x.getLastResult() != null) {
+                        result = Optional.of(String.valueOf(getStatusCode.applyAsInt(x.getLastResult())));
+                    }
+
+                    Monitor.targetExecutionRetry(record, result, x.getLastFailure(), x.getAttemptCount());
+                }
             )
             .onRetriesExceeded(
-                __ -> {
+                x -> {
                     if (retryTopic != null) {
                         producer.produce(retryTopic, record);
                         Monitor.retryProduced(record);

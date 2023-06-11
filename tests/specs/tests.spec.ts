@@ -34,6 +34,7 @@ describe('tests', () => {
             GROUP_ID: 'test',
             TARGET_BASE_URL: 'http://mocks:8080',
             TOPICS_ROUTES: topicRoutes.map(({topic, targetPath}) => `${topic}:${targetPath}`).join(','),
+            RETRY_POLICY_EXPONENTIAL_BACKOFF: '1,5,2',
             ...consumerSettings,
         });
 
@@ -47,16 +48,33 @@ describe('tests', () => {
         await producer.connect();
     };
 
-    const mockHttpTarget = (url: string, status: number) =>
+    const mockHttpTarget = (url: string, status: number, faulty = false) =>
         orchestrator.wireMockClient.createMapping({
             request: {
                 url: url,
                 method: HttpMethod.Post,
             },
-            response: {
-                status,
-            },
+            response: faulty
+                ? {
+                      fault: 'CONNECTION_RESET_BY_PEER',
+                  }
+                : {
+                      status,
+                  },
         });
+
+    const assertOffset = async (topic: string) => {
+        const admin = kafkaOrchestrator.kafkaClient.admin();
+
+        await admin.connect();
+
+        const metadata = await admin.fetchOffsets({groupId: 'test', topics: [topic]});
+
+        admin.disconnect();
+
+        expect(metadata).toMatchSnapshot();
+    };
+
     it('should produce and consume', async () => {
         await start(['foo'], [{topic: 'foo', targetPath: '/consume'}]);
 
@@ -71,6 +89,8 @@ describe('tests', () => {
             headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
             loggedDate: expect.any(Number),
         });
+
+        await assertOffset('foo');
     }, 1800000);
 
     it('should produce and consume with regex patterns', async () => {
@@ -221,10 +241,6 @@ describe('tests', () => {
 
         await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
 
-        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
-
-        expect(calls).toHaveLength(2);
-
         // because we need Hamsa Hamsa Hamsa for tests to work
         const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
 
@@ -242,22 +258,40 @@ describe('tests', () => {
         expect(
             Object.fromEntries(Object.entries(consumedMessage.headers!).map(([key, value]) => [key, value?.toString()]))
         ).toMatchSnapshot();
+
+        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
+
+        expect(calls).toHaveLength(3);
     }, 1800000);
 
-    it('consumer should terminate on an unexpected error', async () => {
-        await start(['foo5'], [{topic: 'foo5', targetPath: '/consume'}], {
-            TARGET_BASE_URL: 'dummy',
+    it('consumer should produce to retry topic on an unexpected error', async () => {
+        const retryTopic = 'retry-345345';
+        const topic = `foo-45445`;
+        await start([topic, retryTopic], [{topic, targetPath: '/consume'}], {
+            RETRY_TOPIC: retryTopic,
         });
-        await producer.send({topic: 'foo5', messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
 
-        const admin = kafkaOrchestrator.kafkaClient.admin();
+        await mockHttpTarget('/consume', 200, true);
 
-        await admin.connect();
+        await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
 
-        const metadata = await admin.fetchOffsets({groupId: 'test', topics: ['foo']});
+        // because we need Hamsa Hamsa Hamsa for tests to work
+        const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
 
-        admin.disconnect();
+        await consumer.subscribe({topic: retryTopic, fromBeginning: true});
 
-        expect(metadata).toMatchSnapshot();
+        const consumedMessage = await new Promise<KafkaMessage>((resolve) => {
+            consumer.run({
+                eachMessage: async ({message}) => resolve(message),
+            });
+        });
+
+        await consumer.disconnect();
+        expect(JSON.parse(consumedMessage.value?.toString() ?? '{}')).toMatchSnapshot();
+        expect(
+            Object.fromEntries(Object.entries(consumedMessage.headers!).map(([key, value]) => [key, value?.toString()]))
+        ).toMatchSnapshot();
+
+        await assertOffset(topic);
     }, 1800000);
 });

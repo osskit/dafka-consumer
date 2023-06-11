@@ -12,6 +12,33 @@ exports[`tests consumer should produce to dead letter topic when target response
 }
 `;
 
+exports[`tests consumer should produce to retry topic on an unexpected error 1`] = `
+{
+  "data": "foo",
+}
+`;
+
+exports[`tests consumer should produce to retry topic on an unexpected error 2`] = `
+{
+  "original-topic": "foo-45445",
+}
+`;
+
+exports[`tests consumer should produce to retry topic on an unexpected error 3`] = `
+[
+  {
+    "partitions": [
+      {
+        "metadata": null,
+        "offset": "1",
+        "partition": 0,
+      },
+    ],
+    "topic": "foo-45445",
+  },
+]
+`;
+
 exports[`tests consumer should produce to retry topic when target response is 500 1`] = `
 {
   "data": "foo",
@@ -22,21 +49,6 @@ exports[`tests consumer should produce to retry topic when target response is 50
 {
   "original-topic": "foo89",
 }
-`;
-
-exports[`tests consumer should terminate on an unexpected error 1`] = `
-[
-  {
-    "partitions": [
-      {
-        "metadata": null,
-        "offset": "1",
-        "partition": 0,
-      },
-    ],
-    "topic": "foo",
-  },
-]
 `;
 
 exports[`tests should add record headers to target call 1`] = `
@@ -90,6 +102,21 @@ exports[`tests should produce and consume 1`] = `
   "queryParams": {},
   "url": "/consume",
 }
+`;
+
+exports[`tests should produce and consume 2`] = `
+[
+  {
+    "partitions": [
+      {
+        "metadata": null,
+        "offset": "1",
+        "partition": 0,
+      },
+    ],
+    "topic": "foo",
+  },
+]
 `;
 
 exports[`tests should transform and add cloud event headers to target call 1`] = `

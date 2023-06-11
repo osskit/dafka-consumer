@@ -85,7 +85,9 @@ Container images are configured using parameters passed at runtime.
 | `TARGET_BASE_URL` | `required` | The target's HTTP POST endpoint |
 | `GROUP_ID` |  `required` | A unique id for the consumer group | 
 | `TOPICS_ROUTES` | `required` | A map between topics and their endpoint routes (e.g `topic:/consume`) |
-| `TARGET_TIMEOUT_MS` | `2147483647` | Timeout for the target's response |
+| `TARGET_TIMEOUT_MS` | `298000` | Timeout for the target's response. Must be lower then RETRY_POLICY_MAX_DURATION_MS |
+| `RETRY_POLICY_MAX_DURATION_MS` | `299000` | Maximum duration of all retry attempts. Must be lower then KAFKA_POLL_INTERVAL_MS | 
+| `KAFKA_POLL_INTERVAL_MS` | `300000` (5 min) | The maximum delay between invocations of poll() when using consumer group management. See [max.poll.interval.ms](https://kafka.apache.org/documentation/#consumerconfigs_max.poll.interval.ms)  for more details.
 | `POLL_TIMEOUT` | `1000` | [Description of POLL_TIMEOUT](https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_max.poll.records) |
 | `MAX_POLL_RECORDS` | `50` | Number of records to process in a single batch |
 | `SESSION_TIMEOUT` | `10000` | [Description of SESSION_TIMEOUT](https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms) |

@@ -9,14 +9,12 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.OptionalLong;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import monitoring.Monitor;
 import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.Fallback;
 import net.jodah.failsafe.function.CheckedSupplier;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
@@ -70,8 +68,9 @@ public class HttpTarget implements ITarget {
 
         final var request = builder.build();
         final long startTime = (new Date()).getTime();
-        final CheckedSupplier<CompletionStage<HttpResponse<String>>> completionStageCheckedSupplier = () ->
-            HttpClient
+
+        final CheckedSupplier<CompletionStage<Optional<HttpResponse<String>>>> completionStageCheckedSupplier = () -> {
+            var httpFuture = HttpClient
                 .newHttpClient()
                 .sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .whenComplete(
@@ -81,11 +80,38 @@ public class HttpTarget implements ITarget {
                         }
                     }
                 );
+
+            var result = new CompletableFuture<Optional<HttpResponse<String>>>();
+
+            httpFuture.whenComplete(
+                (ok, error) -> {
+                    if (error != null) {
+                        result.completeExceptionally(error);
+                    } else {
+                        result.complete(Optional.of(ok));
+                    }
+                }
+            );
+
+            return result;
+        };
+
+        Optional<HttpResponse<String>> defaultResponse = Optional.empty();
+
         return Failsafe
-            .with(retryPolicy.<HttpResponse<String>>get(record, HttpResponse::statusCode))
+            .with(
+                Fallback.of(defaultResponse),
+                retryPolicy.get(record, o -> o.map(r -> r.statusCode()).orElseGet(() -> -1))
+            )
             .getStageAsync(completionStageCheckedSupplier)
             .thenApplyAsync(
-                response -> {
+                optionalResponse -> {
+                    if (optionalResponse.isEmpty()) {
+                        return new TargetResponse(OptionalLong.empty(), OptionalLong.empty());
+                    }
+
+                    var response = optionalResponse.get();
+
                     var callLatency = response.headers().firstValueAsLong("x-received-timestamp").isEmpty()
                         ? OptionalLong.empty()
                         : OptionalLong.of(
