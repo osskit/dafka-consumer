@@ -1,1 +1,0 @@
-FROM --platform=linux/amd64 bazel/src:image
