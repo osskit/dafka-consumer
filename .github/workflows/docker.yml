@@ -28,6 +28,7 @@ jobs:
                       type=semver,pattern={{major}}.{{minor}}.{{patch}}
                       type=semver,pattern={{major}}.{{minor}}
                       type=semver,pattern={{major}}
+                      type=ref,event=pr
 
             - name: Build base image with Bazel
               run: |
