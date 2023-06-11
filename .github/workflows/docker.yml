@@ -1,8 +1,9 @@
 name: docker
 
 on:
-    pull_request:
-        branches: [main]
+    push:
+        tags:
+            - 'v*'
 
 jobs:
     docker:
@@ -10,7 +11,6 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v2
-
             - name: Install bazelisk
               run: |
                   curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.1.0/bazelisk-linux-amd64"
@@ -28,18 +28,18 @@ jobs:
                       type=semver,pattern={{major}}.{{minor}}.{{patch}}
                       type=semver,pattern={{major}}.{{minor}}
                       type=semver,pattern={{major}}
-                      type=ref,event=pr
-
-            - name: Build base image with Bazel
-              run: |
+            - name: Login to DockerHub
+              uses: docker/login-action@v1
+              with:
+                  username: ${{ secrets.DOCKERHUB_USERNAME }}
+                  password: ${{ secrets.DOCKERHUB_TOKEN }}
+            - run: |
                   bazel build //src:image.tar 
                   docker load -i bazel-bin/src/image.tar
-
+              name: Build base image with Bazel
             - name: Push
               run: |
-                  env
-                  echo $DOCKER_METADATA_OUTPUT_TAGS
                   for tag in $(jq -r '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON"); do
-                    echo $tag
-                    docker tag bazel/src:image $tag
+                    docker tag demo:0.0.1-SNAPSHOT $tag
                   done
+                  docker push ${{github.repository}}
