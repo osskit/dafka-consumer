@@ -34,52 +34,46 @@ public class TargetRetryPolicy {
             .withBackoff(delay, maxDelay, ChronoUnit.MILLIS, delayFactor)
             .withMaxDuration(maxDuration)
             .handleIf(e -> true)
-            .handleResultIf(
-                r -> String.valueOf(getStatusCode.applyAsInt(r)).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH)
+            .handleResultIf(r ->
+                String.valueOf(getStatusCode.applyAsInt(r)).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH)
             )
-            .onSuccess(
-                x -> {
-                    var statusCode = String.valueOf(getStatusCode.applyAsInt(x.getResult()));
+            .onSuccess(x -> {
+                var statusCode = String.valueOf(getStatusCode.applyAsInt(x.getResult()));
 
-                    if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
-                        Monitor.processMessageError();
-                        if (retryTopic != null) {
-                            producer.produce(retryTopic, record);
-                            Monitor.retryProduced(record);
-                            return;
-                        }
-                    }
-
-                    if (statusCode.matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH)) {
-                        Monitor.processMessageError();
-                        if (deadLetterTopic != null) {
-                            producer.produce(deadLetterTopic, record);
-                            Monitor.deadLetterProcdued(record);
-                        }
-                        return;
-                    }
-
-                    Monitor.processMessageSuccess(executionStart);
-                }
-            )
-            .onRetry(
-                x -> {
-                    Optional<String> result = Optional.empty();
-
-                    if (x.getLastResult() != null) {
-                        result = Optional.of(String.valueOf(getStatusCode.applyAsInt(x.getLastResult())));
-                    }
-
-                    Monitor.targetExecutionRetry(record, result, x.getLastFailure(), x.getAttemptCount());
-                }
-            )
-            .onRetriesExceeded(
-                x -> {
+                if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
+                    Monitor.processMessageError();
                     if (retryTopic != null) {
                         producer.produce(retryTopic, record);
                         Monitor.retryProduced(record);
+                        return;
                     }
                 }
-            );
+
+                if (statusCode.matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH)) {
+                    Monitor.processMessageError();
+                    if (deadLetterTopic != null) {
+                        producer.produce(deadLetterTopic, record);
+                        Monitor.deadLetterProcdued(record);
+                    }
+                    return;
+                }
+
+                Monitor.processMessageSuccess(executionStart);
+            })
+            .onRetry(x -> {
+                Optional<String> result = Optional.empty();
+
+                if (x.getLastResult() != null) {
+                    result = Optional.of(String.valueOf(getStatusCode.applyAsInt(x.getLastResult())));
+                }
+
+                Monitor.targetExecutionRetry(record, result, x.getLastFailure(), x.getAttemptCount());
+            })
+            .onRetriesExceeded(x -> {
+                if (retryTopic != null) {
+                    producer.produce(retryTopic, record);
+                    Monitor.retryProduced(record);
+                }
+            });
     }
 }

@@ -54,17 +54,15 @@ public class HttpTarget implements ITarget {
 
         record
             .headers()
-            .forEach(
-                header -> {
-                    String headerKey = header.key();
+            .forEach(header -> {
+                String headerKey = header.key();
 
-                    if (cloudEventHeaders.contains(headerKey)) {
-                        headerKey = headerKey.replace("_", "-");
-                    }
-
-                    builder.header(headerKey, new String(header.value(), StandardCharsets.UTF_8));
+                if (cloudEventHeaders.contains(headerKey)) {
+                    headerKey = headerKey.replace("_", "-");
                 }
-            );
+
+                builder.header(headerKey, new String(header.value(), StandardCharsets.UTF_8));
+            });
 
         final var request = builder.build();
         final long startTime = (new Date()).getTime();
@@ -73,25 +71,21 @@ public class HttpTarget implements ITarget {
             var httpFuture = HttpClient
                 .newHttpClient()
                 .sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .whenComplete(
-                    (__, throwable) -> {
-                        if (throwable instanceof HttpTimeoutException) {
-                            Monitor.targetExecutionTimeout(record);
-                        }
+                .whenComplete((__, throwable) -> {
+                    if (throwable instanceof HttpTimeoutException) {
+                        Monitor.targetExecutionTimeout(record);
                     }
-                );
+                });
 
             var result = new CompletableFuture<Optional<HttpResponse<String>>>();
 
-            httpFuture.whenComplete(
-                (ok, error) -> {
-                    if (error != null) {
-                        result.completeExceptionally(error);
-                    } else {
-                        result.complete(Optional.of(ok));
-                    }
+            httpFuture.whenComplete((ok, error) -> {
+                if (error != null) {
+                    result.completeExceptionally(error);
+                } else {
+                    result.complete(Optional.of(ok));
                 }
-            );
+            });
 
             return result;
         };
@@ -104,27 +98,25 @@ public class HttpTarget implements ITarget {
                 retryPolicy.get(record, o -> o.map(r -> r.statusCode()).orElseGet(() -> -1))
             )
             .getStageAsync(completionStageCheckedSupplier)
-            .thenApplyAsync(
-                optionalResponse -> {
-                    if (optionalResponse.isEmpty()) {
-                        return new TargetResponse(OptionalLong.empty(), OptionalLong.empty());
-                    }
-
-                    var response = optionalResponse.get();
-
-                    var callLatency = response.headers().firstValueAsLong("x-received-timestamp").isEmpty()
-                        ? OptionalLong.empty()
-                        : OptionalLong.of(
-                            response.headers().firstValueAsLong("x-received-timestamp").getAsLong() - startTime
-                        );
-                    var resultLatency = response.headers().firstValueAsLong("x-completed-timestamp").isEmpty()
-                        ? OptionalLong.empty()
-                        : OptionalLong.of(
-                            (new Date()).getTime() -
-                            response.headers().firstValueAsLong("x-completed-timestamp").getAsLong()
-                        );
-                    return new TargetResponse(callLatency, resultLatency);
+            .thenApplyAsync(optionalResponse -> {
+                if (optionalResponse.isEmpty()) {
+                    return new TargetResponse(OptionalLong.empty(), OptionalLong.empty());
                 }
-            );
+
+                var response = optionalResponse.get();
+
+                var callLatency = response.headers().firstValueAsLong("x-received-timestamp").isEmpty()
+                    ? OptionalLong.empty()
+                    : OptionalLong.of(
+                        response.headers().firstValueAsLong("x-received-timestamp").getAsLong() - startTime
+                    );
+                var resultLatency = response.headers().firstValueAsLong("x-completed-timestamp").isEmpty()
+                    ? OptionalLong.empty()
+                    : OptionalLong.of(
+                        (new Date()).getTime() -
+                        response.headers().firstValueAsLong("x-completed-timestamp").getAsLong()
+                    );
+                return new TargetResponse(callLatency, resultLatency);
+            });
     }
 }

@@ -92,14 +92,12 @@ public class Main {
         Runtime
             .getRuntime()
             .addShutdownHook(
-                new Thread(
-                    () -> {
-                        Monitor.shuttingDown();
-                        consumer.dispose();
-                        monitoringServer.close();
-                        latch.countDown();
-                    }
-                )
+                new Thread(() -> {
+                    Monitor.shuttingDown();
+                    consumer.dispose();
+                    monitoringServer.close();
+                    latch.countDown();
+                })
             );
     }
 }
