@@ -1,10 +1,12 @@
 package kafka;
 
 import configuration.Config;
+import java.util.concurrent.Future;
 import monitoring.Monitor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
@@ -35,16 +37,9 @@ public class Producer {
         return headersToSend;
     }
 
-    public void produce(String topic, ConsumerRecord<String, String> record) {
+    public Future<RecordMetadata> produce(String topic, ConsumerRecord<String, String> record) {
         Headers headers = getHeaders(record);
 
-        producer.send(
-            new ProducerRecord<>(topic, null, record.key(), record.value(), headers),
-            (metadata, err) -> {
-                if (err != null) {
-                    Monitor.produceError(topic, record, err);
-                }
-            }
-        );
+        return producer.send(new ProducerRecord<>(topic, null, record.key(), record.value(), headers));
     }
 }
