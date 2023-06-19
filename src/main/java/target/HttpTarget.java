@@ -75,8 +75,9 @@ public class HttpTarget implements ITarget {
 
         record
             .headers()
-            .forEach(header -> {
-                String headerKey = header.key();
+            .forEach(
+                header -> {
+                    String headerKey = header.key();
 
                     if (cloudEventHeaders.contains(headerKey)) {
                         headerKey = headerKey.replace("_", "-");
@@ -84,9 +85,7 @@ public class HttpTarget implements ITarget {
 
                     requestBuilder.header(headerKey, new String(header.value(), StandardCharsets.UTF_8));
                 }
-
-                builder.header(headerKey, new String(header.value(), StandardCharsets.UTF_8));
-            });
+            );
 
         final var request = requestBuilder.build();
 

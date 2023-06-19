@@ -87,7 +87,7 @@ public class Main {
             .addShutdownHook(
                 new Thread(
                     () -> {
-                        Monitor.shuttingDown();
+                        LegacyMonitor.shuttingDown();
                         consumer.dispose();
                         monitoringServer.close();
                         latch.countDown();
