@@ -2,34 +2,53 @@ package target;
 
 import configuration.Config;
 import configuration.TopicsRoutes;
-import dev.failsafe.Failsafe;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.okhttp.FailsafeCall;
-import java.net.http.HttpResponse;
+import io.prometheus.client.Counter;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import kafka.Producer;
+import monitoring.LegacyMonitor;
 import monitoring.Monitor;
 import okhttp3.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 public class HttpTarget implements ITarget {
 
     public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
+    private static Counter targetExecutionRetry;
 
     private final TopicsRoutes topicsRoutes;
+
+    private static final Logger logger = LoggerFactory.getLogger(HttpTarget.class);
+
     private static final OkHttpClient client = new OkHttpClient.Builder()
         .callTimeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS))
         .build();
 
     private final Producer producer;
+    private final Monitor monitor;
 
     public HttpTarget(TopicsRoutes topicsRoutes, Producer producer) {
         this.topicsRoutes = topicsRoutes;
         this.producer = producer;
+        var labels = new ArrayList<String>();
+        labels.add("topic");
+        this.monitor = new Monitor("httpTarget", labels);
+
+        targetExecutionRetry =
+            Counter
+                .build()
+                .name("target_execution_retry")
+                .labelNames("attempt", "topic")
+                .help("target_execution_retry")
+                .register();
     }
 
     List<String> cloudEventHeaders = new ArrayList<>() {
@@ -78,21 +97,49 @@ public class HttpTarget implements ITarget {
         var delayFactor = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
         var maxDuration = Duration.ofMillis(Config.RETRY_POLICY_MAX_DURATION_MS);
 
+        var labels = new ArrayList<String>();
+        labels.add(record.topic());
+        var context = new HashMap<String, String>();
+        context.put("topic", record.topic());
+        context.put("key", record.key());
+        context.put("value", record.value());
+
         var retryPolicy = RetryPolicy
             .<Response>builder()
             .withBackoff(delay, maxDelay, ChronoUnit.MILLIS, delayFactor)
             .handleIf(e -> true)
             .handleResultIf(r -> Integer.toString(r.code()).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH))
             .withMaxDuration(maxDuration)
+            .onRetry(
+                e -> {
+                    var attemptCount = Integer.toString(e.getAttemptCount());
+                    MDC.put("attempt_count", attemptCount);
+
+                    context.forEach((key, value) -> MDC.put(key, value));
+
+                    if (e.getLastException() != null) {
+                        logger.info("attempt failed", e.getLastException());
+                    } else {
+                        var response = e.getLastResult();
+                        MDC.put("status_code", Integer.toString(response.code()));
+                        MDC.put("response_body", response.body().string());
+
+                        logger.info("attempt failed");
+                    }
+                    MDC.clear();
+                    targetExecutionRetry.labels(attemptCount, record.topic()).inc();
+                }
+            )
             .build();
 
-        return FailsafeCall
-            .with(retryPolicy)
-            .compose(call)
-            .executeAsync()
+        return this.monitor.monitor(
+                "call",
+                labels,
+                context,
+                FailsafeCall.with(retryPolicy).compose(call).executeAsync()
+            )
             .handleAsync(
                 (response, throwable) -> {
-                    System.out.println("handling " + throwable + " " + response);
                     if (throwable != null) {
                         if (Config.RETRY_TOPIC != null) {
                             return producer.produce(Config.RETRY_TOPIC, record);
@@ -104,17 +151,15 @@ public class HttpTarget implements ITarget {
                     var statusCode = Integer.toString(response.code());
 
                     if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
-                        Monitor.processMessageError();
+                        LegacyMonitor.processMessageError();
                         if (Config.RETRY_TOPIC != null) {
-                            Monitor.retryProduced(record);
                             return producer.produce(Config.RETRY_TOPIC, record);
                         }
                     }
 
                     if (statusCode.matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH)) {
-                        Monitor.processMessageError();
+                        LegacyMonitor.processMessageError();
                         if (Config.DEAD_LETTER_TOPIC != null) {
-                            Monitor.deadLetterProcdued(record);
                             return producer.produce(Config.DEAD_LETTER_TOPIC, record);
                         }
                     }

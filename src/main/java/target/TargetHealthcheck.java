@@ -1,12 +1,11 @@
 package target;
 
 import configuration.Config;
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import monitoring.Monitor;
+import monitoring.LegacyMonitor;
 
 public class TargetHealthcheck {
 
@@ -27,12 +26,14 @@ public class TargetHealthcheck {
 
             var targetHealthcheckResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
             if (targetHealthcheckResponse.statusCode() != 200) {
-                Monitor.targetHealthcheckFailed(new Exception("received " + targetHealthcheckResponse.statusCode()));
+                LegacyMonitor.targetHealthcheckFailed(
+                    new Exception("received " + targetHealthcheckResponse.statusCode())
+                );
                 return false;
             }
             return true;
         } catch (Exception e) {
-            Monitor.targetHealthcheckFailed(e);
+            LegacyMonitor.targetHealthcheckFailed(e);
             return false;
         }
     }

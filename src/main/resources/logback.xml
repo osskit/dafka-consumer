@@ -1,4 +1,7 @@
 <configuration>
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <resetJUL>true</resetJUL>
+    </contextListener>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
             <layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
@@ -13,8 +16,17 @@
         </encoder>
     </appender>
 
-    <variable name="ROOT_LOG_LEVEL" value="${ROOT_LOG_LEVEL:-WARN}" />
-    <root level="${ROOT_LOG_LEVEL}">
+    <variable name="KAFKA_LOG_LEVEL" value="${KAFKA_LOG_LEVEL:-WARN}" />
+
+    <logger name="okhttp3.OkHttpClient" level="INFO" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="org.apache.kafka" level="${KAFKA_LOG_LEVEL}" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>
