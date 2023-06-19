@@ -20,16 +20,14 @@ public class HttpTarget implements ITarget {
 
     public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
-    private final TargetRetryPolicy retryPolicy;
     private final TopicsRoutes topicsRoutes;
-    private final OkHttpClient client = new OkHttpClient.Builder()
+    private static final OkHttpClient client = new OkHttpClient.Builder()
         .callTimeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS))
         .build();
 
     private final Producer producer;
 
-    public HttpTarget(final TargetRetryPolicy retryPolicy, TopicsRoutes topicsRoutes, Producer producer) {
-        this.retryPolicy = retryPolicy;
+    public HttpTarget(TopicsRoutes topicsRoutes, Producer producer) {
         this.topicsRoutes = topicsRoutes;
         this.producer = producer;
     }
@@ -44,7 +42,7 @@ public class HttpTarget implements ITarget {
         }
     };
 
-    public CompletableFuture<TargetResponse> call(final ConsumerRecord<String, String> record) {
+    public CompletableFuture<Object> call(final ConsumerRecord<String, String> record) {
         var body = RequestBody.create(record.value(), JSON);
 
         var requestBuilder = new Request.Builder()
@@ -94,8 +92,13 @@ public class HttpTarget implements ITarget {
             .executeAsync()
             .handleAsync(
                 (response, throwable) -> {
-                    if (throwable != null && Config.RETRY_TOPIC != null) {
-                        return producer.produce(Config.RETRY_TOPIC, record);
+                    System.out.println("handling " + throwable + " " + response);
+                    if (throwable != null) {
+                        if (Config.RETRY_TOPIC != null) {
+                            return producer.produce(Config.RETRY_TOPIC, record);
+                        }
+
+                        return CompletableFuture.failedFuture(throwable);
                     }
 
                     var statusCode = Integer.toString(response.code());
@@ -103,20 +106,20 @@ public class HttpTarget implements ITarget {
                     if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
                         Monitor.processMessageError();
                         if (Config.RETRY_TOPIC != null) {
-                            producer.produce(Config.RETRY_TOPIC, record);
                             Monitor.retryProduced(record);
-                            return;
+                            return producer.produce(Config.RETRY_TOPIC, record);
                         }
                     }
 
                     if (statusCode.matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH)) {
                         Monitor.processMessageError();
                         if (Config.DEAD_LETTER_TOPIC != null) {
-                            producer.produce(Config.DEAD_LETTER_TOPIC, record);
                             Monitor.deadLetterProcdued(record);
+                            return producer.produce(Config.DEAD_LETTER_TOPIC, record);
                         }
-                        return;
                     }
+
+                    return CompletableFuture.completedFuture(null);
                 }
             );
     }

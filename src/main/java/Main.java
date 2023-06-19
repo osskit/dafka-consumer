@@ -64,14 +64,7 @@ public class Main {
                     }
                 }
             ),
-            new HttpTarget(
-                new TargetRetryPolicy(
-                    new Producer(KafkaClientFactory.createProducer()),
-                    Config.RETRY_TOPIC,
-                    Config.DEAD_LETTER_TOPIC
-                ),
-                topicsRoutes
-            )
+            new HttpTarget(topicsRoutes, new Producer(KafkaClientFactory.createProducer()))
         )
             .stream()
             .doOnError(Monitor::consumerError)

@@ -48,6 +48,12 @@ dependencies:
       lang: java
       version: "4.11.0"
 
+  com.squareup.okio:
+    okio:
+      lang: java
+      modules: [ "", "jvm" ]
+      version: "3.3.0"
+
   dev.failsafe:
     failsafe:
       lang: java

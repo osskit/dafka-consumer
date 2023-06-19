@@ -16,6 +16,8 @@ java_library(
         "@third_party//3rdparty/jvm/com/google/protobuf:protobuf_java_util",
         "@third_party//3rdparty/jvm/com/spotify:futures_extra",
         "@third_party//3rdparty/jvm/com/squareup/okhttp3:okhttp",
+        "@third_party//3rdparty/jvm/com/squareup/okio",
+        "@third_party//3rdparty/jvm/com/squareup/okio:okio_jvm",
         "@third_party//3rdparty/jvm/dev/failsafe",
         "@third_party//3rdparty/jvm/dev/failsafe:failsafe_okhttp",
         "@third_party//3rdparty/jvm/io/github/cdimascio:java_dotenv",

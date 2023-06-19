@@ -1,9 +1,11 @@
 package kafka;
 
 import configuration.Config;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import monitoring.Monitor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -37,9 +39,22 @@ public class Producer {
         return headersToSend;
     }
 
-    public Future<RecordMetadata> produce(String topic, ConsumerRecord<String, String> record) {
+    // Source: https://github.com/1and1/reactive/blob/e582c0bdbfb4ab2a0780c77419d0d3ee67f08067/reactive-kafka/src/main/java/net/oneandone/reactive/kafka/CompletableKafkaProducer.java#L42
+    public Future<Void> produce(String topic, ConsumerRecord<String, String> record) {
         Headers headers = getHeaders(record);
 
-        return producer.send(new ProducerRecord<>(topic, null, record.key(), record.value(), headers));
+        final CompletableFuture<Void> promise = new CompletableFuture<>();
+
+        final Callback callback = (metadata, exception) -> {
+            if (exception == null) {
+                promise.complete(null);
+            } else {
+                promise.completeExceptionally(exception);
+            }
+        };
+
+        producer.send(new ProducerRecord<>(topic, null, record.key(), record.value(), headers), callback);
+
+        return promise;
     }
 }

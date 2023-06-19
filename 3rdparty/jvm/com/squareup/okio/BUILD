@@ -7,7 +7,7 @@ java_library(
         ":okio_jvm"
     ],
     visibility = [
-        "//3rdparty/jvm:__subpackages__"
+        "//visibility:public"
     ]
 )
 
@@ -23,7 +23,7 @@ java_library(
         "//3rdparty/jvm/org/jetbrains/kotlin:kotlin_stdlib_jdk8"
     ],
     visibility = [
-        "//3rdparty/jvm:__subpackages__"
+        "//visibility:public"
     ]
 )
 
