@@ -23,31 +23,26 @@ public class Consumer {
     public Flux<?> stream() {
         return kafkaConsumer
             .doOnNext(records -> LegacyMonitor.batchProcessStarted(records.count()))
-            .concatMap(
-                records -> {
-                    var batchStartTimestamp = new Date().getTime();
-                    return Flux
-                        .fromIterable(records)
-                        .groupBy(ConsumerRecord::partition)
-                        .delayElements(Duration.ofMillis(Config.PROCESSING_DELAY))
-                        .publishOn(Schedulers.parallel())
-                        .flatMap(
-                            partition ->
-                                partition
-                                    .doOnNext(LegacyMonitor::processMessageStarted)
-                                    .concatMap(record -> Mono.fromFuture(target.call(record)))
-                        )
-                        .collectList()
-                        .map(__ -> batchStartTimestamp);
-                }
-            )
+            .concatMap(records -> {
+                var batchStartTimestamp = new Date().getTime();
+                return Flux
+                    .fromIterable(records)
+                    .groupBy(ConsumerRecord::partition)
+                    .delayElements(Duration.ofMillis(Config.PROCESSING_DELAY))
+                    .publishOn(Schedulers.parallel())
+                    .flatMap(partition ->
+                        partition
+                            .doOnNext(LegacyMonitor::processMessageStarted)
+                            .concatMap(record -> Mono.fromFuture(target.call(record)))
+                    )
+                    .collectList()
+                    .map(__ -> batchStartTimestamp);
+            })
             .doOnNext(LegacyMonitor::batchProcessCompleted)
-            .map(
-                __ -> {
-                    kafkaConsumer.commit();
-                    return 0;
-                }
-            )
+            .map(__ -> {
+                kafkaConsumer.commit();
+                return 0;
+            })
             .doOnNext(__ -> kafkaConsumer.poll());
     }
 }

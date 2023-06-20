@@ -52,46 +52,42 @@ public class MonitoringServer {
     private void aliveRoute(final HttpServer server) {
         final var httpContext = server.createContext("/alive");
 
-        httpContext.setHandler(
-            exchange -> {
-                if (!exchange.getRequestMethod().equals("GET")) {
-                    exchange.sendResponseHeaders(404, -1);
-                    return;
-                }
-
-                if (!TargetHealthcheck.check()) {
-                    writeResponse(500, exchange);
-                    return;
-                }
-
-                if (consumerDisposed) {
-                    writeResponse(500, exchange);
-                    return;
-                }
-
-                writeResponse(200, exchange);
+        httpContext.setHandler(exchange -> {
+            if (!exchange.getRequestMethod().equals("GET")) {
+                exchange.sendResponseHeaders(404, -1);
+                return;
             }
-        );
+
+            if (!TargetHealthcheck.check()) {
+                writeResponse(500, exchange);
+                return;
+            }
+
+            if (consumerDisposed) {
+                writeResponse(500, exchange);
+                return;
+            }
+
+            writeResponse(200, exchange);
+        });
     }
 
     private void readyRoute(final HttpServer server) {
         final var httpContext = server.createContext("/ready");
 
-        httpContext.setHandler(
-            exchange -> {
-                if (!exchange.getRequestMethod().equals("GET")) {
-                    exchange.sendResponseHeaders(404, -1);
-                    return;
-                }
-
-                if (!consumerAssigned) {
-                    writeResponse(500, exchange);
-                    return;
-                }
-
-                writeResponse(200, exchange);
+        httpContext.setHandler(exchange -> {
+            if (!exchange.getRequestMethod().equals("GET")) {
+                exchange.sendResponseHeaders(404, -1);
+                return;
             }
-        );
+
+            if (!consumerAssigned) {
+                writeResponse(500, exchange);
+                return;
+            }
+
+            writeResponse(200, exchange);
+        });
     }
 
     private void writeResponse(int statusCode, HttpExchange exchange) throws IOException {

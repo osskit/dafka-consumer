@@ -68,23 +68,21 @@ public class Monitor {
 
         logWithContext(() -> logger.info(String.format("%s.%s started", scope, method)), context);
 
-        future.whenComplete(
-            (result, throwable) -> {
-                if (throwable != null) {
-                    actualLabelValues.clear();
-                    actualLabelValues.add(method);
-                    actualLabelValues.add("error");
-                    actualLabelValues.addAll(labelValues);
+        future.whenComplete((result, throwable) -> {
+            if (throwable != null) {
+                actualLabelValues.clear();
+                actualLabelValues.add(method);
+                actualLabelValues.add("error");
+                actualLabelValues.addAll(labelValues);
 
-                    counter.labels(actualLabelValues.toArray(new String[0])).inc();
-                    logWithContext(() -> logger.error(String.format("%s.%s error", scope, method), throwable), context);
-                } else {
-                    counter.labels(actualLabelValues.toArray(new String[0])).inc();
-                    histogram.labels(actualLabelValues.toArray(new String[0])).observe(timer.observeDuration());
-                    logWithContext(() -> logger.info(String.format("%s.%s success", scope, method)), context);
-                }
+                counter.labels(actualLabelValues.toArray(new String[0])).inc();
+                logWithContext(() -> logger.error(String.format("%s.%s error", scope, method), throwable), context);
+            } else {
+                counter.labels(actualLabelValues.toArray(new String[0])).inc();
+                histogram.labels(actualLabelValues.toArray(new String[0])).observe(timer.observeDuration());
+                logWithContext(() -> logger.info(String.format("%s.%s success", scope, method)), context);
             }
-        );
+        });
 
         return future;
     }

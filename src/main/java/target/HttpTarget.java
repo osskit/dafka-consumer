@@ -75,17 +75,15 @@ public class HttpTarget implements ITarget {
 
         record
             .headers()
-            .forEach(
-                header -> {
-                    String headerKey = header.key();
+            .forEach(header -> {
+                String headerKey = header.key();
 
-                    if (cloudEventHeaders.contains(headerKey)) {
-                        headerKey = headerKey.replace("_", "-");
-                    }
-
-                    requestBuilder.header(headerKey, new String(header.value(), StandardCharsets.UTF_8));
+                if (cloudEventHeaders.contains(headerKey)) {
+                    headerKey = headerKey.replace("_", "-");
                 }
-            );
+
+                requestBuilder.header(headerKey, new String(header.value(), StandardCharsets.UTF_8));
+            });
 
         final var request = requestBuilder.build();
 
@@ -109,26 +107,24 @@ public class HttpTarget implements ITarget {
             .handleIf(e -> true)
             .handleResultIf(r -> Integer.toString(r.code()).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH))
             .withMaxDuration(maxDuration)
-            .onRetry(
-                e -> {
-                    var attemptCount = Integer.toString(e.getAttemptCount());
-                    MDC.put("attempt_count", attemptCount);
+            .onRetry(e -> {
+                var attemptCount = Integer.toString(e.getAttemptCount());
+                MDC.put("attempt_count", attemptCount);
 
-                    context.forEach((key, value) -> MDC.put(key, value));
+                context.forEach((key, value) -> MDC.put(key, value));
 
-                    if (e.getLastException() != null) {
-                        logger.info("attempt failed", e.getLastException());
-                    } else {
-                        var response = e.getLastResult();
-                        MDC.put("status_code", Integer.toString(response.code()));
-                        MDC.put("response_body", response.body().string());
+                if (e.getLastException() != null) {
+                    logger.info("attempt failed", e.getLastException());
+                } else {
+                    var response = e.getLastResult();
+                    MDC.put("status_code", Integer.toString(response.code()));
+                    MDC.put("response_body", response.body().string());
 
-                        logger.info("attempt failed");
-                    }
-                    MDC.clear();
-                    targetExecutionRetry.labels(attemptCount, record.topic()).inc();
+                    logger.info("attempt failed");
                 }
-            )
+                MDC.clear();
+                targetExecutionRetry.labels(attemptCount, record.topic()).inc();
+            })
             .build();
 
         return this.monitor.monitor(
@@ -137,34 +133,32 @@ public class HttpTarget implements ITarget {
                 context,
                 FailsafeCall.with(retryPolicy).compose(call).executeAsync()
             )
-            .handleAsync(
-                (response, throwable) -> {
-                    if (throwable != null) {
-                        if (Config.RETRY_TOPIC != null) {
-                            return producer.produce(Config.RETRY_TOPIC, record);
-                        }
-
-                        return CompletableFuture.failedFuture(throwable);
+            .handleAsync((response, throwable) -> {
+                if (throwable != null) {
+                    if (Config.RETRY_TOPIC != null) {
+                        return producer.produce(Config.RETRY_TOPIC, record);
                     }
 
-                    var statusCode = Integer.toString(response.code());
-
-                    if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
-                        LegacyMonitor.processMessageError();
-                        if (Config.RETRY_TOPIC != null) {
-                            return producer.produce(Config.RETRY_TOPIC, record);
-                        }
-                    }
-
-                    if (statusCode.matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH)) {
-                        LegacyMonitor.processMessageError();
-                        if (Config.DEAD_LETTER_TOPIC != null) {
-                            return producer.produce(Config.DEAD_LETTER_TOPIC, record);
-                        }
-                    }
-
-                    return CompletableFuture.completedFuture(null);
+                    return CompletableFuture.failedFuture(throwable);
                 }
-            );
+
+                var statusCode = Integer.toString(response.code());
+
+                if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
+                    LegacyMonitor.processMessageError();
+                    if (Config.RETRY_TOPIC != null) {
+                        return producer.produce(Config.RETRY_TOPIC, record);
+                    }
+                }
+
+                if (statusCode.matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH)) {
+                    LegacyMonitor.processMessageError();
+                    if (Config.DEAD_LETTER_TOPIC != null) {
+                        return producer.produce(Config.DEAD_LETTER_TOPIC, record);
+                    }
+                }
+
+                return CompletableFuture.completedFuture(null);
+            });
     }
 }

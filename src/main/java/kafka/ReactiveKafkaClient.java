@@ -205,18 +205,16 @@ public class ReactiveKafkaClient<K, V> extends Flux<ConsumerRecords<K, V>> imple
             }
             try {
                 inProgress.incrementAndGet();
-                consumer.commitAsync(
-                    (__, error) -> {
-                        if (
-                            error != null &&
-                            !(error instanceof RetriableCommitFailedException) &&
-                            !(error instanceof CommitFailedException)
-                        ) {
-                            actual.onError(error);
-                            return;
-                        }
+                consumer.commitAsync((__, error) -> {
+                    if (
+                        error != null &&
+                        !(error instanceof RetriableCommitFailedException) &&
+                        !(error instanceof CommitFailedException)
+                    ) {
+                        actual.onError(error);
+                        return;
                     }
-                );
+                });
                 inProgress.decrementAndGet();
             } catch (Exception e) {
                 inProgress.decrementAndGet();
