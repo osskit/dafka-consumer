@@ -5,6 +5,7 @@ import configuration.TopicsRoutes;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.okhttp.FailsafeCall;
 import io.prometheus.client.Counter;
+import io.prometheus.client.Histogram;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -32,6 +33,10 @@ public class HttpTarget implements ITarget {
         .callTimeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS))
         .build();
 
+    private final Histogram callTargetLatency;
+
+    private final Histogram resultTargetLatency;
+
     private final Producer producer;
     private final Monitor monitor;
 
@@ -49,6 +54,22 @@ public class HttpTarget implements ITarget {
                 .labelNames("attempt", "topic")
                 .help("target_execution_retry")
                 .register();
+
+        double[] buckets = new double[0];
+
+        if (Config.PROMETHEUS_BUCKETS != null) {
+            buckets =
+                Arrays
+                    .asList(Config.PROMETHEUS_BUCKETS.split(","))
+                    .stream()
+                    .mapToDouble(s -> Double.parseDouble(s))
+                    .toArray();
+        }
+
+        callTargetLatency =
+            Histogram.build().buckets(buckets).name("call_target_latency").help("call_target_latency").register();
+        resultTargetLatency =
+            Histogram.build().buckets(buckets).name("result_target_latency").help("result_target_latency").register();
     }
 
     List<String> cloudEventHeaders = new ArrayList<>() {
@@ -127,6 +148,8 @@ public class HttpTarget implements ITarget {
             })
             .build();
 
+        final long startTime = (new Date()).getTime();
+
         return this.monitor.monitor(
                 "call",
                 labels,
@@ -156,6 +179,16 @@ public class HttpTarget implements ITarget {
                     if (Config.DEAD_LETTER_TOPIC != null) {
                         return producer.produce(Config.DEAD_LETTER_TOPIC, record);
                     }
+                }
+
+                var callLatency = response.header("x-received-timestamp");
+                var resultLatency = response.header("x-completed-timestamp");
+                if (callLatency != null) {
+                    callTargetLatency.observe(Long.getLong(callLatency) - startTime);
+                }
+
+                if (resultLatency != null) {
+                    resultTargetLatency.observe(Long.getLong(resultLatency) - startTime);
                 }
 
                 return CompletableFuture.completedFuture(null);
