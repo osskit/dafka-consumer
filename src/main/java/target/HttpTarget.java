@@ -107,6 +107,8 @@ public class HttpTarget implements ITarget {
             })
             .build();
 
+        final long startTime = (new Date()).getTime();
+
         return FailsafeCall
             .with(retryPolicy)
             .compose(call)
@@ -120,6 +122,8 @@ public class HttpTarget implements ITarget {
                     }
                     return CompletableFuture.failedFuture(throwable);
                 }
+
+                Monitor.processMessageSuccess(executionStart);
 
                 var statusCode = Integer.toString(response.code());
 

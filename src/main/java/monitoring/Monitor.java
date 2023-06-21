@@ -22,7 +22,6 @@ public class Monitor {
     private static Counter deadLetterProduced;
     private static Counter produceError;
     private static Counter targetExecutionRetry;
-    private static Counter targetExecutionTimeout;
     private static Histogram messageLatency;
     private static Histogram processBatchExecutionTime;
     private static Histogram processMessageExecutionTime;
