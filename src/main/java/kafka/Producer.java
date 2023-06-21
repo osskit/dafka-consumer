@@ -39,7 +39,6 @@ public class Producer {
         return headersToSend;
     }
 
-    // Source: https://github.com/1and1/reactive/blob/e582c0bdbfb4ab2a0780c77419d0d3ee67f08067/reactive-kafka/src/main/java/net/oneandone/reactive/kafka/CompletableKafkaProducer.java#L42
     public CompletableFuture<Void> produce(String topic, ConsumerRecord<String, String> record) {
         Headers headers = getHeaders(record);
 
