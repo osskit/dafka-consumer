@@ -107,8 +107,6 @@ public class HttpTarget implements ITarget {
             })
             .build();
 
-        final long startTime = (new Date()).getTime();
-
         return FailsafeCall
             .with(retryPolicy)
             .compose(call)
