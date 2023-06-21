@@ -4,8 +4,6 @@ import configuration.Config;
 import configuration.TopicsRoutes;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.okhttp.FailsafeCall;
-import io.prometheus.client.Counter;
-import io.prometheus.client.Histogram;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -14,12 +12,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import kafka.Producer;
 import monitoring.Monitor;
-import monitoring.Monitor;
 import okhttp3.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 public class HttpTarget implements ITarget {
 
