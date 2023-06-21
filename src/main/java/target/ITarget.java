@@ -2,7 +2,6 @@ package target;
 
 import configuration.Config;
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;

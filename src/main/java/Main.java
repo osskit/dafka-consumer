@@ -1,12 +1,18 @@
-import configuration.*;
+import configuration.Config;
+import configuration.TopicsRoutes;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
-import kafka.*;
-import monitoring.*;
+import kafka.Consumer;
+import kafka.KafkaClientFactory;
+import kafka.Producer;
+import kafka.ReactiveKafkaClient;
+import monitoring.Monitor;
+import monitoring.MonitoringServer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.common.TopicPartition;
 import reactor.core.Disposable;
-import target.*;
+import target.HttpTarget;
+import target.TargetHealthcheck;
 
 public class Main {
 

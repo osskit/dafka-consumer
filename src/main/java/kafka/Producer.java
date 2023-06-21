@@ -1,8 +1,6 @@
 package kafka;
 
 import configuration.Config;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import monitoring.Monitor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
