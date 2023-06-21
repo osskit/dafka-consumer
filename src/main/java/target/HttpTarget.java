@@ -2,30 +2,34 @@ package target;
 
 import configuration.Config;
 import configuration.TopicsRoutes;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpTimeoutException;
+import dev.failsafe.RetryPolicy;
+import dev.failsafe.okhttp.FailsafeCall;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import kafka.Producer;
 import monitoring.Monitor;
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.Fallback;
-import net.jodah.failsafe.function.CheckedSupplier;
+import okhttp3.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 public class HttpTarget implements ITarget {
 
-    private final TargetRetryPolicy retryPolicy;
+    public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
+
     private final TopicsRoutes topicsRoutes;
 
-    public HttpTarget(final TargetRetryPolicy retryPolicy, TopicsRoutes topicsRoutes) {
-        this.retryPolicy = retryPolicy;
+    private static final OkHttpClient client = new OkHttpClient.Builder()
+        .callTimeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS))
+        .build();
+
+    private final Producer producer;
+
+    public HttpTarget(TopicsRoutes topicsRoutes, Producer producer) {
         this.topicsRoutes = topicsRoutes;
+        this.producer = producer;
     }
 
     List<String> cloudEventHeaders = new ArrayList<>() {
@@ -38,19 +42,17 @@ public class HttpTarget implements ITarget {
         }
     };
 
-    public CompletableFuture<TargetResponse> call(final ConsumerRecord<String, String> record) {
-        final var builder = HttpRequest
-            .newBuilder()
-            .version(HttpClient.Version.HTTP_1_1)
-            .uri(URI.create(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(record.topic())))
-            .header("Content-Type", "application/json")
+    public CompletableFuture<Object> call(final ConsumerRecord<String, String> record) {
+        var body = RequestBody.create(record.value(), JSON);
+
+        var requestBuilder = new Request.Builder()
+            .url(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(record.topic()))
+            .post(body)
             .header("x-record-topic", record.topic())
             .header("x-record-partition", String.valueOf(record.partition()))
             .header("x-record-offset", String.valueOf(record.offset()))
             .header("x-record-timestamp", String.valueOf(record.timestamp()))
-            .header("x-record-original-topic", this.getOriginalTopic(record))
-            .POST(HttpRequest.BodyPublishers.ofString(record.value()))
-            .timeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS));
+            .header("x-record-original-topic", this.getOriginalTopic(record));
 
         record
             .headers()
@@ -61,62 +63,78 @@ public class HttpTarget implements ITarget {
                     headerKey = headerKey.replace("_", "-");
                 }
 
-                builder.header(headerKey, new String(header.value(), StandardCharsets.UTF_8));
+                requestBuilder.header(headerKey, new String(header.value(), StandardCharsets.UTF_8));
             });
 
-        final var request = builder.build();
-        final long startTime = (new Date()).getTime();
+        final var request = requestBuilder.build();
 
-        final CheckedSupplier<CompletionStage<Optional<HttpResponse<String>>>> completionStageCheckedSupplier = () -> {
-            var httpFuture = HttpClient
-                .newHttpClient()
-                .sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .whenComplete((__, throwable) -> {
-                    if (throwable instanceof HttpTimeoutException) {
-                        Monitor.targetExecutionTimeout(record);
+        var call = client.newCall(request);
+
+        var delay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
+        var maxDelay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
+        var delayFactor = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
+        var maxDuration = Duration.ofMillis(Config.RETRY_POLICY_MAX_DURATION_MS);
+
+        var retryPolicy = RetryPolicy
+            .<Response>builder()
+            .withBackoff(delay, maxDelay, ChronoUnit.MILLIS, delayFactor)
+            .handleIf(e -> true)
+            .handleResultIf(r -> Integer.toString(r.code()).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH))
+            .withMaxDuration(maxDuration)
+            .onRetry(e -> {
+                Monitor.targetExecutionRetry(
+                    record,
+                    Optional
+                        .ofNullable(e.getLastResult())
+                        .flatMap(r -> {
+                            try {
+                                var responseBody = r.body().string();
+                                return Optional.of(responseBody);
+                            } catch (IOException error) {
+                                return Optional.empty();
+                            }
+                        }),
+                    e.getLastException(),
+                    e.getAttemptCount()
+                );
+            })
+            .build();
+
+        final long executionStart = (new Date()).getTime();
+
+        return FailsafeCall
+            .with(retryPolicy)
+            .compose(call)
+            .executeAsync()
+            .handleAsync((response, throwable) -> {
+                if (throwable != null) {
+                    Monitor.processMessageError();
+                    if (Config.RETRY_TOPIC != null) {
+                        Monitor.retryProduced(record);
+                        return producer.produce(Config.RETRY_TOPIC, record);
                     }
-                });
-
-            var result = new CompletableFuture<Optional<HttpResponse<String>>>();
-
-            httpFuture.whenComplete((ok, error) -> {
-                if (error != null) {
-                    result.completeExceptionally(error);
-                } else {
-                    result.complete(Optional.of(ok));
-                }
-            });
-
-            return result;
-        };
-
-        Optional<HttpResponse<String>> defaultResponse = Optional.empty();
-
-        return Failsafe
-            .with(
-                Fallback.of(defaultResponse),
-                retryPolicy.get(record, o -> o.map(r -> r.statusCode()).orElseGet(() -> -1))
-            )
-            .getStageAsync(completionStageCheckedSupplier)
-            .thenApplyAsync(optionalResponse -> {
-                if (optionalResponse.isEmpty()) {
-                    return new TargetResponse(OptionalLong.empty(), OptionalLong.empty());
+                    return CompletableFuture.failedFuture(throwable);
                 }
 
-                var response = optionalResponse.get();
+                Monitor.processMessageSuccess(executionStart);
 
-                var callLatency = response.headers().firstValueAsLong("x-received-timestamp").isEmpty()
-                    ? OptionalLong.empty()
-                    : OptionalLong.of(
-                        response.headers().firstValueAsLong("x-received-timestamp").getAsLong() - startTime
-                    );
-                var resultLatency = response.headers().firstValueAsLong("x-completed-timestamp").isEmpty()
-                    ? OptionalLong.empty()
-                    : OptionalLong.of(
-                        (new Date()).getTime() -
-                        response.headers().firstValueAsLong("x-completed-timestamp").getAsLong()
-                    );
-                return new TargetResponse(callLatency, resultLatency);
+                var statusCode = Integer.toString(response.code());
+
+                if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
+                    if (Config.RETRY_TOPIC != null) {
+                        Monitor.retryProduced(record);
+                        return producer.produce(Config.RETRY_TOPIC, record);
+                    }
+                }
+
+                if (statusCode.matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH)) {
+                    if (Config.DEAD_LETTER_TOPIC != null) {
+                        Monitor.deadLetterProcdued(record);
+                        return producer.produce(Config.DEAD_LETTER_TOPIC, record);
+                    }
+                }
+
+                return CompletableFuture.completedFuture(null);
             });
     }
 }

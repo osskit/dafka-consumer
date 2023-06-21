@@ -4,7 +4,7 @@ java_library(
         "//external:jar/org/jetbrains/annotations"
     ],
     visibility = [
-        "//3rdparty/jvm:__subpackages__"
+        "//visibility:public"
     ]
 )
 

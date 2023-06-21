@@ -4,11 +4,7 @@ import configuration.Config;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.json.JSONObject;
@@ -22,7 +18,6 @@ public class Monitor {
     private static Counter deadLetterProduced;
     private static Counter produceError;
     private static Counter targetExecutionRetry;
-    private static Counter targetExecutionTimeout;
     private static Histogram messageLatency;
     private static Histogram processBatchExecutionTime;
     private static Histogram processMessageExecutionTime;
@@ -338,28 +333,6 @@ public class Monitor {
 
         write(log);
         targetExecutionRetry.labels(String.valueOf(attempt)).inc();
-    }
-
-    public static void targetExecutionTimeout(ConsumerRecord<String, String> record) {
-        targetExecutionTimeout.inc();
-
-        write(
-            new JSONObject()
-                .put("level", "info")
-                .put("message", "target execution timeout")
-                .put(
-                    "extra",
-                    new JSONObject()
-                        .put(
-                            "record",
-                            new JSONObject()
-                                .put("value", record.value())
-                                .put("topic", record.topic())
-                                .put("partition", record.partition())
-                                .put("offset", record.offset())
-                        )
-                )
-        );
     }
 
     public static void targetHealthcheckFailed(Exception exception) {

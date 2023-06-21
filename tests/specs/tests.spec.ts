@@ -12,11 +12,11 @@ describe('tests', () => {
 
     beforeAll(async () => {
         kafkaOrchestrator = await startKafka();
-    }, 1800000);
+    }, 18000);
 
     afterAll(async () => {
         await kafkaOrchestrator.stop();
-    }, 1800000);
+    }, 18000);
 
     afterEach(async () => {
         if (producer) {
@@ -235,6 +235,7 @@ describe('tests', () => {
         const topic = 'foo89';
         await start([topic, retryTopic], [{topic, targetPath: '/consume'}], {
             RETRY_TOPIC: retryTopic,
+            PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH: '500',
         });
 
         const consumerMapping = await mockHttpTarget('/consume', 500);

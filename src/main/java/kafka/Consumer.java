@@ -33,18 +33,7 @@ public class Consumer {
                     .flatMap(partition ->
                         partition
                             .doOnNext(Monitor::processMessageStarted)
-                            .concatMap(record ->
-                                Mono
-                                    .fromFuture(target.call(record))
-                                    .doOnSuccess(targetResponse -> {
-                                        if (targetResponse.callLatency.isPresent()) {
-                                            Monitor.callTargetLatency(targetResponse.callLatency.getAsLong());
-                                        }
-                                        if (targetResponse.resultLatency.isPresent()) {
-                                            Monitor.resultTargetLatency(targetResponse.resultLatency.getAsLong());
-                                        }
-                                    })
-                            )
+                            .concatMap(record -> Mono.fromFuture(target.call(record)))
                     )
                     .collectList()
                     .map(__ -> batchStartTimestamp);
