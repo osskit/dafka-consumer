@@ -145,16 +145,6 @@ public class HttpTarget implements ITarget {
                     }
                 }
 
-                var callLatency = response.header("x-received-timestamp");
-                var resultLatency = response.header("x-completed-timestamp");
-                if (callLatency != null) {
-                    Monitor.callTargetLatency(Long.getLong(callLatency) - startTime);
-                }
-
-                if (resultLatency != null) {
-                    Monitor.resultTargetLatency(Long.getLong(resultLatency) - startTime);
-                }
-
                 return CompletableFuture.completedFuture(null);
             });
     }
