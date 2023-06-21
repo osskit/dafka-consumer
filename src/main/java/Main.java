@@ -18,28 +18,28 @@ public class Main {
     public static void main(String[] args) throws Exception {
         try {
             Config.init();
-            LegacyMonitor.init();
+            Monitor.init();
 
             topicsRoutes = new TopicsRoutes(Config.TOPICS_ROUTES);
             waitForTargetHealthcheck();
             monitoringServer = new MonitoringServer().start();
             consumer = createConsumer(monitoringServer);
             onShutdown(consumer, monitoringServer);
-            LegacyMonitor.started();
+            Monitor.started();
             latch.await();
         } catch (Exception e) {
-            LegacyMonitor.initializationError(e);
+            Monitor.initializationError(e);
             throw e;
         }
-        LegacyMonitor.serviceTerminated();
+        Monitor.serviceTerminated();
     }
 
     private static void waitForTargetHealthcheck() throws InterruptedException {
         do {
-            LegacyMonitor.waitingForTargetHealthcheck();
+            Monitor.waitingForTargetHealthcheck();
             Thread.sleep(1000);
         } while (!TargetHealthcheck.check());
-        LegacyMonitor.targetHealthcheckPassedSuccessfully();
+        Monitor.targetHealthcheckPassedSuccessfully();
     }
 
     private static Disposable createConsumer(MonitoringServer monitoringServer) {
@@ -54,29 +54,29 @@ public class Main {
                             return;
                         }
 
-                        LegacyMonitor.assignedToPartition(partitions);
+                        Monitor.assignedToPartition(partitions);
                         monitoringServer.consumerAssigned();
                     }
 
                     @Override
                     public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-                        LegacyMonitor.revokedFromPartition(partitions);
+                        Monitor.revokedFromPartition(partitions);
                     }
                 }
             ),
             new HttpTarget(topicsRoutes, new Producer(KafkaClientFactory.createProducer()))
         )
             .stream()
-            .doOnError(LegacyMonitor::consumerError)
+            .doOnError(Monitor::consumerError)
             .subscribe(
                 __ -> {},
                 exception -> {
                     monitoringServer.consumerDisposed();
-                    LegacyMonitor.consumerError(exception);
+                    Monitor.consumerError(exception);
                 },
                 () -> {
                     monitoringServer.consumerDisposed();
-                    LegacyMonitor.consumerCompleted();
+                    Monitor.consumerCompleted();
                 }
             );
     }
@@ -86,7 +86,7 @@ public class Main {
             .getRuntime()
             .addShutdownHook(
                 new Thread(() -> {
-                    LegacyMonitor.shuttingDown();
+                    Monitor.shuttingDown();
                     consumer.dispose();
                     monitoringServer.close();
                     latch.countDown();

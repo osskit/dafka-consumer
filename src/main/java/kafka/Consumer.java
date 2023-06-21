@@ -3,7 +3,7 @@ package kafka;
 import configuration.Config;
 import java.time.Duration;
 import java.util.Date;
-import monitoring.LegacyMonitor;
+import monitoring.Monitor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,7 +22,7 @@ public class Consumer {
 
     public Flux<?> stream() {
         return kafkaConsumer
-            .doOnNext(records -> LegacyMonitor.batchProcessStarted(records.count()))
+            .doOnNext(records -> Monitor.batchProcessStarted(records.count()))
             .concatMap(records -> {
                 var batchStartTimestamp = new Date().getTime();
                 return Flux
@@ -32,13 +32,13 @@ public class Consumer {
                     .publishOn(Schedulers.parallel())
                     .flatMap(partition ->
                         partition
-                            .doOnNext(LegacyMonitor::processMessageStarted)
+                            .doOnNext(Monitor::processMessageStarted)
                             .concatMap(record -> Mono.fromFuture(target.call(record)))
                     )
                     .collectList()
                     .map(__ -> batchStartTimestamp);
             })
-            .doOnNext(LegacyMonitor::batchProcessCompleted)
+            .doOnNext(Monitor::batchProcessCompleted)
             .map(__ -> {
                 kafkaConsumer.commit();
                 return 0;

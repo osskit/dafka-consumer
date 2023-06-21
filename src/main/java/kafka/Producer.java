@@ -16,13 +16,9 @@ import org.apache.kafka.common.header.internals.RecordHeaders;
 public class Producer {
 
     private final KafkaProducer<String, String> producer;
-    private final Monitor monitor;
 
     public Producer(KafkaProducer<String, String> producer) {
         this.producer = producer;
-        var labels = new ArrayList<String>();
-        labels.add("topic");
-        this.monitor = new Monitor("producer", labels);
     }
 
     private Headers getHeaders(ConsumerRecord<String, String> record) {
@@ -53,18 +49,13 @@ public class Producer {
             if (exception == null) {
                 promise.complete(null);
             } else {
+                Monitor.produceError(topic, record, exception);
                 promise.completeExceptionally(exception);
             }
         };
 
         producer.send(new ProducerRecord<>(topic, null, record.key(), record.value(), headers), callback);
 
-        var labels = new ArrayList<String>();
-        labels.add(topic);
-
-        var context = new HashMap<String, String>();
-        context.put("topic", topic);
-
-        return monitor.monitor("produce", labels, context, promise);
+        return promise;
     }
 }

@@ -5,7 +5,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import monitoring.LegacyMonitor;
+import monitoring.Monitor;
 
 public class TargetHealthcheck {
 
@@ -26,14 +26,12 @@ public class TargetHealthcheck {
 
             var targetHealthcheckResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
             if (targetHealthcheckResponse.statusCode() != 200) {
-                LegacyMonitor.targetHealthcheckFailed(
-                    new Exception("received " + targetHealthcheckResponse.statusCode())
-                );
+                Monitor.targetHealthcheckFailed(new Exception("received " + targetHealthcheckResponse.statusCode()));
                 return false;
             }
             return true;
         } catch (Exception e) {
-            LegacyMonitor.targetHealthcheckFailed(e);
+            Monitor.targetHealthcheckFailed(e);
             return false;
         }
     }
