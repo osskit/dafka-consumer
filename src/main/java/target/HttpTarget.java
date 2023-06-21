@@ -4,8 +4,6 @@ import configuration.Config;
 import configuration.TopicsRoutes;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.okhttp.FailsafeCall;
-import io.prometheus.client.Counter;
-import io.prometheus.client.Histogram;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -14,12 +12,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import kafka.Producer;
 import monitoring.Monitor;
-import monitoring.Monitor;
 import okhttp3.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 public class HttpTarget implements ITarget {
 
@@ -143,16 +137,6 @@ public class HttpTarget implements ITarget {
                         Monitor.deadLetterProcdued(record);
                         return producer.produce(Config.DEAD_LETTER_TOPIC, record);
                     }
-                }
-
-                var callLatency = response.header("x-received-timestamp");
-                var resultLatency = response.header("x-completed-timestamp");
-                if (callLatency != null) {
-                    Monitor.callTargetLatency(Long.getLong(callLatency) - startTime);
-                }
-
-                if (resultLatency != null) {
-                    Monitor.resultTargetLatency(Long.getLong(resultLatency) - startTime);
                 }
 
                 return CompletableFuture.completedFuture(null);
