@@ -75,13 +75,6 @@ public class HttpTarget implements ITarget {
         var delayFactor = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
         var maxDuration = Duration.ofMillis(Config.RETRY_POLICY_MAX_DURATION_MS);
 
-        var labels = new ArrayList<String>();
-        labels.add(record.topic());
-        var context = new HashMap<String, String>();
-        context.put("topic", record.topic());
-        context.put("key", record.key());
-        context.put("value", record.value());
-
         var retryPolicy = RetryPolicy
             .<Response>builder()
             .withBackoff(delay, maxDelay, ChronoUnit.MILLIS, delayFactor)
@@ -107,7 +100,7 @@ public class HttpTarget implements ITarget {
             })
             .build();
 
-        final long startTime = (new Date()).getTime();
+        final long executionStart = (new Date()).getTime();
 
         return FailsafeCall
             .with(retryPolicy)

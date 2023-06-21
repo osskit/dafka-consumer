@@ -339,28 +339,6 @@ public class Monitor {
         targetExecutionRetry.labels(String.valueOf(attempt)).inc();
     }
 
-    public static void targetExecutionTimeout(ConsumerRecord<String, String> record) {
-        targetExecutionTimeout.inc();
-
-        write(
-            new JSONObject()
-                .put("level", "info")
-                .put("message", "target execution timeout")
-                .put(
-                    "extra",
-                    new JSONObject()
-                        .put(
-                            "record",
-                            new JSONObject()
-                                .put("value", record.value())
-                                .put("topic", record.topic())
-                                .put("partition", record.partition())
-                                .put("offset", record.offset())
-                        )
-                )
-        );
-    }
-
     public static void targetHealthcheckFailed(Exception exception) {
         JSONObject log = new JSONObject()
             .put("level", "info")
