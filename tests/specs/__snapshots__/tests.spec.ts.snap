@@ -9,6 +9,7 @@ exports[`tests consumer should produce to dead letter topic when target response
 exports[`tests consumer should produce to dead letter topic when target response is 400 2`] = `
 {
   "original-topic": "foo4",
+  "x-group-id": "test",
 }
 `;
 
@@ -21,6 +22,7 @@ exports[`tests consumer should produce to retry topic on an unexpected error 1`]
 exports[`tests consumer should produce to retry topic on an unexpected error 2`] = `
 {
   "original-topic": "foo-45445",
+  "x-group-id": "test",
 }
 `;
 
@@ -48,6 +50,7 @@ exports[`tests consumer should produce to retry topic when target response is 50
 exports[`tests consumer should produce to retry topic when target response is 500 2`] = `
 {
   "original-topic": "foo89",
+  "x-group-id": "test",
 }
 `;
 

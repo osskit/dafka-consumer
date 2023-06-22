@@ -33,12 +33,13 @@ public class Producer {
         }
 
         headersToSend.add(Config.ORIGINAL_TOPIC, record.topic().getBytes());
+        headersToSend.add("x-group-id", Config.GROUP_ID.getBytes());
 
         return headersToSend;
     }
 
     // Source: https://github.com/1and1/reactive/blob/e582c0bdbfb4ab2a0780c77419d0d3ee67f08067/reactive-kafka/src/main/java/net/oneandone/reactive/kafka/CompletableKafkaProducer.java#L42
-    public CompletableFuture<Void> produce(String topic, ConsumerRecord<String, String> record) {
+    public CompletableFuture<Void> produce(String topic, ConsumerRecord<String, String> record, String requestId) {
         Headers headers = getHeaders(record);
 
         final CompletableFuture<Void> promise = new CompletableFuture<>();
@@ -47,7 +48,7 @@ public class Producer {
             if (exception == null) {
                 promise.complete(null);
             } else {
-                Monitor.produceError(topic, record, exception);
+                Monitor.produceError(topic, requestId, exception);
                 promise.completeExceptionally(exception);
             }
         };
