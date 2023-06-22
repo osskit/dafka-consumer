@@ -69,11 +69,14 @@ public class HttpTarget implements ITarget {
         final var request = requestBuilder.build();
 
         var call = client.newCall(request);
+        var requestId = UUID.randomUUID().toString();
 
         var delay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
         var maxDelay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
         var delayFactor = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
         var maxDuration = Duration.ofMillis(Config.RETRY_POLICY_MAX_DURATION_MS);
+
+        Monitor.processMessageStarted(record, requestId);
 
         var retryPolicy = RetryPolicy
             .<Response>builder()
@@ -83,7 +86,6 @@ public class HttpTarget implements ITarget {
             .withMaxDuration(maxDuration)
             .onRetry(e -> {
                 Monitor.targetExecutionRetry(
-                    record,
                     Optional
                         .ofNullable(e.getLastResult())
                         .flatMap(r -> {
@@ -95,7 +97,8 @@ public class HttpTarget implements ITarget {
                             }
                         }),
                     e.getLastException(),
-                    e.getAttemptCount()
+                    e.getAttemptCount(),
+                    requestId
                 );
             })
             .build();
@@ -108,31 +111,31 @@ public class HttpTarget implements ITarget {
             .executeAsync()
             .handleAsync((response, throwable) -> {
                 if (throwable != null) {
-                    Monitor.processMessageError();
+                    Monitor.processMessageError(throwable, requestId);
                     if (Config.RETRY_TOPIC != null) {
-                        Monitor.retryProduced(record);
-                        return producer.produce(Config.RETRY_TOPIC, record);
+                        Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
+                        return producer.produce(Config.RETRY_TOPIC, record, requestId);
                     }
                     return CompletableFuture.failedFuture(throwable);
                 }
-
-                Monitor.processMessageSuccess(executionStart);
 
                 var statusCode = Integer.toString(response.code());
 
                 if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
                     if (Config.RETRY_TOPIC != null) {
-                        Monitor.retryProduced(record);
-                        return producer.produce(Config.RETRY_TOPIC, record);
+                        Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
+                        return producer.produce(Config.RETRY_TOPIC, record, requestId);
                     }
                 }
 
                 if (statusCode.matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH)) {
                     if (Config.DEAD_LETTER_TOPIC != null) {
-                        Monitor.deadLetterProcdued(record);
-                        return producer.produce(Config.DEAD_LETTER_TOPIC, record);
+                        Monitor.deadLetterProduced(Config.DEAD_LETTER_TOPIC, requestId);
+                        return producer.produce(Config.DEAD_LETTER_TOPIC, record, requestId);
                     }
                 }
+
+                Monitor.processMessageSuccess(requestId, executionStart);
 
                 return CompletableFuture.completedFuture(null);
             });

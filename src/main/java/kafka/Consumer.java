@@ -30,11 +30,7 @@ public class Consumer {
                     .groupBy(ConsumerRecord::partition)
                     .delayElements(Duration.ofMillis(Config.PROCESSING_DELAY))
                     .publishOn(Schedulers.parallel())
-                    .flatMap(partition ->
-                        partition
-                            .doOnNext(Monitor::processMessageStarted)
-                            .concatMap(record -> Mono.fromFuture(target.call(record)))
-                    )
+                    .flatMap(partition -> partition.concatMap(record -> Mono.fromFuture(target.call(record))))
                     .collectList()
                     .map(__ -> batchStartTimestamp);
             })

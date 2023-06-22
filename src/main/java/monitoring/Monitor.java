@@ -141,7 +141,7 @@ public class Monitor {
         processBatchExecutionTime.observe((double) executionTimeMs / 1000);
     }
 
-    public static void processMessageStarted(ConsumerRecord<String, String> record) {
+    public static void processMessageStarted(ConsumerRecord<String, String> record, String requestId) {
         messageLatency.labels(record.topic()).observe(((double) (new Date().getTime() - record.timestamp())) / 1000);
         processMessageStarted.inc();
 
@@ -162,39 +162,55 @@ public class Monitor {
                                 .put("headers", record.headers())
                                 .put("key", record.key())
                         )
+                        .put("requestId", requestId)
                 )
         );
     }
 
-    public static void callTargetLatency(long latency) {
-        callTargetLatency.observe((double) latency / 1000);
-    }
-
-    public static void resultTargetLatency(long latency) {
-        resultTargetLatency.observe((double) latency / 1000);
-    }
-
-    public static void processMessageSuccess(long executionStart) {
+    public static void processMessageSuccess(String requestId, long executionStart) {
+        var extra = new JSONObject();
+        extra.put("requestId", requestId);
+        JSONObject log = new JSONObject()
+            .put("level", "info")
+            .put("message", "process message success")
+            .put("extra", extra);
+        write(log);
         processMessageExecutionTime.observe(((double) (new Date().getTime() - executionStart)) / 1000);
         processMessageSuccess.inc();
     }
 
-    public static void processMessageError() {
+    public static void processMessageError(Throwable exception, String requestId) {
+        var extra = new JSONObject();
+        extra.put(
+            "err",
+            new JSONObject()
+                .put("errorMessages", getErrorMessages(exception))
+                .put("class", exception.getClass())
+                .put("stacktrace", exception.getStackTrace())
+        );
+        extra.put("requestId", requestId);
+        JSONObject log = new JSONObject()
+            .put("level", "info")
+            .put("message", "process message failed")
+            .put("extra", extra);
+        write(log);
         processMessageError.inc();
     }
 
-    public static void retryProduced(ConsumerRecord<String, String> consumerRecord) {
-        var extra = new JSONObject().put("message", new JSONObject().put("key", consumerRecord.key()));
-        extra.put("value", consumerRecord.value());
+    public static void retryProduced(String topic, String requestId) {
+        var extra = new JSONObject();
+        extra.put("requestId", requestId);
+        extra.put("topic", topic);
         JSONObject log = new JSONObject().put("level", "info").put("message", "retry produced").put("extra", extra);
         write(log);
 
         retryProduced.inc();
     }
 
-    public static void deadLetterProcdued(ConsumerRecord<String, String> consumerRecord) {
-        var extra = new JSONObject().put("message", new JSONObject().put("key", consumerRecord.key()));
-        extra.put("value", consumerRecord.value());
+    public static void deadLetterProduced(String topic, String requestId) {
+        var extra = new JSONObject();
+        extra.put("requestId", requestId);
+        extra.put("topic", topic);
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "dead letter produced")
@@ -293,9 +309,9 @@ public class Monitor {
         write(log);
     }
 
-    public static void produceError(String topic, ConsumerRecord<String, String> consumerRecord, Throwable exception) {
-        var extra = new JSONObject().put("message", new JSONObject().put("key", consumerRecord.key()));
-        extra.put("value", consumerRecord.value());
+    public static void produceError(String topic, String requestId, Throwable exception) {
+        var extra = new JSONObject();
+        extra.put("requestId", requestId);
         JSONObject log = new JSONObject()
             .put("level", "error")
             .put("message", String.format("failed producing message to %s topic", topic))
@@ -308,14 +324,13 @@ public class Monitor {
     }
 
     public static void targetExecutionRetry(
-        ConsumerRecord<String, String> consumerRecord,
         Optional<String> responseBody,
         Throwable exception,
-        int attempt
+        int attempt,
+        String requestId
     ) {
         var extra = new JSONObject();
-        extra.put("message", new JSONObject().put("key", consumerRecord.key()));
-        extra.put("value", consumerRecord.value());
+        extra.put("requestId", requestId);
         if (responseBody.isPresent()) {
             extra.put("response", responseBody.get());
         }
