@@ -21,8 +21,13 @@ public class HttpTarget implements ITarget {
 
     private final TopicsRoutes topicsRoutes;
 
+    private static final Duration httpTimeout = Duration.ofMillis(Config.TARGET_TIMEOUT_MS);
+
     private static final OkHttpClient client = new OkHttpClient.Builder()
-        .callTimeout(Duration.ofMillis(Config.TARGET_TIMEOUT_MS))
+        .callTimeout(httpTimeout)
+        .readTimeout(httpTimeout)
+        .writeTimeout(httpTimeout)
+        .connectTimeout(httpTimeout)
         .build();
 
     private final Producer producer;
