@@ -14,6 +14,7 @@ import kafka.Producer;
 import monitoring.Monitor;
 import okhttp3.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.json.JSONObject;
 
 public class HttpTarget implements ITarget {
 
@@ -58,6 +59,21 @@ public class HttpTarget implements ITarget {
             .header("x-record-offset", String.valueOf(record.offset()))
             .header("x-record-timestamp", String.valueOf(record.timestamp()))
             .header("x-record-original-topic", this.getOriginalTopic(record));
+
+        if (Config.BODY_HEADERS_PATHS != null) {
+            JSONObject jsonObject = new JSONObject(record.value());
+
+            Config.BODY_HEADERS_PATHS.forEach(key -> {
+                if (jsonObject.has(key)) {
+                    JSONObject headersObject = jsonObject.getJSONObject(key);
+
+                    for (String headerKey : headersObject.keySet()) {
+                        String value = headersObject.getString(headerKey);
+                        requestBuilder.header(headerKey, value);
+                    }
+                }
+            });
+        }
 
         record
             .headers()
