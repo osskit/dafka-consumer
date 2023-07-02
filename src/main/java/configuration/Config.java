@@ -33,6 +33,7 @@ public class Config {
     public static List<Integer> RETRY_POLICY_EXPONENTIAL_BACKOFF;
     public static int RETRY_POLICY_MAX_DURATION_MS;
     public static long TARGET_TIMEOUT_MS;
+    public static boolean ALLOW_BODY_HEADERS;
 
     //Authentication
     public static boolean USE_SASL_AUTH;
@@ -56,6 +57,7 @@ public class Config {
         TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
         TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
 
+        ALLOW_BODY_HEADERS = getOptionalBool(dotenv, "ALLOW_BODY_HEADERS", false);
         POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);
         KAFKA_POLL_INTERVAL_MS = getOptionalInt(dotenv, "KAFKA_POLL_INTERVAL_MS", 5 * 60 * 1000);
 
