@@ -14,7 +14,6 @@ import kafka.Producer;
 import monitoring.Monitor;
 import okhttp3.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class HttpTarget implements ITarget {
