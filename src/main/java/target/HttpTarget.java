@@ -60,18 +60,20 @@ public class HttpTarget implements ITarget {
             .header("x-record-timestamp", String.valueOf(record.timestamp()))
             .header("x-record-original-topic", this.getOriginalTopic(record));
 
-        if (Config.ALLOW_BODY_HEADERS) {
+        if (Config.BODY_HEADERS_PATHS != null) {
             JSONObject jsonObject = new JSONObject(record.value());
 
-            if (jsonObject.has("headers")) {
-                JSONObject headersObject = jsonObject.getJSONObject("headers");
+            Config.BODY_HEADERS_PATHS.forEach(key -> {
+                if (jsonObject.has(key)) {
+                    JSONObject headersObject = jsonObject.getJSONObject(key);
 
-                for (String key : headersObject.keySet()) {
-                    String value = headersObject.getString(key);
+                    for (String headerKey : headersObject.keySet()) {
+                        String value = headersObject.getString(headerKey);
 
-                    requestBuilder.header(key, value);
+                        requestBuilder.header(headerKey, value);
+                    }
                 }
-            }
+            });
         }
 
         record

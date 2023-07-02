@@ -297,7 +297,7 @@ describe('tests', () => {
     }, 1800000);
 
     it('should support body headers them to headers of the record', async () => {
-        await start(['foo2'], [{topic: 'foo2', targetPath: '/consume'}], {ALLOW_BODY_HEADERS: 'true'});
+        await start(['foo2'], [{topic: 'foo2', targetPath: '/consume'}], {BODY_HEADERS_PATHS: 'headers,bla'});
 
         const consumerMapping = await mockHttpTarget('/consume', 200);
 
@@ -305,7 +305,7 @@ describe('tests', () => {
             topic: 'foo2',
             messages: [
                 {
-                    value: JSON.stringify({data: 'foo', headers: {'x-request-id': 'bla'}}),
+                    value: JSON.stringify({data: 'foo', bla: {foo: 'bar'}, headers: {'x-request-id': 'bla'}}),
                     key: 'thekey',
                 },
             ],
