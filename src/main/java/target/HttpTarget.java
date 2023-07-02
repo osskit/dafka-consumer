@@ -69,7 +69,6 @@ public class HttpTarget implements ITarget {
 
                     for (String headerKey : headersObject.keySet()) {
                         String value = headersObject.getString(headerKey);
-
                         requestBuilder.header(headerKey, value);
                     }
                 }
