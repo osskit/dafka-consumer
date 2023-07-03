@@ -318,4 +318,27 @@ describe('tests', () => {
             loggedDate: expect.any(Number),
         });
     }, 1800000);
+
+    it('should support body headers them to headers of the record even with empty header value', async () => {
+        await start(['foo2'], [{topic: 'foo2', targetPath: '/consume'}], {BODY_HEADERS_PATHS: 'headers,bla'});
+
+        const consumerMapping = await mockHttpTarget('/consume', 200);
+
+        await producer.send({
+            topic: 'foo2',
+            messages: [
+                {
+                    value: JSON.stringify({data: 'foo', bla: {foo: null}, headers: {'x-request-id': 'requestId'}}),
+                    key: 'thekey',
+                },
+            ],
+        });
+
+        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
+        expect(calls).toHaveLength(1);
+        expect(calls[0]).toMatchSnapshot({
+            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
+            loggedDate: expect.any(Number),
+        });
+    }, 1800000);
 });
