@@ -64,10 +64,7 @@ public class HttpTarget implements ITarget {
             JSONObject jsonObject = new JSONObject(record.value());
             Config.BODY_HEADERS_PATHS.forEach(key -> {
                 if (jsonObject.has(key)) {
-                    System.out.println("Fuck1" + key);
-
                     JSONObject headersObject = jsonObject.getJSONObject(key);
-                    System.out.println("Fuck2" + headersObject.keySet());
 
                     for (String headerKey : headersObject.keySet()) {
                         if (!headersObject.isNull(headerKey)) {
