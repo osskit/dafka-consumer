@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import kafka.Producer;
 import monitoring.Monitor;
 import okhttp3.*;
@@ -29,6 +30,13 @@ public class HttpTarget implements ITarget {
         .readTimeout(httpTimeout)
         .writeTimeout(httpTimeout)
         .connectTimeout(httpTimeout)
+        .connectionPool(
+            new ConnectionPool(
+                Config.CONNECTION_POOL_MAX_IDLE_CONNECTIONS,
+                Config.CONNECTION_POOL_KEEP_ALIVE_DURATION_MS,
+                TimeUnit.MILLISECONDS
+            )
+        )
         .build();
 
     private final Producer producer;
