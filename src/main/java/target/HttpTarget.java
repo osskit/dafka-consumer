@@ -25,20 +25,6 @@ public class HttpTarget implements ITarget {
 
     private static final Duration httpTimeout = Duration.ofMillis(Config.TARGET_TIMEOUT_MS);
 
-    private static final OkHttpClient client = new OkHttpClient.Builder()
-        .callTimeout(httpTimeout)
-        .readTimeout(httpTimeout)
-        .writeTimeout(httpTimeout)
-        .connectTimeout(httpTimeout)
-        .connectionPool(
-            new ConnectionPool(
-                Config.CONNECTION_POOL_MAX_IDLE_CONNECTIONS,
-                Config.CONNECTION_POOL_KEEP_ALIVE_DURATION_MS,
-                TimeUnit.MILLISECONDS
-            )
-        )
-        .build();
-
     private final Producer producer;
 
     public HttpTarget(TopicsRoutes topicsRoutes, Producer producer) {
@@ -58,6 +44,13 @@ public class HttpTarget implements ITarget {
 
     public CompletableFuture<Object> call(final ConsumerRecord<String, String> record) {
         var body = RequestBody.create(record.value(), JSON);
+
+        var client = new OkHttpClient.Builder()
+            .callTimeout(httpTimeout)
+            .readTimeout(httpTimeout)
+            .writeTimeout(httpTimeout)
+            .connectTimeout(httpTimeout)
+            .build();
 
         var requestBuilder = new Request.Builder()
             .url(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(record.topic()))
