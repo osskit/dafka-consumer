@@ -26,7 +26,6 @@ public class Consumer {
             .doOnNext(records -> Monitor.batchProcessStarted(records.count()))
             .concatMap(records -> {
                 var batchStartTimestamp = new Date().getTime();
-                // check if any key is null in ConsumerRecords iterator
                 var hasNullKey = StreamSupport
                     .stream(records.spliterator(), false)
                     .anyMatch(record -> record.key() == null);
