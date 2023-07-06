@@ -49,6 +49,9 @@ public class Config {
     public static String PROMETHEUS_BUCKETS;
     public static String TARGET_HEALTHCHECK;
 
+    public static int CONNECTION_POOL_MAX_IDLE_CONNECTIONS;
+    public static int CONNECTION_POOL_KEEP_ALIVE_DURATION_MS;
+
     public static void init() throws Exception {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
@@ -56,6 +59,9 @@ public class Config {
         GROUP_ID = getString(dotenv, "GROUP_ID");
         TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
         TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
+
+        CONNECTION_POOL_MAX_IDLE_CONNECTIONS = getOptionalInt(dotenv, "CONNECTION_POOL_MAX_IDLE_CONNECTIONS", 2);
+        CONNECTION_POOL_KEEP_ALIVE_DURATION_MS = getOptionalInt(dotenv, "CONNECTION_POOL_KEEP_ALIVE_DURATION_MS", 1000);
 
         BODY_HEADERS_PATHS = getOptionalStringList(dotenv, "BODY_HEADERS_PATHS");
         POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);
