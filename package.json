@@ -1,6 +1,6 @@
 {
     "name": "dafka-consumer",
-    "version": "7.5.9",
+    "version": "7.5.10",
     "description": "Dockerized kafka consumer",
     "private": true,
     "repository": {
