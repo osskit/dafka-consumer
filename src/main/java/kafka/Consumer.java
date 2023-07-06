@@ -3,6 +3,7 @@ package kafka;
 import configuration.Config;
 import java.time.Duration;
 import java.util.Date;
+import java.util.stream.StreamSupport;
 import monitoring.Monitor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import reactor.core.publisher.Flux;
@@ -25,9 +26,13 @@ public class Consumer {
             .doOnNext(records -> Monitor.batchProcessStarted(records.count()))
             .concatMap(records -> {
                 var batchStartTimestamp = new Date().getTime();
+                var hasNullKey = StreamSupport
+                    .stream(records.spliterator(), false)
+                    .anyMatch(record -> record.key() == null);
+
                 return Flux
                     .fromIterable(records)
-                    .groupBy(ConsumerRecord::partition)
+                    .groupBy(record -> hasNullKey ? record.partition() : record.key())
                     .delayElements(Duration.ofMillis(Config.PROCESSING_DELAY))
                     .publishOn(Schedulers.parallel())
                     .flatMap(partition -> partition.concatMap(record -> Mono.fromFuture(target.call(record))))
