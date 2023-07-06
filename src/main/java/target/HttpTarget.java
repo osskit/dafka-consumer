@@ -120,8 +120,9 @@ public class HttpTarget implements ITarget {
                         .ofNullable(e.getLastResult())
                         .flatMap(r -> {
                             try {
-                                var responseBody = r.body().string();
-                                return Optional.of(responseBody);
+                                try (Response response = r) {
+                                    return Optional.of(response.body().string());
+                                }
                             } catch (IOException error) {
                                 return Optional.empty();
                             }
@@ -139,35 +140,37 @@ public class HttpTarget implements ITarget {
             .with(retryPolicy)
             .compose(call)
             .executeAsync()
-            .handleAsync((response, throwable) -> {
-                if (throwable != null) {
-                    Monitor.processMessageError(throwable, requestId);
-                    if (Config.RETRY_TOPIC != null) {
-                        Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
-                        return producer.produce(Config.RETRY_TOPIC, record, requestId);
+            .handleAsync((r, throwable) -> {
+                try (Response response = r) {
+                    if (throwable != null) {
+                        Monitor.processMessageError(throwable, requestId);
+                        if (Config.RETRY_TOPIC != null) {
+                            Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
+                            return producer.produce(Config.RETRY_TOPIC, record, requestId);
+                        }
+                        return CompletableFuture.failedFuture(throwable);
                     }
-                    return CompletableFuture.failedFuture(throwable);
-                }
 
-                var statusCode = Integer.toString(response.code());
+                    var statusCode = Integer.toString(response.code());
 
-                if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
-                    if (Config.RETRY_TOPIC != null) {
-                        Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
-                        return producer.produce(Config.RETRY_TOPIC, record, requestId);
+                    if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
+                        if (Config.RETRY_TOPIC != null) {
+                            Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
+                            return producer.produce(Config.RETRY_TOPIC, record, requestId);
+                        }
                     }
-                }
 
-                if (statusCode.matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH)) {
-                    if (Config.DEAD_LETTER_TOPIC != null) {
-                        Monitor.deadLetterProduced(Config.DEAD_LETTER_TOPIC, requestId);
-                        return producer.produce(Config.DEAD_LETTER_TOPIC, record, requestId);
+                    if (statusCode.matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH)) {
+                        if (Config.DEAD_LETTER_TOPIC != null) {
+                            Monitor.deadLetterProduced(Config.DEAD_LETTER_TOPIC, requestId);
+                            return producer.produce(Config.DEAD_LETTER_TOPIC, record, requestId);
+                        }
                     }
+
+                    Monitor.processMessageSuccess(requestId, executionStart);
+
+                    return CompletableFuture.completedFuture(null);
                 }
-
-                Monitor.processMessageSuccess(requestId, executionStart);
-
-                return CompletableFuture.completedFuture(null);
             });
     }
 }
