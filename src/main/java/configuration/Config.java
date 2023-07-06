@@ -60,7 +60,7 @@ public class Config {
         TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
         TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
 
-        CONNECTION_POOL_MAX_IDLE_CONNECTIONS = getOptionalInt(dotenv, "CONNECTION_POOL_MAX_IDLE_CONNECTIONS", 2);
+        CONNECTION_POOL_MAX_IDLE_CONNECTIONS = getOptionalInt(dotenv, "CONNECTION_POOL_MAX_IDLE_CONNECTIONS", 0);
         CONNECTION_POOL_KEEP_ALIVE_DURATION_MS = getOptionalInt(dotenv, "CONNECTION_POOL_KEEP_ALIVE_DURATION_MS", 1000);
 
         BODY_HEADERS_PATHS = getOptionalStringList(dotenv, "BODY_HEADERS_PATHS");
