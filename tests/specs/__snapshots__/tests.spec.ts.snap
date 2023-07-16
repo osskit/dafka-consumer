@@ -10,6 +10,7 @@ exports[`tests consumer should produce to dead letter topic when target response
 {
   "original-topic": "foo4",
   "x-group-id": "test",
+  "x-original-key": "thekey",
 }
 `;
 
@@ -51,6 +52,7 @@ exports[`tests consumer should produce to retry topic when target response is 50
 {
   "original-topic": "foo89",
   "x-group-id": "test",
+  "x-original-key": "thekey",
 }
 `;
 
