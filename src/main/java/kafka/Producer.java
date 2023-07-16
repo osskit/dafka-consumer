@@ -34,6 +34,7 @@ public class Producer {
 
         headersToSend.add(Config.ORIGINAL_TOPIC, record.topic().getBytes());
         headersToSend.add("x-group-id", Config.GROUP_ID.getBytes());
+        headersToSend.add("x-original-key", record.key());
 
         return headersToSend;
     }
