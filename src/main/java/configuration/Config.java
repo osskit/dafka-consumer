@@ -31,6 +31,7 @@ public class Config {
     public static String PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static String PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static List<Integer> RETRY_POLICY_EXPONENTIAL_BACKOFF;
+    public static int RETRY_POLICY_MAX_RETRIES;
     public static int RETRY_POLICY_MAX_DURATION_MS;
     public static long TARGET_TIMEOUT_MS;
     public static List<String> BODY_HEADERS_PATHS;
