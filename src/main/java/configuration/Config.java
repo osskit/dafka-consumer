@@ -102,6 +102,7 @@ public class Config {
             getOptionalString(dotenv, "PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH", "4[0-9][0-79]");
         RETRY_POLICY_EXPONENTIAL_BACKOFF =
             getOptionalIntList(dotenv, "RETRY_POLICY_EXPONENTIAL_BACKOFF", 3, List.of(50, 5000, 10));
+        RETRY_POLICY_MAX_RETRIES = getOptionalInt(dotenv, "RETRY_POLICY_MAX_RETRIES", 2);
         RETRY_TOPIC = getOptionalString(dotenv, "RETRY_TOPIC", null);
 
         DEAD_LETTER_TOPIC = getOptionalString(dotenv, "DEAD_LETTER_TOPIC", null);

@@ -111,6 +111,7 @@ public class HttpTarget implements ITarget {
         var retryPolicy = RetryPolicy
             .<Response>builder()
             .withBackoff(delay, maxDelay, ChronoUnit.MILLIS, delayFactor)
+            .withMaxRetries(Config.RETRY_POLICY_MAX_RETRIES)
             .handleIf(e -> true)
             .handleResultIf(r -> Integer.toString(r.code()).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH))
             .withMaxDuration(maxDuration)
