@@ -15,6 +15,7 @@ import kafka.Producer;
 import monitoring.Monitor;
 import okhttp3.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class HttpTarget implements ITarget {
@@ -68,8 +69,22 @@ public class HttpTarget implements ITarget {
             .header("x-record-timestamp", String.valueOf(record.timestamp()))
             .header("x-record-original-topic", this.getOriginalTopic(record));
 
+        var requestId = UUID.randomUUID().toString();
+
+        JSONObject jsonObject;
+
+        try {
+            jsonObject = new JSONObject(record.value());
+        } catch (JSONException throwable) {
+            Monitor.processMessageError(throwable, requestId);
+            if (Config.DEAD_LETTER_TOPIC != null) {
+                Monitor.retryProduced(Config.DEAD_LETTER_TOPIC, requestId);
+                return producer.produce(Config.DEAD_LETTER_TOPIC, record, requestId);
+            }
+            return CompletableFuture.failedFuture(throwable);
+        }
+
         if (Config.BODY_HEADERS_PATHS != null) {
-            JSONObject jsonObject = new JSONObject(record.value());
             Config.BODY_HEADERS_PATHS.forEach(key -> {
                 if (jsonObject.has(key)) {
                     JSONObject headersObject = jsonObject.getJSONObject(key);
@@ -99,7 +114,6 @@ public class HttpTarget implements ITarget {
         final var request = requestBuilder.build();
 
         var call = client.newCall(request);
-        var requestId = UUID.randomUUID().toString();
 
         var delay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
         var maxDelay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
