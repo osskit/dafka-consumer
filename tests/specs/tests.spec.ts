@@ -230,6 +230,36 @@ describe('tests', () => {
         ).toMatchSnapshot();
     }, 1800000);
 
+    it('consumer should produce to deadLetterTopic topic when value is not valid JSON', async () => {
+        const deadLetterTopic = 'deadLetterTopic333';
+        const topic = 'foo89';
+        await start([topic, deadLetterTopic], [{topic, targetPath: '/consume'}], {
+            DEAD_LETTER_TOPIC: deadLetterTopic,
+        });
+
+        const consumerMapping = await mockHttpTarget('/consume', 500);
+
+        await producer.send({topic, messages: [{value: '', key: 'thekey'}]});
+
+        // because we need Hamsa Hamsa Hamsa for tests to work
+        const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
+
+        await consumer.subscribe({topic: deadLetterTopic, fromBeginning: true});
+
+        const consumedMessage = await new Promise<KafkaMessage>((resolve) => {
+            consumer.run({
+                eachMessage: async ({message}) => resolve(message),
+            });
+        });
+
+        await consumer.disconnect();
+
+        expect(consumedMessage.value?.toString()).toMatchSnapshot();
+        expect(
+            Object.fromEntries(Object.entries(consumedMessage.headers!).map(([key, value]) => [key, value?.toString()]))
+        ).toMatchSnapshot();
+    }, 1800000);
+
     it('consumer should produce to retry topic when target response is 500', async () => {
         const retryTopic = 'retry';
         const topic = 'foo89';
