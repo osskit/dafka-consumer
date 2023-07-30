@@ -211,7 +211,6 @@ describe('tests', () => {
 
         expect(calls).toHaveLength(1);
 
-        // because we need Hamsa Hamsa Hamsa for tests to work
         const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
 
         await consumer.subscribe({topic: deadLetterTopic, fromBeginning: true});
@@ -237,11 +236,8 @@ describe('tests', () => {
             DEAD_LETTER_TOPIC: deadLetterTopic,
         });
 
-        const consumerMapping = await mockHttpTarget('/consume', 500);
-
         await producer.send({topic, messages: [{value: '', key: 'thekey'}]});
 
-        // because we need Hamsa Hamsa Hamsa for tests to work
         const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
 
         await consumer.subscribe({topic: deadLetterTopic, fromBeginning: true});
@@ -272,7 +268,6 @@ describe('tests', () => {
 
         await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
 
-        // because we need Hamsa Hamsa Hamsa for tests to work
         const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
 
         await consumer.subscribe({topic: retryTopic, fromBeginning: true});
@@ -306,7 +301,6 @@ describe('tests', () => {
 
         await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
 
-        // because we need Hamsa Hamsa Hamsa for tests to work
         const consumer = kafkaOrchestrator.kafkaClient.consumer({groupId: 'test-555'});
 
         await consumer.subscribe({topic: retryTopic, fromBeginning: true});
