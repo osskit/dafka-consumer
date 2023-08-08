@@ -13,6 +13,15 @@ exports[`tests consumer should produce to dead letter topic when target response
 }
 `;
 
+exports[`tests consumer should produce to deadLetterTopic topic when value is not valid JSON 1`] = `""`;
+
+exports[`tests consumer should produce to deadLetterTopic topic when value is not valid JSON 2`] = `
+{
+  "original-topic": "foo89",
+  "x-group-id": "test",
+}
+`;
+
 exports[`tests consumer should produce to retry topic on an unexpected error 1`] = `
 {
   "data": "foo",
