@@ -17,6 +17,7 @@ public class Config {
     public static String KAFKA_BROKER;
     public static String GROUP_ID;
     public static String TARGET_BASE_URL;
+
     public static Map<String, String> TOPICS_ROUTES;
 
     //Optional
@@ -58,7 +59,18 @@ public class Config {
 
         KAFKA_BROKER = getString(dotenv, "KAFKA_BROKER");
         GROUP_ID = getString(dotenv, "GROUP_ID");
-        TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
+
+        var targetServiceNameEnvVar = getOptionalString(dotenv, "TARGET_SERVICE_NAME_ENV_VAR", "");
+
+        if (targetServiceNameEnvVar != "") {
+            var targetPort = getOptionalInt(dotenv, "TARGET_PORT", 80);
+            var targetIp = getString(dotenv, targetServiceNameEnvVar);
+
+            TARGET_BASE_URL = String.format("http://%s:%d", targetIp, targetPort);
+        } else {
+            TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
+        }
+
         TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
 
         CONNECTION_POOL_MAX_IDLE_CONNECTIONS = getOptionalInt(dotenv, "CONNECTION_POOL_MAX_IDLE_CONNECTIONS", 0);
