@@ -60,11 +60,11 @@ public class Config {
         KAFKA_BROKER = getString(dotenv, "KAFKA_BROKER");
         GROUP_ID = getString(dotenv, "GROUP_ID");
 
-        var targetServiceNameEnvVar = getOptionalString(dotenv, "TARGET_SERVICE_NAME_ENV_VAR", "");
+        var k8sServiceHost = getOptionalString(dotenv, "K8S_SERVICE_HOST_ENV_VAR", "");
 
-        if (targetServiceNameEnvVar != "") {
+        if (k8sServiceHost != "") {
             var targetPort = getOptionalInt(dotenv, "TARGET_PORT", 80);
-            var targetIp = getString(dotenv, targetServiceNameEnvVar);
+            var targetIp = getString(dotenv, k8sServiceHost);
 
             TARGET_BASE_URL = String.format("http://%s:%d", targetIp, targetPort);
         } else {
