@@ -367,7 +367,7 @@ describe('tests', () => {
         });
     }, 1800000);
 
-    it.only('consumer should wait after connection error from target', async () => {
+    it('consumer should wait after connection error from target', async () => {
         const targetPath = '/consume';
         const topic = 'wait-foo';
         await start([topic], [{topic, targetPath}], {
