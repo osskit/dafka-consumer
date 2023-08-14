@@ -4,6 +4,7 @@ import {start as startKafka} from '../testcontainers/orchestrator.js';
 import {range} from 'lodash-es';
 import pRetry from 'p-retry';
 import {KafkaMessage, Producer} from 'kafkajs';
+import delay from 'delay';
 
 describe('tests', () => {
     let kafkaOrchestrator: KafkaOrchestrator;
@@ -364,5 +365,30 @@ describe('tests', () => {
             headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
             loggedDate: expect.any(Number),
         });
+    }, 1800000);
+
+    it.only('consumer should wait after connection error from target', async () => {
+        const targetPath = '/consume';
+        const topic = 'wait-foo';
+        await start([topic], [{topic, targetPath}], {
+            CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '1000,10000,2',
+            TARGET_BASE_URL: 'http://transientMocks:8080',
+        });
+        await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
+        const transientWireMockClient = await orchestrator.startTransientWireMock();
+        const consumerMapping = await transientWireMockClient.createMapping({
+            request: {
+                url: targetPath,
+                method: HttpMethod.Post,
+            },
+            response: {
+                status: 200,
+            },
+        });
+
+        await delay(2000);
+        const calls = await transientWireMockClient.waitForCalls(consumerMapping);
+
+        expect(calls).toHaveLength(1);
     }, 1800000);
 });

@@ -1,10 +1,12 @@
 package target;
 
+import com.google.common.collect.ImmutableList;
 import configuration.Config;
 import configuration.TopicsRoutes;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.okhttp.FailsafeCall;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -25,7 +27,6 @@ public class HttpTarget implements ITarget {
     private final TopicsRoutes topicsRoutes;
 
     private static final Duration httpTimeout = Duration.ofMillis(Config.TARGET_TIMEOUT_MS);
-
     private static final OkHttpClient client = new OkHttpClient.Builder()
         .callTimeout(httpTimeout)
         .readTimeout(httpTimeout)
@@ -47,15 +48,9 @@ public class HttpTarget implements ITarget {
         this.producer = producer;
     }
 
-    List<String> cloudEventHeaders = new ArrayList<>() {
-        {
-            add("ce_id");
-            add("ce_time");
-            add("ce_specversion");
-            add("ce_type");
-            add("ce_source");
-        }
-    };
+    List<String> cloudEventHeaders = new ArrayList<>(
+        ImmutableList.of("ce_id", "ce_time", "ce_specversion", "ce_type", "ce_source")
+    );
 
     public CompletableFuture<Object> call(final ConsumerRecord<String, String> record) {
         var body = RequestBody.create(record.value(), JSON);
@@ -148,11 +143,45 @@ public class HttpTarget implements ITarget {
                 );
             })
             .build();
+        var connectionFailureDelay = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
+        var connectionFailureMaxDelay = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
+        var connectionFailureDelayFactor = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
+        var connectionFailureMaxDuration = Duration.ofMillis(Config.CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS);
+        var connectionErrorRetryPolicy = RetryPolicy
+            .<Response>builder()
+            .withBackoff(
+                connectionFailureDelay,
+                connectionFailureMaxDelay,
+                ChronoUnit.MILLIS,
+                connectionFailureDelayFactor
+            )
+            .withMaxRetries(Config.CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES)
+            .handleIf(e -> e.getClass().equals(ConnectException.class))
+            .withMaxDuration(connectionFailureMaxDuration)
+            .onRetry(e -> {
+                Monitor.connectionFailureRetry(
+                    Optional
+                        .ofNullable(e.getLastResult())
+                        .flatMap(r -> {
+                            try {
+                                try (Response response = r) {
+                                    return Optional.of(response.body().string());
+                                }
+                            } catch (IOException error) {
+                                return Optional.empty();
+                            }
+                        }),
+                    e.getLastException(),
+                    e.getAttemptCount(),
+                    requestId
+                );
+            })
+            .build();
 
         final long executionStart = (new Date()).getTime();
 
         return FailsafeCall
-            .with(retryPolicy)
+            .with(retryPolicy, connectionErrorRetryPolicy)
             .compose(call)
             .executeAsync()
             .handleAsync((r, throwable) -> {

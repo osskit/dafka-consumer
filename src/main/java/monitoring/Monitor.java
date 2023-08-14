@@ -18,6 +18,7 @@ public class Monitor {
     private static Counter deadLetterProduced;
     private static Counter produceError;
     private static Counter targetExecutionRetry;
+    private static Counter connectionFailureRetry;
     private static Histogram messageLatency;
     private static Histogram processBatchExecutionTime;
     private static Histogram processMessageExecutionTime;
@@ -87,9 +88,17 @@ public class Monitor {
         targetExecutionRetry =
             Counter
                 .build()
-                .name("target_execution_rerty")
+                .name("target_execution_retry")
                 .labelNames("attempt")
-                .help("target_execution_rerty")
+                .help("target_execution_retry")
+                .register();
+
+        connectionFailureRetry =
+            Counter
+                .build()
+                .name("connection_failure_retry")
+                .labelNames("attempt")
+                .help("connection_failure_retry")
                 .register();
     }
 
@@ -323,11 +332,11 @@ public class Monitor {
         produceError.inc();
     }
 
-    public static void targetExecutionRetry(
+    private static void logTargetRetry(
         Optional<String> responseBody,
         Throwable exception,
-        int attempt,
-        String requestId
+        String requestId,
+        String message
     ) {
         var extra = new JSONObject();
         extra.put("requestId", requestId);
@@ -341,13 +350,32 @@ public class Monitor {
             error.put("type", exception.getClass());
         }
 
-        JSONObject log = new JSONObject().put("level", "info").put("message", "target retry");
+        JSONObject log = new JSONObject().put("level", "info").put("message", message);
 
         log.put("extra", extra);
         log.put("err", error);
 
         write(log);
+    }
+
+    public static void targetExecutionRetry(
+        Optional<String> responseBody,
+        Throwable exception,
+        int attempt,
+        String requestId
+    ) {
+        logTargetRetry(responseBody, exception, requestId, "target retry");
         targetExecutionRetry.labels(String.valueOf(attempt)).inc();
+    }
+
+    public static void connectionFailureRetry(
+        Optional<String> responseBody,
+        Throwable exception,
+        int attempt,
+        String requestId
+    ) {
+        logTargetRetry(responseBody, exception, requestId, "connection failure retry");
+        connectionFailureRetry.labels(String.valueOf(attempt)).inc();
     }
 
     public static void targetHealthcheckFailed(Exception exception) {
