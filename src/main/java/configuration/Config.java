@@ -32,8 +32,12 @@ public class Config {
     public static String PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static String PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static List<Integer> RETRY_POLICY_EXPONENTIAL_BACKOFF;
+    public static List<Integer> CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF;
+    public static int CONNECTION_FAILURE_DELAY_MS;
     public static int RETRY_POLICY_MAX_RETRIES;
     public static int RETRY_POLICY_MAX_DURATION_MS;
+    public static int CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES;
+    public static int CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS;
     public static long TARGET_TIMEOUT_MS;
     public static List<String> BODY_HEADERS_PATHS;
 
@@ -84,6 +88,8 @@ public class Config {
         SESSION_TIMEOUT = getOptionalInt(dotenv, "SESSION_TIMEOUT", 10000);
         RETRY_POLICY_MAX_DURATION_MS =
             getOptionalInt(dotenv, "RETRY_POLICY_MAX_DURATION_MS", KAFKA_POLL_INTERVAL_MS - 1000);
+        CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS =
+            getOptionalInt(dotenv, "CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS", KAFKA_POLL_INTERVAL_MS - 1000);
         TARGET_TIMEOUT_MS = getOptionalLong(dotenv, "TARGET_TIMEOUT_MS", RETRY_POLICY_MAX_DURATION_MS - 1000);
 
         if (KAFKA_POLL_INTERVAL_MS < RETRY_POLICY_MAX_DURATION_MS) {
@@ -115,7 +121,16 @@ public class Config {
             getOptionalString(dotenv, "PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH", "4[0-9][0-79]");
         RETRY_POLICY_EXPONENTIAL_BACKOFF =
             getOptionalIntList(dotenv, "RETRY_POLICY_EXPONENTIAL_BACKOFF", 3, List.of(50, 5000, 10));
+        CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF =
+            getOptionalIntList(
+                dotenv,
+                "CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF",
+                3,
+                List.of(5000, 300_000, 2)
+            );
         RETRY_POLICY_MAX_RETRIES = getOptionalInt(dotenv, "RETRY_POLICY_MAX_RETRIES", 2);
+        CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES =
+            getOptionalInt(dotenv, "CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES", 2);
         RETRY_TOPIC = getOptionalString(dotenv, "RETRY_TOPIC", null);
 
         DEAD_LETTER_TOPIC = getOptionalString(dotenv, "DEAD_LETTER_TOPIC", null);
