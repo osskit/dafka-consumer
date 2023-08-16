@@ -4,9 +4,10 @@ import com.google.common.collect.ImmutableList;
 import configuration.Config;
 import configuration.TopicsRoutes;
 import dev.failsafe.RetryPolicy;
+import dev.failsafe.event.ExecutionAttemptedEvent;
+import dev.failsafe.event.ExecutionCompletedEvent;
 import dev.failsafe.okhttp.FailsafeCall;
 import java.io.IOException;
-import java.net.ConnectException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -51,6 +52,34 @@ public class HttpTarget implements ITarget {
     List<String> cloudEventHeaders = new ArrayList<>(
         ImmutableList.of("ce_id", "ce_time", "ce_specversion", "ce_type", "ce_source")
     );
+
+    private Optional<String> extractCompletedResponseBody(ExecutionCompletedEvent<Response> e) {
+        return Optional
+            .ofNullable(e.getResult())
+            .flatMap(r -> {
+                try {
+                    try (Response response = r) {
+                        return Optional.of(response.body().string());
+                    }
+                } catch (IOException error) {
+                    return Optional.empty();
+                }
+            });
+    }
+
+    private Optional<String> extractAttemptedResponseBody(ExecutionAttemptedEvent<Response> e) {
+        return Optional
+            .ofNullable(e.getLastResult())
+            .flatMap(r -> {
+                try {
+                    try (Response response = r) {
+                        return Optional.of(response.body().string());
+                    }
+                } catch (IOException error) {
+                    return Optional.empty();
+                }
+            });
+    }
 
     public CompletableFuture<Object> call(final ConsumerRecord<String, String> record) {
         var body = RequestBody.create(record.value(), JSON);
@@ -126,22 +155,15 @@ public class HttpTarget implements ITarget {
             .withMaxDuration(maxDuration)
             .onRetry(e -> {
                 Monitor.targetExecutionRetry(
-                    Optional
-                        .ofNullable(e.getLastResult())
-                        .flatMap(r -> {
-                            try {
-                                try (Response response = r) {
-                                    return Optional.of(response.body().string());
-                                }
-                            } catch (IOException error) {
-                                return Optional.empty();
-                            }
-                        }),
+                    extractAttemptedResponseBody(e),
                     e.getLastException(),
                     e.getAttemptCount(),
                     requestId
                 );
             })
+            .onSuccess(e ->
+                Monitor.targetExecutionRetrySuccess(extractCompletedResponseBody(e), e.getAttemptCount(), requestId)
+            )
             .build();
         var connectionFailureDelay = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
         var connectionFailureMaxDelay = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
@@ -160,22 +182,15 @@ public class HttpTarget implements ITarget {
             .withMaxDuration(connectionFailureMaxDuration)
             .onRetry(e -> {
                 Monitor.connectionFailureRetry(
-                    Optional
-                        .ofNullable(e.getLastResult())
-                        .flatMap(r -> {
-                            try {
-                                try (Response response = r) {
-                                    return Optional.of(response.body().string());
-                                }
-                            } catch (IOException error) {
-                                return Optional.empty();
-                            }
-                        }),
+                    extractAttemptedResponseBody(e),
                     e.getLastException(),
                     e.getAttemptCount(),
                     requestId
                 );
             })
+            .onSuccess(e ->
+                Monitor.connectionFailureRetrySuccess(extractCompletedResponseBody(e), e.getAttemptCount(), requestId)
+            )
             .build();
 
         final long executionStart = (new Date()).getTime();
