@@ -156,7 +156,7 @@ public class HttpTarget implements ITarget {
                 connectionFailureDelayFactor
             )
             .withMaxRetries(Config.CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES)
-            .handle(ConnectException.class)
+            .handle(Throwable.class)
             .withMaxDuration(connectionFailureMaxDuration)
             .onRetry(e -> {
                 Monitor.connectionFailureRetry(
