@@ -142,6 +142,23 @@ public class HttpTarget implements ITarget {
                     requestId
                 );
             })
+            .onSuccess(e ->
+                Monitor.targetExecutionRetrySuccess(
+                    Optional
+                        .ofNullable(e.getResult())
+                        .flatMap(r -> {
+                            try {
+                                try (Response response = r) {
+                                    return Optional.of(response.body().string());
+                                }
+                            } catch (IOException error) {
+                                return Optional.empty();
+                            }
+                        }),
+                    e.getAttemptCount(),
+                    requestId
+                )
+            )
             .build();
         var connectionFailureDelay = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
         var connectionFailureMaxDelay = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
@@ -176,6 +193,23 @@ public class HttpTarget implements ITarget {
                     requestId
                 );
             })
+            .onSuccess(e ->
+                Monitor.connectionFailureRetrySuccess(
+                    Optional
+                        .ofNullable(e.getResult())
+                        .flatMap(r -> {
+                            try {
+                                try (Response response = r) {
+                                    return Optional.of(response.body().string());
+                                }
+                            } catch (IOException error) {
+                                return Optional.empty();
+                            }
+                        }),
+                    e.getAttemptCount(),
+                    requestId
+                )
+            )
             .build();
 
         final long executionStart = (new Date()).getTime();

@@ -18,7 +18,9 @@ public class Monitor {
     private static Counter deadLetterProduced;
     private static Counter produceError;
     private static Counter targetExecutionRetry;
+    private static Counter targetExecutionRetrySuccess;
     private static Counter connectionFailureRetry;
+    private static Counter connectionFailureRetrySuccess;
     private static Histogram messageLatency;
     private static Histogram processBatchExecutionTime;
     private static Histogram processMessageExecutionTime;
@@ -358,6 +360,23 @@ public class Monitor {
         write(log);
     }
 
+    private static void logTargetRetrySuccess(Optional<String> responseBody, String requestId, String message) {
+        var extra = new JSONObject();
+        extra.put("requestId", requestId);
+        if (responseBody.isPresent()) {
+            extra.put("response", responseBody.get());
+        }
+
+        var error = new JSONObject();
+
+        JSONObject log = new JSONObject().put("level", "info").put("message", message);
+
+        log.put("extra", extra);
+        log.put("err", error);
+
+        write(log);
+    }
+
     public static void targetExecutionRetry(
         Optional<String> responseBody,
         Throwable exception,
@@ -366,6 +385,16 @@ public class Monitor {
     ) {
         logTargetRetry(responseBody, exception, requestId, "target retry");
         targetExecutionRetry.labels(String.valueOf(attempt)).inc();
+    }
+
+    public static void targetExecutionRetrySuccess(Optional<String> responseBody, int attempt, String requestId) {
+        logTargetRetrySuccess(responseBody, requestId, "target retry succeeded");
+        targetExecutionRetrySuccess.labels(String.valueOf(attempt)).inc();
+    }
+
+    public static void connectionFailureRetrySuccess(Optional<String> responseBody, int attempt, String requestId) {
+        logTargetRetrySuccess(responseBody, requestId, "connection failure retry succeeded");
+        connectionFailureRetrySuccess.labels(String.valueOf(attempt)).inc();
     }
 
     public static void connectionFailureRetry(
