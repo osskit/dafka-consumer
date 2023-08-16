@@ -147,7 +147,7 @@ public class HttpTarget implements ITarget {
         var connectionFailureMaxDelay = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
         var connectionFailureDelayFactor = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
         var connectionFailureMaxDuration = Duration.ofMillis(Config.CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS);
-        var connectionErrorRetryPolicy = RetryPolicy
+        var connectionFailureRetryPolicy = RetryPolicy
             .<Response>builder()
             .withBackoff(
                 connectionFailureDelay,
@@ -181,7 +181,7 @@ public class HttpTarget implements ITarget {
         final long executionStart = (new Date()).getTime();
 
         return FailsafeCall
-            .with(retryPolicy, connectionErrorRetryPolicy)
+            .with(retryPolicy, connectionFailureRetryPolicy)
             .compose(call)
             .executeAsync()
             .handleAsync((r, throwable) -> {
