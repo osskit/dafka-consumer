@@ -116,7 +116,7 @@ public class Config {
             getOptionalString(dotenv, "RETRY_PROCESS_WHEN_STATUS_CODE_MATCH", "5[0-9][0-9]");
 
         PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH =
-            getOptionalString(dotenv, "PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH", "408");
+            getOptionalString(dotenv, "PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH", "5[0-9][0-9]|408");
         PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH =
             getOptionalString(dotenv, "PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH", "4[0-9][0-79]");
         RETRY_POLICY_EXPONENTIAL_BACKOFF =
