@@ -1,5 +1,5 @@
 import {StartedNetwork, Wait} from 'testcontainers';
-import {KafkaContainer} from 'testcontainers';
+import {KafkaContainer} from '@testcontainers/kafka';
 import {Kafka, logLevel} from 'kafkajs';
 
 export const kafka = async (network: StartedNetwork) => {
