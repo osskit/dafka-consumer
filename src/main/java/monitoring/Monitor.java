@@ -19,13 +19,11 @@ public class Monitor {
     private static Counter produceError;
     private static Counter targetExecutionRetry;
     private static Counter targetExecutionRetrySuccess;
-    private static Counter connectionFailureRetry;
-    private static Counter connectionFailureRetrySuccess;
+    private static Counter targetConnectionRetry;
+    private static Counter targetConnectionRetrySuccess;
     private static Histogram messageLatency;
     private static Histogram processBatchExecutionTime;
     private static Histogram processMessageExecutionTime;
-    private static Histogram callTargetLatency;
-    private static Histogram resultTargetLatency;
     private static Gauge assignedPartitions;
 
     private static double[] buckets = new double[0];
@@ -50,12 +48,6 @@ public class Monitor {
                 .name("message_latency")
                 .help("message_latency")
                 .register();
-
-        callTargetLatency =
-            Histogram.build().buckets(buckets).name("call_target_latency").help("call_target_latency").register();
-
-        resultTargetLatency =
-            Histogram.build().buckets(buckets).name("result_target_latency").help("result_target_latency").register();
 
         processMessageSuccess =
             Counter.build().name("process_message_success").help("process_message_success").register();
@@ -95,7 +87,7 @@ public class Monitor {
                 .help("target_execution_retry")
                 .register();
 
-        connectionFailureRetry =
+        targetConnectionRetry =
             Counter
                 .build()
                 .name("connection_failure_retry")
@@ -383,28 +375,28 @@ public class Monitor {
         int attempt,
         String requestId
     ) {
-        logTargetRetry(responseBody, exception, requestId, "target retry");
+        logTargetRetry(responseBody, exception, requestId, "target execution retry");
         targetExecutionRetry.labels(String.valueOf(attempt)).inc();
     }
 
     public static void targetExecutionRetrySuccess(Optional<String> responseBody, int attempt, String requestId) {
-        logTargetRetrySuccess(responseBody, requestId, "target retry succeeded");
+        logTargetRetrySuccess(responseBody, requestId, "target execution resolved successfully");
         targetExecutionRetrySuccess.labels(String.valueOf(attempt)).inc();
     }
 
-    public static void connectionFailureRetrySuccess(Optional<String> responseBody, int attempt, String requestId) {
-        logTargetRetrySuccess(responseBody, requestId, "connection failure retry succeeded");
-        connectionFailureRetrySuccess.labels(String.valueOf(attempt)).inc();
+    public static void targetConnectionRetrySuccess(Optional<String> responseBody, int attempt, String requestId) {
+        logTargetRetrySuccess(responseBody, requestId, "connection failures resolved successfully");
+        targetConnectionRetrySuccess.labels(String.valueOf(attempt)).inc();
     }
 
-    public static void connectionFailureRetry(
+    public static void targetConnectionRetry(
         Optional<String> responseBody,
         Throwable exception,
         int attempt,
         String requestId
     ) {
-        logTargetRetry(responseBody, exception, requestId, "connection failure retry");
-        connectionFailureRetry.labels(String.valueOf(attempt)).inc();
+        logTargetRetry(responseBody, exception, requestId, "target connection retry");
+        targetConnectionRetry.labels(String.valueOf(attempt)).inc();
     }
 
     public static void targetHealthcheckFailed(Exception exception) {
