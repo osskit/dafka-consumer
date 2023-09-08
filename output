@@ -1,0 +1,5 @@
+yarn run v1.22.19
+$ bazel build //src:image.tar && docker load -i bazel-bin/src/image.tar
+Loaded image: bazel/src:image
+$ NODE_OPTIONS=--experimental-vm-modules jest --config tests/jest.config.ts
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.

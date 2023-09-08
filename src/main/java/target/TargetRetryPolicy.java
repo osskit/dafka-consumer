@@ -1,10 +1,14 @@
 package target;
 
 import configuration.Config;
+import dev.failsafe.RetryPolicy;
 import dev.failsafe.event.ExecutionAttemptedEvent;
 import dev.failsafe.event.ExecutionCompletedEvent;
 import dev.failsafe.okhttp.FailsafeCall;
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -27,7 +31,7 @@ public class TargetRetryPolicy {
         var connectionFailureDelayFactor = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
         var connectionFailureMaxDuration = Duration.ofMillis(Config.CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS);
 
-        var connectionRetryPolicy = dev.failsafe.RetryPolicy
+        var connectionRetryPolicy = RetryPolicy
             .<Response>builder()
             .withBackoff(
                 connectionFailureDelay,
@@ -36,8 +40,12 @@ public class TargetRetryPolicy {
                 connectionFailureDelayFactor
             )
             .withMaxRetries(Config.CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES)
+            //                .handleIf((r, e) -> {
+            //                    System.out.println("111111 " +  e.getMessage());
+            //                    return true;
+            //                })
             .handle(IOException.class)
-            .handleResultIf(r -> Integer.toString(r.code()).matches("502|503|504"))
+            //            .handleResultIf(r -> Integer.toString(r.code()).matches("503"))
             .withMaxDuration(connectionFailureMaxDuration)
             .onRetry(e -> {
                 Monitor.targetConnectionRetry(
@@ -47,6 +55,7 @@ public class TargetRetryPolicy {
                     requestId
                 );
             })
+            .onFailure(__ -> Monitor.targetConnectionRetryExceeded(requestId))
             .onSuccess(e ->
                 Monitor.targetConnectionRetrySuccess(extractCompletedResponseBody(e), e.getAttemptCount(), requestId)
             )
@@ -71,7 +80,7 @@ public class TargetRetryPolicy {
             )
             .build();
 
-        return FailsafeCall.with(connectionRetryPolicy, executionRetryPolicy);
+        return FailsafeCall.with(connectionRetryPolicy);
     }
 
     private static Optional<String> extractAttemptedResponseBody(ExecutionAttemptedEvent<Response> e) {

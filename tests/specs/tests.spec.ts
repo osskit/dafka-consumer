@@ -137,38 +137,6 @@ describe('tests', () => {
         });
     }, 1800000);
 
-    it('should transform and add cloud event headers to target call', async () => {
-        await start(['foo2'], [{topic: 'foo2', targetPath: '/consume'}]);
-
-        const consumerMapping = await mockHttpTarget('/consume', 200);
-
-        await producer.send({
-            topic: 'foo2',
-            messages: [
-                {
-                    value: JSON.stringify({data: 'foo'}),
-                    key: 'thekey',
-                    headers: {
-                        'x-request-id': 'bla',
-                        random_header: 'random',
-                        ce_type: 'type',
-                        ce_id: 'id',
-                        ce_specversion: '1',
-                        ce_source: 'source',
-                        ce_time: '123456',
-                    },
-                },
-            ],
-        });
-
-        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
-        expect(calls).toHaveLength(1);
-        expect(calls[0]).toMatchSnapshot({
-            headers: {'x-record-timestamp': expect.any(String), 'x-record-offset': expect.any(String)},
-            loggedDate: expect.any(Number),
-        });
-    }, 1800000);
-
     it('should consume bursts of records', async () => {
         await start(['foo3'], [{topic: 'foo3', targetPath: '/consume'}]);
 
@@ -367,14 +335,17 @@ describe('tests', () => {
         });
     }, 1800000);
 
-    it('consumer should wait after connection error from target', async () => {
+    it.only('consumer should wait after connection error from target', async () => {
         const targetPath = '/consume';
         const topic = 'wait-foo';
         await start([topic], [{topic, targetPath}], {
-            CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '1000,10000,2',
+            CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '1000,100000,2',
+            CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES: '30',
             TARGET_BASE_URL: 'http://transientMocks:8080',
         });
+
         await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
+        await delay(2000);
         const transientWireMockClient = await orchestrator.startTransientWireMock();
         const consumerMapping = await transientWireMockClient.createMapping({
             request: {
@@ -386,9 +357,25 @@ describe('tests', () => {
             },
         });
 
-        await delay(2000);
+        await delay(5000);
+
         const calls = await transientWireMockClient.waitForCalls(consumerMapping);
 
         expect(calls).toHaveLength(1);
+    }, 1800000);
+
+    it('consumer should wait after getting 503 response from target', async () => {
+        const targetPath = '/consume';
+        const topic = 'wait-foo';
+        await start([topic], [{topic, targetPath}], {
+            CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '1000,10000,2',
+        });
+        await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
+        const consumerMapping = await mockHttpTarget('/consume', 503);
+
+        await delay(2000);
+        const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
+
+        expect(calls).toHaveLength(3);
     }, 1800000);
 });

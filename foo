@@ -1,0 +1,4 @@
+yarn run v1.22.19
+$ bazel build //src:image.tar && docker load -i bazel-bin/src/image.tar
+yarn run v1.22.19
+$ bazel build //src:image.tar && docker load -i bazel-bin/src/image.tar
