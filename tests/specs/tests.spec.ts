@@ -339,13 +339,14 @@ describe('tests', () => {
         const targetPath = '/consume';
         const topic = 'wait-foo';
         await start([topic], [{topic, targetPath}], {
-            CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '1000,100000,2',
-            CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES: '30',
+            CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '5,8000000,2',
+            CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS: '8000000',
             TARGET_BASE_URL: 'http://transientMocks:8080',
         });
 
         await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
-        await delay(2000);
+        await delay(5000);
+
         const transientWireMockClient = await orchestrator.startTransientWireMock();
         const consumerMapping = await transientWireMockClient.createMapping({
             request: {
@@ -356,7 +357,6 @@ describe('tests', () => {
                 status: 200,
             },
         });
-
         await delay(5000);
 
         const calls = await transientWireMockClient.waitForCalls(consumerMapping);
@@ -368,12 +368,15 @@ describe('tests', () => {
         const targetPath = '/consume';
         const topic = 'wait-foo';
         await start([topic], [{topic, targetPath}], {
-            CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '1000,10000,2',
+            CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '50,5000,2',
+            CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS: '5000',
+            CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES: '3',
+            PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH: '503',
         });
         await producer.send({topic, messages: [{value: JSON.stringify({data: 'foo'}), key: 'thekey'}]});
         const consumerMapping = await mockHttpTarget('/consume', 503);
 
-        await delay(2000);
+        await delay(20000);
         const calls = await orchestrator.wireMockClient.waitForCalls(consumerMapping);
 
         expect(calls).toHaveLength(3);

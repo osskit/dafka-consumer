@@ -5,6 +5,7 @@ import io.prometheus.client.Counter;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
 import java.util.*;
+import okhttp3.Response;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.json.JSONObject;
@@ -168,12 +169,17 @@ public class Monitor {
         );
     }
 
-    public static void processMessageSuccess(String requestId, long executionStart) {
+    public static void processMessageCompleted(
+        String requestId,
+        long executionStart,
+        int statusCode,
+        Throwable throwable
+    ) {
         var extra = new JSONObject();
-        extra.put("requestId", requestId);
+        extra.put("requestId", requestId).put("statusCode", statusCode).put("exception", throwable);
         JSONObject log = new JSONObject()
             .put("level", "info")
-            .put("message", "process message success")
+            .put("message", "process message completed")
             .put("extra", extra);
         write(log);
         processMessageExecutionTime.observe(((double) (new Date().getTime() - executionStart)) / 1000);
@@ -377,17 +383,9 @@ public class Monitor {
             responseBody,
             exception,
             requestId,
-            String.format("target execution retry, %s attempt", attempt)
+            String.format("target execution retry, attempt %s", attempt)
         );
         targetExecutionRetry.labels(String.valueOf(attempt)).inc();
-    }
-
-    public static void targetExecutionRetrySuccess(Optional<String> responseBody, int attempt, String requestId) {
-        logTargetRetrySuccess(
-            responseBody,
-            requestId,
-            String.format("target execution resolved successfully after %s attempts", attempt)
-        );
     }
 
     public static void targetConnectionRetry(
@@ -400,26 +398,9 @@ public class Monitor {
             responseBody,
             exception,
             requestId,
-            String.format("target connection retry, %s attempt", attempt)
+            String.format("target connection retry, attempt %s", attempt)
         );
         targetConnectionRetry.labels(String.valueOf(attempt)).inc();
-    }
-
-    public static void targetConnectionRetryExceeded(String requestId) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "target connection retry exceeded")
-            .put("requestId", requestId);
-
-        write(log);
-    }
-
-    public static void targetConnectionRetrySuccess(Optional<String> responseBody, int attempt, String requestId) {
-        logTargetRetrySuccess(
-            responseBody,
-            requestId,
-            String.format("target connection resolved successfully after %s attempts", attempt)
-        );
     }
 
     public static void targetHealthcheckFailed(Exception exception) {

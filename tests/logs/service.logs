@@ -1,0 +1,21 @@
+{"level":"info","extra":{"targetBaseUrl":"http://transientMocks:8080"},"message":"waiting for target healthcheck"}
+{"level":"info","extra":{"targetBaseUrl":"http://transientMocks:8080"},"message":"target healthcheck passed successfully"}
+{"level":"info","message":"kafka-consumer-test started"}
+{"level":"info","extra":{"count":1},"message":"consumer was assigned to partitions"}
+{"level":"info","extra":{"count":1},"message":"batch process started"}
+{"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c","record":{"headers":"RecordHeaders(headers = [], isReadOnly = false)","partition":0,"offset":0,"topic":"wait-foo","value":"{\"data\":\"foo\"}","key":"thekey"}},"message":"process message started"}
+{"err":{"message":"transientmocks: Name or service not known","type":"class java.net.UnknownHostException"},"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c"},"message":"target connection retry, attempt 1"}
+{"err":{"message":"transientmocks","type":"class java.net.UnknownHostException"},"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c"},"message":"target connection retry, attempt 2"}
+{"err":{"message":"transientmocks","type":"class java.net.UnknownHostException"},"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c"},"message":"target connection retry, attempt 3"}
+{"err":{"message":"transientmocks","type":"class java.net.UnknownHostException"},"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c"},"message":"target connection retry, attempt 4"}
+{"err":{"message":"transientmocks","type":"class java.net.UnknownHostException"},"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c"},"message":"target connection retry, attempt 5"}
+{"err":{"message":"transientmocks","type":"class java.net.UnknownHostException"},"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c"},"message":"target connection retry, attempt 6"}
+{"err":{"message":"transientmocks","type":"class java.net.UnknownHostException"},"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c"},"message":"target connection retry, attempt 7"}
+{"err":{"message":"transientmocks","type":"class java.net.UnknownHostException"},"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c"},"message":"target connection retry, attempt 8"}
+{"err":{"message":"transientmocks","type":"class java.net.UnknownHostException"},"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c"},"message":"target connection retry, attempt 9"}
+{"err":{"message":"transientmocks","type":"class java.net.UnknownHostException"},"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c"},"message":"target connection retry, attempt 10"}
+{"err":{"message":"transientmocks","type":"class java.net.UnknownHostException"},"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c"},"message":"target connection retry, attempt 11"}
+{"level":"info","extra":{"requestId":"4d33bd9c-11a0-4c68-a173-2a5745df0f5c","statusCode":200},"message":"process message completed"}
+{"level":"info","extra":{"executionTime":10847},"message":"batch process completed"}
+{"level":"info","message":"shutting down"}
+{"level":"info","message":"kafka-consumer-test terminated"}

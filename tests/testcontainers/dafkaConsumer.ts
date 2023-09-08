@@ -1,6 +1,7 @@
 import {StartedNetwork, StoppedTestContainer, Wait} from 'testcontainers';
 import {GenericContainer} from 'testcontainers';
 import {withThrow, withRetry} from '@osskit/fetch-enhancers';
+import fs from 'node:fs';
 
 const maxRetries = parseInt(process.env.MAX_RETRIES ?? '10');
 const startupTimeout = parseInt(process.env.STARTUP_TIMEOUT ?? '60000');
@@ -28,10 +29,7 @@ export const dafkaConsumer = async (
         .withStartupTimeout(startupTimeout)
         .start();
 
-    if (process.env.VERBOSE) {
-        const logs = await container.logs();
-        logs.pipe(process.stdout);
-    }
+    await container.logs().then((logs) => logs.pipe(fs.createWriteStream('./tests/logs/service.logs', {})));
 
     const baseUrl = `http://localhost:${container.getMappedPort(3000)}`;
 

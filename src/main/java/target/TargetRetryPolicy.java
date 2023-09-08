@@ -33,20 +33,16 @@ public class TargetRetryPolicy {
 
         var connectionRetryPolicy = RetryPolicy
             .<Response>builder()
+            .withMaxAttempts(-1)
             .withBackoff(
                 connectionFailureDelay,
                 connectionFailureMaxDelay,
                 ChronoUnit.MILLIS,
                 connectionFailureDelayFactor
             )
-            .withMaxRetries(Config.CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES)
-            //                .handleIf((r, e) -> {
-            //                    System.out.println("111111 " +  e.getMessage());
-            //                    return true;
-            //                })
-            .handle(IOException.class)
-            //            .handleResultIf(r -> Integer.toString(r.code()).matches("503"))
             .withMaxDuration(connectionFailureMaxDuration)
+            .handle(Throwable.class)
+            .handleResultIf(r -> Integer.toString(r.code()).matches("503"))
             .onRetry(e -> {
                 Monitor.targetConnectionRetry(
                     extractAttemptedResponseBody(e),
@@ -55,18 +51,14 @@ public class TargetRetryPolicy {
                     requestId
                 );
             })
-            .onFailure(__ -> Monitor.targetConnectionRetryExceeded(requestId))
-            .onSuccess(e ->
-                Monitor.targetConnectionRetrySuccess(extractCompletedResponseBody(e), e.getAttemptCount(), requestId)
-            )
             .build();
 
         var executionRetryPolicy = dev.failsafe.RetryPolicy
             .<Response>builder()
+            .withMaxAttempts(-1)
             .withBackoff(delay, maxDelay, ChronoUnit.MILLIS, delayFactor)
-            .withMaxRetries(Config.RETRY_POLICY_MAX_RETRIES)
-            .handleResultIf(r -> Integer.toString(r.code()).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH))
             .withMaxDuration(maxDuration)
+            .handleResultIf(r -> Integer.toString(r.code()).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH))
             .onRetry(e -> {
                 Monitor.targetExecutionRetry(
                     extractAttemptedResponseBody(e),
@@ -75,12 +67,9 @@ public class TargetRetryPolicy {
                     requestId
                 );
             })
-            .onSuccess(e ->
-                Monitor.targetExecutionRetrySuccess(extractCompletedResponseBody(e), e.getAttemptCount(), requestId)
-            )
             .build();
 
-        return FailsafeCall.with(connectionRetryPolicy);
+        return FailsafeCall.with(executionRetryPolicy, connectionRetryPolicy);
     }
 
     private static Optional<String> extractAttemptedResponseBody(ExecutionAttemptedEvent<Response> e) {
