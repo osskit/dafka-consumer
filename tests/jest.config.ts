@@ -21,6 +21,7 @@ const config: JestConfigWithTsJest = {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         '^(\\.{1,2}/.*)\\.js$': '$1',
     },
+    testTimeout: 1800000,
 };
 
 export default config;

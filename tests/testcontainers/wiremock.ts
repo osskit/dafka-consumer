@@ -1,21 +1,19 @@
-import type {StartedNetwork, StartedTestContainer} from 'testcontainers';
+import type {StartedNetwork} from 'testcontainers';
 import {GenericContainer} from 'testcontainers';
 import {WireMockClient} from '@osskit/wiremock-client';
 
-export const wiremock = async (network: StartedNetwork, alias = 'mocks') => {
+export const wiremock = async (network: StartedNetwork) => {
     let container = new GenericContainer('wiremock/wiremock')
         .withExposedPorts(8080)
         .withNetwork(network)
-        .withNetworkAliases(alias)
+        .withNetworkAliases('mocks')
         .withCommand(['--verbose']);
 
-    let startedContainer: StartedTestContainer | undefined;
+    let startedContainer = await container.start();
+    let client = new WireMockClient(`http://localhost:${startedContainer.getMappedPort(8080)}`);
 
     return {
-        start: async () => {
-            startedContainer = await container.start();
-            return new WireMockClient(`http://localhost:${startedContainer.getMappedPort(8080)}`);
-        },
-        stop: () => startedContainer?.stop(),
+        client,
+        stop: () => startedContainer.stop(),
     };
 };

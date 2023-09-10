@@ -10,6 +10,7 @@ export const kafka = async (network: StartedNetwork) => {
             Wait.forLogMessage('Registered broker 1 at path /brokers/ids/1 with addresses: BROKER://kafka:9092')
         )
         .start();
+
     const client = new Kafka({
         logLevel: logLevel.NOTHING,
         brokers: [`${container.getHost()}:${container.getMappedPort(9093)}`],

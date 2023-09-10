@@ -1,61 +1,62 @@
-import {Network, StartedNetwork} from 'testcontainers';
-import {dafkaConsumer} from './dafkaConsumer.js';
+import {Network, StoppedTestContainer} from 'testcontainers';
+import {consumer} from './consumer.js';
 import {kafka} from './kafka.js';
 import {wiremock} from './wiremock.js';
 import {WireMockClient} from '@osskit/wiremock-client';
-import {Kafka} from 'kafkajs';
-
-export interface KafkaOrchestrator {
-    stop: () => Promise<void>;
-    startOrchestrator: (dafkaEnv: Record<string, string>) => Promise<Orchestrator>;
-    kafkaClient: Kafka;
-}
+import {Admin, KafkaMessage, Producer} from 'kafkajs';
 
 export interface Orchestrator {
+    consumer: (env: Record<string, string>, topics: string[]) => Promise<void>;
+    producer: () => Promise<Producer>;
+    target: WireMockClient;
+    admin: () => Admin;
+    consume: (topic: string) => Promise<any>;
     stop: () => Promise<void>;
-    wireMockClient: WireMockClient;
-    consumerReady: () => Promise<Response>;
-    stopTransientWireMock: () => Promise<void>;
-    startTransientWireMock: () => Promise<WireMockClient>;
 }
 
 export const start = async () => {
     const network = await new Network().start();
 
     const {client: kafkaClient, stop: stopKafka} = await kafka(network);
+    const {client: target, stop: stopWiremock} = await wiremock(network);
 
+    let stopConsumer: () => Promise<StoppedTestContainer>;
+    let producer: Producer;
     return {
-        kafkaClient,
+        consumer: async (env: Record<string, string>, topics: string[]) => {
+            const admin = kafkaClient.admin();
+            await admin.createTopics({topics: topics.map((topic) => ({topic}))});
+            const {stop} = await consumer(network, env);
+            stopConsumer = stop;
+        },
+        producer: async () => {
+            producer = kafkaClient.producer();
+            await producer.connect();
+            return producer;
+        },
+        target,
+        admin: () => kafkaClient.admin(),
+        consume: async (topic: string) => {
+            const consumer = kafkaClient.consumer({groupId: 'orchestrator'});
+            await consumer.subscribe({topic: topic, fromBeginning: true});
+            const consumedMessage = await new Promise<KafkaMessage>((resolve) => {
+                consumer.run({
+                    eachMessage: async ({message}) => resolve(message),
+                });
+            });
+            await consumer.disconnect();
+            const value = JSON.parse(consumedMessage.value?.toString() ?? '{}');
+            const headers = Object.fromEntries(
+                Object.entries(consumedMessage.headers!).map(([key, value]) => [key, value?.toString()])
+            );
+            return {value, headers};
+        },
         stop: async () => {
+            await producer.disconnect();
+            await stopConsumer();
+            await stopWiremock();
             await stopKafka();
             await network.stop();
         },
-        startOrchestrator: async (dafkaEnv: Record<string, string>) => {
-            return startOrchestratorInner(network, dafkaEnv);
-        },
-    };
-};
-
-const startOrchestratorInner = async (
-    network: StartedNetwork,
-    dafkaEnv: Record<string, string>
-): Promise<Orchestrator> => {
-    const [
-        {stop: stopWiremock, start: startWiremock},
-        {stop: stopTransientWireMock, start: startTransientWireMock},
-        {ready: consumerReady, stop: stopService},
-    ] = await Promise.all([wiremock(network), wiremock(network, 'transientMocks'), dafkaConsumer(network, dafkaEnv)]);
-
-    const wireMockClient = await startWiremock();
-    return {
-        async stop() {
-            await Promise.all([stopService(), stopWiremock(), stopTransientWireMock()]);
-        },
-        wireMockClient: wireMockClient!,
-        consumerReady,
-        stopTransientWireMock: async () => {
-            await stopTransientWireMock();
-        },
-        startTransientWireMock,
     };
 };

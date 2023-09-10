@@ -33,7 +33,6 @@ public class TargetRetryPolicy {
 
         var connectionRetryPolicy = RetryPolicy
             .<Response>builder()
-            .withMaxAttempts(-1)
             .withBackoff(
                 connectionFailureDelay,
                 connectionFailureMaxDelay,
@@ -41,7 +40,8 @@ public class TargetRetryPolicy {
                 connectionFailureDelayFactor
             )
             .withMaxDuration(connectionFailureMaxDuration)
-            .handle(Throwable.class)
+            .withMaxAttempts(Config.RETRY_POLICY_MAX_RETRIES)
+            .handle(IOException.class)
             .handleResultIf(r -> Integer.toString(r.code()).matches("503"))
             .onRetry(e -> {
                 Monitor.targetConnectionRetry(
@@ -55,9 +55,10 @@ public class TargetRetryPolicy {
 
         var executionRetryPolicy = dev.failsafe.RetryPolicy
             .<Response>builder()
-            .withMaxAttempts(-1)
             .withBackoff(delay, maxDelay, ChronoUnit.MILLIS, delayFactor)
             .withMaxDuration(maxDuration)
+            .withMaxAttempts(Config.RETRY_POLICY_MAX_RETRIES)
+            .handleIf(e -> false)
             .handleResultIf(r -> Integer.toString(r.code()).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH))
             .onRetry(e -> {
                 Monitor.targetExecutionRetry(
@@ -75,20 +76,6 @@ public class TargetRetryPolicy {
     private static Optional<String> extractAttemptedResponseBody(ExecutionAttemptedEvent<Response> e) {
         return Optional
             .ofNullable(e.getLastResult())
-            .flatMap(r -> {
-                try {
-                    try (Response response = r) {
-                        return Optional.of(response.body().string());
-                    }
-                } catch (IOException error) {
-                    return Optional.empty();
-                }
-            });
-    }
-
-    private static Optional<String> extractCompletedResponseBody(ExecutionCompletedEvent<Response> e) {
-        return Optional
-            .ofNullable(e.getResult())
             .flatMap(r -> {
                 try {
                     try (Response response = r) {
