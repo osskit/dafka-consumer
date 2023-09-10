@@ -1,9 +1,0 @@
-{"level":"info","extra":{"targetBaseUrl":"http://mocks:8080"},"message":"waiting for target healthcheck"}
-{"level":"info","extra":{"targetBaseUrl":"http://mocks:8080"},"message":"target healthcheck passed successfully"}
-{"level":"info","message":"kafka-consumer-test started"}
-{"level":"info","extra":{"count":1},"message":"consumer was assigned to partitions"}
-{"level":"info","extra":{"count":1},"message":"batch process started"}
-{"level":"info","extra":{"requestId":"79bd0d5b-fc43-4a35-a9db-d658da91982e","record":{"headers":"RecordHeaders(headers = [], isReadOnly = false)","partition":0,"offset":0,"topic":"prefix.foo","value":"{\"data\":\"foo\"}"}},"message":"process message started"}
-{"level":"info","extra":{"requestId":"79bd0d5b-fc43-4a35-a9db-d658da91982e","statusCode":200},"message":"process message completed"}
-{"level":"info","extra":{"executionTime":887},"message":"batch process completed"}
-{"level":"info","message":"shutting down"}

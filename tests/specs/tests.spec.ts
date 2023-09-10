@@ -85,6 +85,7 @@ describe('tests', () => {
                 topic: 'foo',
                 messages: range(10000).map((_) => ({value: JSON.stringify({data: 'foo'})})),
             });
+            await delay(30000);
 
             //assert
             await expect(getOffset(orchestrator.admin(), 'foo')).resolves.toBe(10000);
