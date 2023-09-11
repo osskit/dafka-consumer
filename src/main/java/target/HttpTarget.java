@@ -39,6 +39,7 @@ public class HttpTarget implements ITarget {
 
     public CompletableFuture<Object> call(final ConsumerRecord<String, String> record) {
         var requestId = UUID.randomUUID().toString();
+        Monitor.processMessageStarted(record, requestId);
         try {
             return TargetRetryPolicy
                 .create(record, requestId)

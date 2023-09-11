@@ -19,13 +19,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 public class TargetRetryPolicy {
 
     public static FailsafeCall.FailsafeCallBuilder create(ConsumerRecord<String, String> record, String requestId) {
-        var delay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
-        var maxDelay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
-        var delayFactor = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
-        var maxDuration = Duration.ofMillis(Config.RETRY_POLICY_MAX_DURATION_MS);
-
-        Monitor.processMessageStarted(record, requestId);
-
         var connectionFailureDelay = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
         var connectionFailureMaxDelay = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
         var connectionFailureDelayFactor = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
@@ -52,6 +45,11 @@ public class TargetRetryPolicy {
                 );
             })
             .build();
+
+        var delay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
+        var maxDelay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
+        var delayFactor = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
+        var maxDuration = Duration.ofMillis(Config.RETRY_POLICY_MAX_DURATION_MS);
 
         var executionRetryPolicy = dev.failsafe.RetryPolicy
             .<Response>builder()

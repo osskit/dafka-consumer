@@ -208,7 +208,7 @@ describe('tests', () => {
             await expect(getOffset(orchestrator.admin(), 'foo')).resolves.toBe(1);
         });
 
-        it.only('consumer should recover from socket error', async () => {
+        it('consumer should recover from socket error', async () => {
             //prepare
             await orchestrator.consumer(
                 {
@@ -237,7 +237,7 @@ describe('tests', () => {
             await expect(getOffset(orchestrator.admin(), 'foo')).resolves.toBe(1);
         });
 
-        it.only('consumer should produce to retry topic', async () => {
+        it('consumer should produce to retry topic', async () => {
             //prepare
             await orchestrator.consumer(
                 {
@@ -267,7 +267,7 @@ describe('tests', () => {
             await expect(orchestrator.consume('retry')).resolves.toMatchSnapshot();
         });
 
-        it.only('consumer should produce to dead letter topic', async () => {
+        it('consumer should produce to dead letter topic', async () => {
             //prepare
             await orchestrator.consumer(
                 {
@@ -294,7 +294,7 @@ describe('tests', () => {
             await expect(orchestrator.consume('dead')).resolves.toMatchSnapshot();
         });
 
-        it.only('consumer should produce to dead letter topic when value is not valid JSON', async () => {
+        it('consumer should produce to dead letter topic when value is not valid JSON', async () => {
             //prepare
             await orchestrator.consumer(
                 {
