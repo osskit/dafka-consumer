@@ -40,7 +40,7 @@ public class TargetRetryPolicy {
                 connectionFailureDelayFactor
             )
             .withMaxDuration(connectionFailureMaxDuration)
-            .withMaxAttempts(Config.RETRY_POLICY_MAX_RETRIES)
+            .withMaxAttempts(Config.CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES)
             .handle(IOException.class)
             .handleResultIf(r -> Integer.toString(r.code()).matches("503"))
             .onRetry(e -> {

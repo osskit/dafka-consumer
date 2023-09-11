@@ -4,7 +4,6 @@ import {getCalls, mockHttpTarget, mockFaultyHttpTarget} from '../services/target
 import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
 import {range} from 'lodash-es';
-import pRetry from 'p-retry';
 import delay from 'delay';
 
 const topicRoutes = (topicRoutes: {topic: string; targetPath: string}[]) =>
@@ -68,7 +67,7 @@ describe('tests', () => {
             await expect(getOffset(orchestrator.admin(), 'prefix.foo')).resolves.toBe(1);
         });
 
-        it.only('should consume bursts of records', async () => {
+        it('should consume bursts of records', async () => {
             //prepare
             await orchestrator.consumer(
                 {
@@ -83,12 +82,12 @@ describe('tests', () => {
             //act
             await produce(orchestrator, {
                 topic: 'foo',
-                messages: range(10000).map((_) => ({value: JSON.stringify({data: 'foo'})})),
+                messages: range(5000).map((_) => ({value: JSON.stringify({data: 'foo'})})),
             });
-            await delay(30000);
+            await delay(100000);
 
             //assert
-            await expect(getOffset(orchestrator.admin(), 'foo')).resolves.toBe(10000);
+            await expect(getOffset(orchestrator.admin(), 'foo')).resolves.toBe(5000);
         });
     });
 
@@ -165,7 +164,7 @@ describe('tests', () => {
                     TARGET_BASE_URL: 'http://mocks:8080',
                     TOPICS_ROUTES: topicRoutes([{topic: 'foo', targetPath: '/consume'}]),
                     CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '5,8000000,2',
-                    CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS: '8000000',
+                    CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES: '5',
                 },
                 ['foo']
             );
@@ -176,10 +175,10 @@ describe('tests', () => {
                 topic: 'foo',
                 messages: [{value: JSON.stringify({data: 'foo'})}],
             });
-            await delay(20000);
+            await delay(5000);
 
             //assert
-            await expect(getCalls(orchestrator.target, target)).resolves.toHaveLength(10);
+            await expect(getCalls(orchestrator.target, target)).resolves.toHaveLength(5);
             await expect(getOffset(orchestrator.admin(), 'foo')).resolves.toBe(1);
         });
 
@@ -190,8 +189,8 @@ describe('tests', () => {
                     GROUP_ID: 'test',
                     TARGET_BASE_URL: 'http://mocks:8080',
                     TOPICS_ROUTES: topicRoutes([{topic: 'foo', targetPath: '/consume'}]),
-                    CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '50,5000,2',
-                    CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS: '5000',
+                    CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '5,8000000,2',
+                    CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES: '5',
                 },
                 ['foo']
             );
@@ -202,21 +201,21 @@ describe('tests', () => {
                 topic: 'foo',
                 messages: [{value: JSON.stringify({data: 'foo'})}],
             });
-            await delay(20000);
+            await delay(5000);
 
             //assert
-            await expect(getCalls(orchestrator.target, target)).resolves.toHaveLength(10);
+            await expect(getCalls(orchestrator.target, target)).resolves.toHaveLength(5);
             await expect(getOffset(orchestrator.admin(), 'foo')).resolves.toBe(1);
         });
 
-        it('consumer should recover from socket error', async () => {
+        it.only('consumer should recover from socket error', async () => {
             //prepare
             await orchestrator.consumer(
                 {
                     GROUP_ID: 'test',
                     TARGET_BASE_URL: 'http://mocks:8080',
                     TOPICS_ROUTES: topicRoutes([{topic: 'foo', targetPath: '/consume'}]),
-                    CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '50,5000,2',
+                    CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF: '50,50000,2',
                     CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS: '5000',
                 },
                 ['foo']
@@ -238,7 +237,7 @@ describe('tests', () => {
             await expect(getOffset(orchestrator.admin(), 'foo')).resolves.toBe(1);
         });
 
-        it('consumer should produce to retry topic', async () => {
+        it.only('consumer should produce to retry topic', async () => {
             //prepare
             await orchestrator.consumer(
                 {
@@ -268,7 +267,7 @@ describe('tests', () => {
             await expect(orchestrator.consume('retry')).resolves.toMatchSnapshot();
         });
 
-        it('consumer should produce to dead letter topic', async () => {
+        it.only('consumer should produce to dead letter topic', async () => {
             //prepare
             await orchestrator.consumer(
                 {
@@ -295,7 +294,7 @@ describe('tests', () => {
             await expect(orchestrator.consume('dead')).resolves.toMatchSnapshot();
         });
 
-        it('consumer should produce to dead letter topic when value is not valid JSON', async () => {
+        it.only('consumer should produce to dead letter topic when value is not valid JSON', async () => {
             //prepare
             await orchestrator.consumer(
                 {

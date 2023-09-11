@@ -21,7 +21,7 @@ export const consumer = async (network: StartedNetwork, env: Record<string, stri
         .withStartupTimeout(startupTimeout)
         .start();
 
-    await container.logs().then((logs) => logs.pipe(fs.createWriteStream('./tests/logs/service.logs', {})));
+    await container.logs().then((logs) => logs.pipe(fs.createWriteStream('./tests/logs/service.log', {})));
 
     return {
         stop: () => container.stop(),
