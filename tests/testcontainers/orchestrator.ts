@@ -4,6 +4,7 @@ import {kafka} from './kafka.js';
 import {wiremock} from './wiremock.js';
 import {WireMockClient} from '@osskit/wiremock-client';
 import {Admin, KafkaMessage, Producer} from 'kafkajs';
+import delay from 'delay';
 
 export interface Orchestrator {
     consumer: (env: Record<string, string>, topics: string[]) => Promise<void>;
@@ -28,6 +29,7 @@ export const start = async () => {
             await admin.createTopics({topics: topics.map((topic) => ({topic}))});
             const {stop} = await consumer(network, env);
             stopConsumer = stop;
+            await delay(5000);
         },
         producer: async () => {
             producer = kafkaClient.producer();

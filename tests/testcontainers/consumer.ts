@@ -1,6 +1,6 @@
 import {StartedNetwork, StoppedTestContainer, Wait} from 'testcontainers';
 import {GenericContainer} from 'testcontainers';
-import fs from 'node:fs';
+// import fs from 'node:fs';
 
 const startupTimeout = parseInt(process.env.STARTUP_TIMEOUT ?? '60000');
 
@@ -21,7 +21,7 @@ export const consumer = async (network: StartedNetwork, env: Record<string, stri
         .withStartupTimeout(startupTimeout)
         .start();
 
-    await container.logs().then((logs) => logs.pipe(fs.createWriteStream('./tests/logs/service.log', {})));
+    // await container.logs().then((logs) => logs.pipe(fs.createWriteStream('./tests/logs/service.log', {})));
 
     return {
         stop: () => container.stop(),
