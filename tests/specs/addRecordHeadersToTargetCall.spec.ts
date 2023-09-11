@@ -14,7 +14,7 @@ describe('tests', () => {
     }, 5 * 60 * 1000);
 
     afterEach(async () => {
-        orchestrator.stop();
+        await orchestrator.stop();
     });
 
     it('should add record headers to target call', async () => {

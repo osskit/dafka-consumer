@@ -15,7 +15,7 @@ describe('tests', () => {
     }, 5 * 60 * 1000);
 
     afterEach(async () => {
-        orchestrator.stop();
+        await orchestrator.stop();
     });
 
     it('should produce and consume', async () => {

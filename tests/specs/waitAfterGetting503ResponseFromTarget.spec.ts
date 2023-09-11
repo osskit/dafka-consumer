@@ -16,7 +16,7 @@ describe('tests', () => {
     }, 5 * 60 * 1000);
 
     afterEach(async () => {
-        orchestrator.stop();
+        await orchestrator.stop();
     });
 
     it('consumer should wait after getting 503 response from target', async () => {

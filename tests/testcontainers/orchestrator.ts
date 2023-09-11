@@ -10,7 +10,7 @@ export interface Orchestrator {
     producer: () => Promise<Producer>;
     target: WireMockClient;
     admin: () => Admin;
-    consume: (topic: string) => Promise<any>;
+    consume: (topic: string, parse?: boolean) => Promise<any>;
     stop: () => Promise<void>;
 }
 
@@ -36,7 +36,7 @@ export const start = async () => {
         },
         target,
         admin: () => kafkaClient.admin(),
-        consume: async (topic: string) => {
+        consume: async (topic: string, parse = true) => {
             const consumer = kafkaClient.consumer({groupId: 'orchestrator'});
             await consumer.subscribe({topic: topic, fromBeginning: true});
             const consumedMessage = await new Promise<KafkaMessage>((resolve) => {
@@ -45,7 +45,9 @@ export const start = async () => {
                 });
             });
             await consumer.disconnect();
-            const value = JSON.parse(consumedMessage.value?.toString() ?? '{}');
+            const value = parse
+                ? JSON.parse(consumedMessage.value?.toString() ?? '{}')
+                : consumedMessage.value?.toString();
             const headers = Object.fromEntries(
                 Object.entries(consumedMessage.headers!).map(([key, value]) => [key, value?.toString()])
             );
