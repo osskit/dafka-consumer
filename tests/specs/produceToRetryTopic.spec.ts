@@ -27,7 +27,7 @@ describe('tests', () => {
                 RETRY_TOPIC: 'retry',
                 RETRY_PROCESS_WHEN_STATUS_CODE_MATCH: '511',
                 PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH: '511',
-                RETRY_POLICY_EXPONENTIAL_BACKOFF: '50,500,10',
+                RETRY_POLICY_EXPONENTIAL_BACKOFF: '5,500,2',
                 RETRY_POLICY_MAX_DURATION: '1000',
             },
             ['foo', 'retry']
