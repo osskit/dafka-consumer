@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`tests should produce and consume 1`] = `
+[
+  {
+    "body": {
+      "data": "foo",
+    },
+  },
+]
+`;
