@@ -4,9 +4,7 @@ import {getCalls, mockHttpTarget, mockFaultyHttpTarget} from '../services/target
 import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
 import delay from 'delay';
-
-const topicRoutes = (topicRoutes: {topic: string; targetPath: string}[]) =>
-    topicRoutes.map(({topic, targetPath}) => `${topic}:${targetPath}`).join(',');
+import {topicRoutes} from '../services/topicRoutes.js';
 
 describe('tests', () => {
     let orchestrator: Orchestrator;
