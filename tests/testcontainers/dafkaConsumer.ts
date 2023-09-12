@@ -8,7 +8,10 @@ export interface ServiceContainer {
     stop: () => Promise<StoppedTestContainer>;
 }
 
-export const consumer = async (network: StartedNetwork, env: Record<string, string>): Promise<ServiceContainer> => {
+export const dafkaConsumer = async (
+    network: StartedNetwork,
+    env: Record<string, string>
+): Promise<ServiceContainer> => {
     const container = await new GenericContainer('bazel/src:image')
         .withExposedPorts(3000)
         .withNetwork(network)
