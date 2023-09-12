@@ -11,33 +11,34 @@ describe('tests', () => {
     let orchestrator: Orchestrator;
 
     beforeEach(async () => {
-        orchestrator = await start();
-    }, 5 * 60 * 1000);
-
-    afterEach(async () => {
-        await orchestrator.stop();
-    });
-
-    it('should consume bursts of records', async () => {
-        //prepare
-        await orchestrator.consumer(
+        orchestrator = await start(
             {
+                KAFKA_BROKER: 'kafka:9092',
+                MONITORING_SERVER_PORT: '3000',
                 GROUP_ID: 'test',
                 TARGET_BASE_URL: 'http://mocks:8080',
                 TOPICS_ROUTES: topicRoutes([{topic: 'foo', targetPath: '/consume'}]),
             },
             ['foo']
         );
-        await mockHttpTarget(orchestrator.target, '/consume', 200);
+    }, 5 * 60 * 1000);
 
-        //act
+    afterEach(async () => {
+        if (!orchestrator) {
+            return;
+        }
+        await orchestrator.stop();
+    });
+
+    it('should consume bursts of records', async () => {
+        await mockHttpTarget(orchestrator.wiremockClient, '/consume', 200);
+
         await produce(orchestrator, {
             topic: 'foo',
             messages: range(1000).map((_) => ({value: JSON.stringify({data: 'foo'})})),
         });
         await delay(30000);
 
-        //assert
-        await expect(getOffset(orchestrator.admin(), 'foo')).resolves.toBe(1000);
+        await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1000);
     });
 });

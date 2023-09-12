@@ -3,7 +3,7 @@ import {KafkaContainer} from '@testcontainers/kafka';
 import {Kafka, logLevel} from 'kafkajs';
 import delay from 'delay';
 
-export const kafka = async (network: StartedNetwork) => {
+export const kafka = async (network: StartedNetwork, topics: string[]) => {
     const container = await new KafkaContainer('confluentinc/cp-kafka:7.2.2')
         .withNetwork(network)
         .withNetworkAliases('kafka')
@@ -16,6 +16,8 @@ export const kafka = async (network: StartedNetwork) => {
         logLevel: logLevel.NOTHING,
         brokers: [`${container.getHost()}:${container.getMappedPort(9093)}`],
     });
+
+    await client.admin().createTopics({topics: topics.map((topic) => ({topic}))});
 
     return {
         stop: () => container.stop(),

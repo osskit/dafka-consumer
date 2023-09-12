@@ -5,22 +5,16 @@ import delay from 'delay';
 import {mockHttpTarget} from '../services/target.js';
 import {getOffset} from '../services/getOffset.js';
 import {topicRoutes} from '../services/topicRoutes.js';
+import {consume} from '../services/consume.js';
 
 describe('tests', () => {
     let orchestrator: Orchestrator;
 
     beforeEach(async () => {
-        orchestrator = await start();
-    }, 5 * 60 * 1000);
-
-    afterEach(async () => {
-        await orchestrator.stop();
-    });
-
-    it('consumer should produce to dead letter topic when value is not valid JSON', async () => {
-        //prepare
-        await orchestrator.consumer(
+        orchestrator = await start(
             {
+                KAFKA_BROKER: 'kafka:9092',
+                MONITORING_SERVER_PORT: '3000',
                 GROUP_ID: 'test',
                 TARGET_BASE_URL: 'http://mocks:8080',
                 TOPICS_ROUTES: topicRoutes([{topic: 'foo', targetPath: '/consume'}]),
@@ -29,7 +23,17 @@ describe('tests', () => {
             },
             ['foo', 'dead']
         );
-        await mockHttpTarget(orchestrator.target, '/consume', 200);
+    }, 5 * 60 * 1000);
+
+    afterEach(async () => {
+        if (!orchestrator) {
+            return;
+        }
+        await orchestrator.stop();
+    });
+
+    it('consumer should produce to dead letter topic when value is not valid JSON', async () => {
+        await mockHttpTarget(orchestrator.wiremockClient, '/consume', 200);
 
         //act
         await produce(orchestrator, {
@@ -39,7 +43,7 @@ describe('tests', () => {
         await delay(5000);
 
         //assert
-        await expect(getOffset(orchestrator.admin(), 'foo')).resolves.toBe(1);
-        await expect(orchestrator.consume('dead', false)).resolves.toMatchSnapshot();
+        await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1);
+        await expect(consume(orchestrator.kafkaClient, 'dead', false)).resolves.toMatchSnapshot();
     });
 });

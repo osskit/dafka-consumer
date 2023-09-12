@@ -10,17 +10,10 @@ describe('tests', () => {
     let orchestrator: Orchestrator;
 
     beforeEach(async () => {
-        orchestrator = await start();
-    }, 5 * 60 * 1000);
-
-    afterEach(async () => {
-        await orchestrator.stop();
-    });
-
-    it('consumer should wait after connection error from target', async () => {
-        //prepare
-        await orchestrator.consumer(
+        orchestrator = await start(
             {
+                KAFKA_BROKER: 'kafka:9092',
+                MONITORING_SERVER_PORT: '3000',
                 GROUP_ID: 'test',
                 TARGET_BASE_URL: 'http://mocks:8080',
                 TOPICS_ROUTES: topicRoutes([{topic: 'foo', targetPath: '/consume'}]),
@@ -29,17 +22,25 @@ describe('tests', () => {
             },
             ['foo']
         );
-        const target = await mockFaultyHttpTarget(orchestrator.target, '/consume');
+    }, 5 * 60 * 1000);
 
-        //act
+    afterEach(async () => {
+        if (!orchestrator) {
+            return;
+        }
+        await orchestrator.stop();
+    });
+
+    it('consumer should wait after connection error from target', async () => {
+        const target = await mockFaultyHttpTarget(orchestrator.wiremockClient, '/consume');
+
         await produce(orchestrator, {
             topic: 'foo',
             messages: [{value: JSON.stringify({data: 'foo'})}],
         });
         await delay(5000);
 
-        //assert
-        await expect(getCalls(orchestrator.target, target)).resolves.toHaveLength(5);
-        await expect(getOffset(orchestrator.admin(), 'foo')).resolves.toBe(1);
+        await expect(getCalls(orchestrator.wiremockClient, target)).resolves.toHaveLength(5);
+        await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1);
     });
 });

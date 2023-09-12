@@ -12,11 +12,7 @@ export const consumer = async (network: StartedNetwork, env: Record<string, stri
     const container = await new GenericContainer('bazel/src:image')
         .withExposedPorts(3000)
         .withNetwork(network)
-        .withEnvironment({
-            ...env,
-            KAFKA_BROKER: 'kafka:9092',
-            MONITORING_SERVER_PORT: '3000',
-        })
+        .withEnvironment(env)
         .withWaitStrategy(Wait.forLogMessage('consumer was assigned to partitions'))
         .withStartupTimeout(startupTimeout)
         .start();

@@ -1,6 +1,7 @@
-import {Admin} from 'kafkajs';
+import {Kafka} from 'kafkajs';
 
-export const getOffset = async (admin: Admin, topic: string) => {
+export const getOffset = async (kafka: Kafka, topic: string) => {
+    const admin = kafka.admin();
     await admin.connect();
     const metadata = await admin.fetchOffsets({groupId: 'test', topics: [topic]});
     admin.disconnect();
