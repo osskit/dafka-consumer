@@ -3,12 +3,8 @@ package target;
 import configuration.Config;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.event.ExecutionAttemptedEvent;
-import dev.failsafe.event.ExecutionCompletedEvent;
 import dev.failsafe.okhttp.FailsafeCall;
 import java.io.IOException;
-import java.net.ConnectException;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -35,7 +31,9 @@ public class TargetRetryPolicy {
             .withMaxDuration(connectionFailureMaxDuration)
             .withMaxAttempts(Config.CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES)
             .handle(IOException.class)
-            .handleResultIf(r -> Integer.toString(r.code()).matches("503"))
+            .handleResultIf(r ->
+                Integer.toString(r.code()).matches(Config.CONNECTION_RETRY_PROCESS_WHEN_STATUS_CODE_MATCH)
+            )
             .onRetry(e -> {
                 Monitor.targetConnectionRetry(
                     extractAttemptedResponseBody(e),
