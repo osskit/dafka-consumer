@@ -30,7 +30,7 @@ describe('tests', () => {
         await orchestrator.stop();
     });
 
-    it('should consume bursts of records', async () => {
+    it('should consume burst of records', async () => {
         await mockHttpTarget(orchestrator.wiremockClient, '/consume', 200);
 
         await produce(orchestrator, {
