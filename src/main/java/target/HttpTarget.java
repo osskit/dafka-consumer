@@ -1,16 +1,8 @@
 package target;
 
-import com.google.common.collect.ImmutableList;
 import configuration.Config;
 import configuration.TopicsRoutes;
-import dev.failsafe.RetryPolicy;
-import dev.failsafe.event.ExecutionAttemptedEvent;
-import dev.failsafe.event.ExecutionCompletedEvent;
-import dev.failsafe.okhttp.FailsafeCall;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -18,15 +10,11 @@ import kafka.Producer;
 import monitoring.Monitor;
 import okhttp3.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 public class HttpTarget implements ITarget {
 
-    public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
-
     private final TopicsRoutes topicsRoutes;
-
     private static final Duration httpTimeout = Duration.ofMillis(Config.TARGET_TIMEOUT_MS);
     private static final OkHttpClient client = new OkHttpClient.Builder()
         .callTimeout(httpTimeout)
@@ -49,66 +37,39 @@ public class HttpTarget implements ITarget {
         this.producer = producer;
     }
 
-    List<String> cloudEventHeaders = new ArrayList<>(
-        ImmutableList.of("ce_id", "ce_time", "ce_specversion", "ce_type", "ce_source")
-    );
-
-    private Optional<String> extractCompletedResponseBody(ExecutionCompletedEvent<Response> e) {
-        return Optional
-            .ofNullable(e.getResult())
-            .flatMap(r -> {
-                try {
-                    try (Response response = r) {
-                        return Optional.of(response.body().string());
-                    }
-                } catch (IOException error) {
-                    return Optional.empty();
-                }
-            });
-    }
-
-    private Optional<String> extractAttemptedResponseBody(ExecutionAttemptedEvent<Response> e) {
-        return Optional
-            .ofNullable(e.getLastResult())
-            .flatMap(r -> {
-                try {
-                    try (Response response = r) {
-                        return Optional.of(response.body().string());
-                    }
-                } catch (IOException error) {
-                    return Optional.empty();
-                }
-            });
-    }
-
     public CompletableFuture<Object> call(final ConsumerRecord<String, String> record) {
-        var body = RequestBody.create(record.value(), JSON);
+        var requestId = UUID.randomUUID().toString();
+        Monitor.processMessageStarted(record, requestId);
+        try {
+            return TargetRetryPolicy
+                .create(record, requestId)
+                .compose(client.newCall(createRequest(record)))
+                .executeAsync()
+                .handleAsync((response, throwable) ->
+                    onExecutionSuccess(response, throwable, record, (new Date()).getTime(), requestId)
+                );
+        } catch (Throwable throwable) {
+            Monitor.processMessageError(throwable, requestId);
+            if (Config.DEAD_LETTER_TOPIC != null) {
+                Monitor.deadLetterProduced(Config.DEAD_LETTER_TOPIC, requestId);
+                return producer.produce(Config.DEAD_LETTER_TOPIC, record, requestId);
+            }
+            return CompletableFuture.failedFuture(throwable);
+        }
+    }
 
+    private Request createRequest(final ConsumerRecord<String, String> record) {
         var requestBuilder = new Request.Builder()
             .url(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(record.topic()))
-            .post(body)
+            .post(RequestBody.create(record.value(), MediaType.get("application/json; charset=utf-8")))
             .header("x-record-topic", record.topic())
             .header("x-record-partition", String.valueOf(record.partition()))
             .header("x-record-offset", String.valueOf(record.offset()))
             .header("x-record-timestamp", String.valueOf(record.timestamp()))
             .header("x-record-original-topic", this.getOriginalTopic(record));
 
-        var requestId = UUID.randomUUID().toString();
-
-        JSONObject jsonObject;
-
-        try {
-            jsonObject = new JSONObject(record.value());
-        } catch (JSONException throwable) {
-            Monitor.processMessageError(throwable, requestId);
-            if (Config.DEAD_LETTER_TOPIC != null) {
-                Monitor.retryProduced(Config.DEAD_LETTER_TOPIC, requestId);
-                return producer.produce(Config.DEAD_LETTER_TOPIC, record, requestId);
-            }
-            return CompletableFuture.failedFuture(throwable);
-        }
-
         if (Config.BODY_HEADERS_PATHS != null) {
+            var jsonObject = new JSONObject(record.value());
             Config.BODY_HEADERS_PATHS.forEach(key -> {
                 if (jsonObject.has(key)) {
                     JSONObject headersObject = jsonObject.getJSONObject(key);
@@ -122,114 +83,42 @@ public class HttpTarget implements ITarget {
                 }
             });
         }
+        return requestBuilder.build();
+    }
 
-        record
-            .headers()
-            .forEach(header -> {
-                String headerKey = header.key();
+    private CompletableFuture<Object> onExecutionSuccess(
+        Response response,
+        Throwable throwable,
+        ConsumerRecord<String, String> record,
+        long executionStart,
+        String requestId
+    ) {
+        if (throwable != null) {
+            Monitor.processMessageCompleted(requestId, executionStart, -1, throwable);
+            if (Config.RETRY_TOPIC != null) {
+                Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
+                return producer.produce(Config.RETRY_TOPIC, record, requestId);
+            }
+            return CompletableFuture.failedFuture(throwable);
+        }
 
-                if (cloudEventHeaders.contains(headerKey)) {
-                    headerKey = headerKey.replace("_", "-");
-                }
+        Monitor.processMessageCompleted(requestId, executionStart, response.code(), null);
+        if (
+            Integer.toString(response.code()).matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH) &&
+            Config.RETRY_TOPIC != null
+        ) {
+            Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
+            return producer.produce(Config.RETRY_TOPIC, record, requestId);
+        }
 
-                requestBuilder.header(headerKey, new String(header.value(), StandardCharsets.UTF_8));
-            });
+        if (
+            Integer.toString(response.code()).matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH) &&
+            Config.DEAD_LETTER_TOPIC != null
+        ) {
+            Monitor.deadLetterProduced(Config.DEAD_LETTER_TOPIC, requestId);
+            return producer.produce(Config.DEAD_LETTER_TOPIC, record, requestId);
+        }
 
-        final var request = requestBuilder.build();
-
-        var call = client.newCall(request);
-
-        var delay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
-        var maxDelay = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
-        var delayFactor = Config.RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
-        var maxDuration = Duration.ofMillis(Config.RETRY_POLICY_MAX_DURATION_MS);
-
-        Monitor.processMessageStarted(record, requestId);
-
-        var retryPolicy = RetryPolicy
-            .<Response>builder()
-            .withBackoff(delay, maxDelay, ChronoUnit.MILLIS, delayFactor)
-            .withMaxRetries(Config.RETRY_POLICY_MAX_RETRIES)
-            .handleIf(e -> true)
-            .handleResultIf(r -> Integer.toString(r.code()).matches(Config.RETRY_PROCESS_WHEN_STATUS_CODE_MATCH))
-            .withMaxDuration(maxDuration)
-            .onRetry(e -> {
-                Monitor.targetExecutionRetry(
-                    extractAttemptedResponseBody(e),
-                    e.getLastException(),
-                    e.getAttemptCount(),
-                    requestId
-                );
-            })
-            .onSuccess(e ->
-                Monitor.targetExecutionRetrySuccess(extractCompletedResponseBody(e), e.getAttemptCount(), requestId)
-            )
-            .build();
-        var connectionFailureDelay = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(0);
-        var connectionFailureMaxDelay = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(1);
-        var connectionFailureDelayFactor = Config.CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF.get(2);
-        var connectionFailureMaxDuration = Duration.ofMillis(Config.CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS);
-        var connectionFailureRetryPolicy = RetryPolicy
-            .<Response>builder()
-            .withBackoff(
-                connectionFailureDelay,
-                connectionFailureMaxDelay,
-                ChronoUnit.MILLIS,
-                connectionFailureDelayFactor
-            )
-            .withMaxRetries(Config.CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES)
-            .handle(Throwable.class)
-            .withMaxDuration(connectionFailureMaxDuration)
-            .onRetry(e -> {
-                Monitor.connectionFailureRetry(
-                    extractAttemptedResponseBody(e),
-                    e.getLastException(),
-                    e.getAttemptCount(),
-                    requestId
-                );
-            })
-            .onSuccess(e ->
-                Monitor.connectionFailureRetrySuccess(extractCompletedResponseBody(e), e.getAttemptCount(), requestId)
-            )
-            .build();
-
-        final long executionStart = (new Date()).getTime();
-
-        return FailsafeCall
-            .with(retryPolicy, connectionFailureRetryPolicy)
-            .compose(call)
-            .executeAsync()
-            .handleAsync((r, throwable) -> {
-                try (Response response = r) {
-                    if (throwable != null) {
-                        Monitor.processMessageError(throwable, requestId);
-                        if (Config.RETRY_TOPIC != null) {
-                            Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
-                            return producer.produce(Config.RETRY_TOPIC, record, requestId);
-                        }
-                        return CompletableFuture.failedFuture(throwable);
-                    }
-
-                    var statusCode = Integer.toString(response.code());
-
-                    if (statusCode.matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH)) {
-                        if (Config.RETRY_TOPIC != null) {
-                            Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
-                            return producer.produce(Config.RETRY_TOPIC, record, requestId);
-                        }
-                    }
-
-                    if (statusCode.matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH)) {
-                        if (Config.DEAD_LETTER_TOPIC != null) {
-                            Monitor.deadLetterProduced(Config.DEAD_LETTER_TOPIC, requestId);
-                            return producer.produce(Config.DEAD_LETTER_TOPIC, record, requestId);
-                        }
-                    }
-
-                    Monitor.processMessageSuccess(requestId, executionStart);
-
-                    return CompletableFuture.completedFuture(null);
-                }
-            });
+        return CompletableFuture.completedFuture(null);
     }
 }

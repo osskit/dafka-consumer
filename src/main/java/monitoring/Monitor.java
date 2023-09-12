@@ -5,6 +5,7 @@ import io.prometheus.client.Counter;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
 import java.util.*;
+import okhttp3.Response;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.json.JSONObject;
@@ -18,14 +19,10 @@ public class Monitor {
     private static Counter deadLetterProduced;
     private static Counter produceError;
     private static Counter targetExecutionRetry;
-    private static Counter targetExecutionRetrySuccess;
-    private static Counter connectionFailureRetry;
-    private static Counter connectionFailureRetrySuccess;
+    private static Counter targetConnectionRetry;
     private static Histogram messageLatency;
     private static Histogram processBatchExecutionTime;
     private static Histogram processMessageExecutionTime;
-    private static Histogram callTargetLatency;
-    private static Histogram resultTargetLatency;
     private static Gauge assignedPartitions;
 
     private static double[] buckets = new double[0];
@@ -50,12 +47,6 @@ public class Monitor {
                 .name("message_latency")
                 .help("message_latency")
                 .register();
-
-        callTargetLatency =
-            Histogram.build().buckets(buckets).name("call_target_latency").help("call_target_latency").register();
-
-        resultTargetLatency =
-            Histogram.build().buckets(buckets).name("result_target_latency").help("result_target_latency").register();
 
         processMessageSuccess =
             Counter.build().name("process_message_success").help("process_message_success").register();
@@ -95,12 +86,12 @@ public class Monitor {
                 .help("target_execution_retry")
                 .register();
 
-        connectionFailureRetry =
+        targetConnectionRetry =
             Counter
                 .build()
-                .name("connection_failure_retry")
+                .name("target_connection_retry")
                 .labelNames("attempt")
-                .help("connection_failure_retry")
+                .help("target_connection_retry")
                 .register();
     }
 
@@ -178,12 +169,17 @@ public class Monitor {
         );
     }
 
-    public static void processMessageSuccess(String requestId, long executionStart) {
+    public static void processMessageCompleted(
+        String requestId,
+        long executionStart,
+        int statusCode,
+        Throwable throwable
+    ) {
         var extra = new JSONObject();
-        extra.put("requestId", requestId);
+        extra.put("requestId", requestId).put("statusCode", statusCode).put("exception", throwable);
         JSONObject log = new JSONObject()
             .put("level", "info")
-            .put("message", "process message success")
+            .put("message", "process message completed")
             .put("extra", extra);
         write(log);
         processMessageExecutionTime.observe(((double) (new Date().getTime() - executionStart)) / 1000);
@@ -383,28 +379,28 @@ public class Monitor {
         int attempt,
         String requestId
     ) {
-        logTargetRetry(responseBody, exception, requestId, "target retry");
+        logTargetRetry(
+            responseBody,
+            exception,
+            requestId,
+            String.format("target execution retry, attempt %s", attempt)
+        );
         targetExecutionRetry.labels(String.valueOf(attempt)).inc();
     }
 
-    public static void targetExecutionRetrySuccess(Optional<String> responseBody, int attempt, String requestId) {
-        logTargetRetrySuccess(responseBody, requestId, "target retry succeeded");
-        targetExecutionRetrySuccess.labels(String.valueOf(attempt)).inc();
-    }
-
-    public static void connectionFailureRetrySuccess(Optional<String> responseBody, int attempt, String requestId) {
-        logTargetRetrySuccess(responseBody, requestId, "connection failure retry succeeded");
-        connectionFailureRetrySuccess.labels(String.valueOf(attempt)).inc();
-    }
-
-    public static void connectionFailureRetry(
+    public static void targetConnectionRetry(
         Optional<String> responseBody,
         Throwable exception,
         int attempt,
         String requestId
     ) {
-        logTargetRetry(responseBody, exception, requestId, "connection failure retry");
-        connectionFailureRetry.labels(String.valueOf(attempt)).inc();
+        logTargetRetry(
+            responseBody,
+            exception,
+            requestId,
+            String.format("target connection retry, attempt %s", attempt)
+        );
+        targetConnectionRetry.labels(String.valueOf(attempt)).inc();
     }
 
     public static void targetHealthcheckFailed(Exception exception) {

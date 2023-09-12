@@ -28,12 +28,12 @@ public class Config {
     public static int SESSION_TIMEOUT;
     public static String RETRY_TOPIC;
     public static String DEAD_LETTER_TOPIC;
+    public static String CONNECTION_RETRY_PROCESS_WHEN_STATUS_CODE_MATCH;
     public static String RETRY_PROCESS_WHEN_STATUS_CODE_MATCH;
     public static String PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static String PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static List<Integer> RETRY_POLICY_EXPONENTIAL_BACKOFF;
     public static List<Integer> CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF;
-    public static int CONNECTION_FAILURE_DELAY_MS;
     public static int RETRY_POLICY_MAX_RETRIES;
     public static int RETRY_POLICY_MAX_DURATION_MS;
     public static int CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES;
@@ -112,15 +112,20 @@ public class Config {
             );
         }
 
-        RETRY_PROCESS_WHEN_STATUS_CODE_MATCH =
-            getOptionalString(dotenv, "RETRY_PROCESS_WHEN_STATUS_CODE_MATCH", "5[0-9][0-9]");
+        CONNECTION_RETRY_PROCESS_WHEN_STATUS_CODE_MATCH =
+            getOptionalString(dotenv, "CONNECTION_RETRY_PROCESS_WHEN_STATUS_CODE_MATCH", "502|503|504");
+
+        RETRY_PROCESS_WHEN_STATUS_CODE_MATCH = getOptionalString(dotenv, "RETRY_PROCESS_WHEN_STATUS_CODE_MATCH", "500");
 
         PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH =
-            getOptionalString(dotenv, "PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH", "408");
+            getOptionalString(dotenv, "PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH", "5[0-9][0-9]");
+
         PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH =
-            getOptionalString(dotenv, "PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH", "4[0-9][0-79]");
+            getOptionalString(dotenv, "PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH", "4[0-9][0-9]");
+
         RETRY_POLICY_EXPONENTIAL_BACKOFF =
             getOptionalIntList(dotenv, "RETRY_POLICY_EXPONENTIAL_BACKOFF", 3, List.of(50, 5000, 10));
+
         CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF =
             getOptionalIntList(
                 dotenv,
@@ -128,14 +133,19 @@ public class Config {
                 3,
                 List.of(5000, 300_000, 2)
             );
-        RETRY_POLICY_MAX_RETRIES = getOptionalInt(dotenv, "RETRY_POLICY_MAX_RETRIES", 2);
+        RETRY_POLICY_MAX_RETRIES = getOptionalInt(dotenv, "RETRY_POLICY_MAX_RETRIES", 10);
+
         CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES =
-            getOptionalInt(dotenv, "CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES", 2);
+            getOptionalInt(dotenv, "CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES", 10);
+
         RETRY_TOPIC = getOptionalString(dotenv, "RETRY_TOPIC", null);
 
         DEAD_LETTER_TOPIC = getOptionalString(dotenv, "DEAD_LETTER_TOPIC", null);
+
         PROCESSING_DELAY = getOptionalInt(dotenv, "PROCESSING_DELAY", 0);
+
         MONITORING_SERVER_PORT = getOptionalInt(dotenv, "MONITORING_SERVER_PORT", 0);
+
         TARGET_HEALTHCHECK = getOptionalString(dotenv, "TARGET_HEALTHCHECK", null);
 
         USE_SASL_AUTH = getOptionalBool(dotenv, "USE_SASL_AUTH", false);
@@ -150,6 +160,7 @@ public class Config {
         }
 
         USE_PROMETHEUS = getOptionalBool(dotenv, "USE_PROMETHEUS", false);
+
         PROMETHEUS_BUCKETS = getOptionalString(dotenv, "PROMETHEUS_BUCKETS", "0.003,0.03,0.1,0.3,1.5,10");
     }
 

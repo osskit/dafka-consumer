@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`tests should add record headers to target call 1`] = `
+[
+  {
+    "body": {
+      "data": "foo",
+    },
+    "headers": {
+      "Accept-Encoding": "gzip",
+      "Connection": "keep-alive",
+      "Content-Length": "14",
+      "Content-Type": "application/json; charset=UTF-8",
+      "Host": "mocks:8080",
+      "User-Agent": "okhttp/4.11.0",
+      "x-record-offset": "0",
+      "x-record-original-topic": "foo",
+      "x-record-partition": "0",
+      "x-record-topic": "foo",
+    },
+  },
+]
+`;

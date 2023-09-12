@@ -1,0 +1,28 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`tests copy body headers to record headers 1`] = `
+[
+  {
+    "body": {
+      "bla": {
+        "baz": null,
+        "foo": "bar",
+      },
+      "data": "foo",
+    },
+    "headers": {
+      "Accept-Encoding": "gzip",
+      "Connection": "keep-alive",
+      "Content-Length": "45",
+      "Content-Type": "application/json; charset=UTF-8",
+      "Host": "mocks:8080",
+      "User-Agent": "okhttp/4.11.0",
+      "foo": "bar",
+      "x-record-offset": "0",
+      "x-record-original-topic": "foo",
+      "x-record-partition": "0",
+      "x-record-topic": "foo",
+    },
+  },
+]
+`;
