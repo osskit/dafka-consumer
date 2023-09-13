@@ -33,7 +33,7 @@ describe('tests', () => {
     });
 
     it('consumer should produce to dead letter topic', async () => {
-        const target = await mockHttpTarget(orchestrator.wiremockClient, '/consume', 428);
+        const target = await mockHttpTarget(orchestrator.wiremockClient, '/consume', 428, 'foo foo bar bar');
 
         await produce(orchestrator, {
             topic: 'foo',

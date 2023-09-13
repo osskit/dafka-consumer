@@ -1,7 +1,7 @@
 import {HttpMethod, RequestPattern, WireMockClient} from '@osskit/wiremock-client';
 import {omit} from 'lodash-es';
 
-export const mockHttpTarget = (wiremock: WireMockClient, url: string, status: number) =>
+export const mockHttpTarget = (wiremock: WireMockClient, url: string, status: number, body?: string) =>
     wiremock.createMapping({
         request: {
             url: url,
@@ -9,6 +9,7 @@ export const mockHttpTarget = (wiremock: WireMockClient, url: string, status: nu
         },
         response: {
             status,
+            body,
         },
     });
 

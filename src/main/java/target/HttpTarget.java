@@ -52,7 +52,13 @@ public class HttpTarget implements ITarget {
             Monitor.processMessageError(throwable, requestId);
             if (Config.DEAD_LETTER_TOPIC != null) {
                 Monitor.deadLetterProduced(Config.DEAD_LETTER_TOPIC, requestId);
-                return producer.produce(Config.DEAD_LETTER_TOPIC, record, requestId);
+                return producer.produce(
+                    Config.DEAD_LETTER_TOPIC,
+                    record,
+                    Optional.empty(),
+                    Optional.of(throwable),
+                    requestId
+                );
             }
             return CompletableFuture.failedFuture(throwable);
         }
@@ -98,7 +104,13 @@ public class HttpTarget implements ITarget {
                 Monitor.processMessageCompleted(requestId, executionStart, -1, throwable);
                 if (Config.RETRY_TOPIC != null) {
                     Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
-                    return producer.produce(Config.RETRY_TOPIC, record, requestId);
+                    return producer.produce(
+                        Config.RETRY_TOPIC,
+                        record,
+                        Optional.empty(),
+                        Optional.of(throwable),
+                        requestId
+                    );
                 }
                 return CompletableFuture.failedFuture(throwable);
             }
@@ -109,7 +121,7 @@ public class HttpTarget implements ITarget {
                 Config.RETRY_TOPIC != null
             ) {
                 Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
-                return producer.produce(Config.RETRY_TOPIC, record, requestId);
+                return producer.produce(Config.RETRY_TOPIC, record, Optional.of(r), Optional.empty(), requestId);
             }
 
             if (
@@ -117,7 +129,7 @@ public class HttpTarget implements ITarget {
                 Config.DEAD_LETTER_TOPIC != null
             ) {
                 Monitor.deadLetterProduced(Config.DEAD_LETTER_TOPIC, requestId);
-                return producer.produce(Config.DEAD_LETTER_TOPIC, record, requestId);
+                return producer.produce(Config.DEAD_LETTER_TOPIC, record, Optional.of(r), Optional.empty(), requestId);
             }
 
             return CompletableFuture.completedFuture(null);
