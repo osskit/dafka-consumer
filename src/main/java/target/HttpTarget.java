@@ -93,32 +93,34 @@ public class HttpTarget implements ITarget {
         long executionStart,
         String requestId
     ) {
-        if (throwable != null) {
-            Monitor.processMessageCompleted(requestId, executionStart, -1, throwable);
-            if (Config.RETRY_TOPIC != null) {
+        try (Response r = response) {
+            if (throwable != null) {
+                Monitor.processMessageCompleted(requestId, executionStart, -1, throwable);
+                if (Config.RETRY_TOPIC != null) {
+                    Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
+                    return producer.produce(Config.RETRY_TOPIC, record, requestId);
+                }
+                return CompletableFuture.failedFuture(throwable);
+            }
+
+            Monitor.processMessageCompleted(requestId, executionStart, r.code(), null);
+            if (
+                Integer.toString(r.code()).matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH) &&
+                Config.RETRY_TOPIC != null
+            ) {
                 Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
                 return producer.produce(Config.RETRY_TOPIC, record, requestId);
             }
-            return CompletableFuture.failedFuture(throwable);
-        }
 
-        Monitor.processMessageCompleted(requestId, executionStart, response.code(), null);
-        if (
-            Integer.toString(response.code()).matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH) &&
-            Config.RETRY_TOPIC != null
-        ) {
-            Monitor.retryProduced(Config.RETRY_TOPIC, requestId);
-            return producer.produce(Config.RETRY_TOPIC, record, requestId);
-        }
+            if (
+                Integer.toString(r.code()).matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH) &&
+                Config.DEAD_LETTER_TOPIC != null
+            ) {
+                Monitor.deadLetterProduced(Config.DEAD_LETTER_TOPIC, requestId);
+                return producer.produce(Config.DEAD_LETTER_TOPIC, record, requestId);
+            }
 
-        if (
-            Integer.toString(response.code()).matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH) &&
-            Config.DEAD_LETTER_TOPIC != null
-        ) {
-            Monitor.deadLetterProduced(Config.DEAD_LETTER_TOPIC, requestId);
-            return producer.produce(Config.DEAD_LETTER_TOPIC, record, requestId);
+            return CompletableFuture.completedFuture(null);
         }
-
-        return CompletableFuture.completedFuture(null);
     }
 }
