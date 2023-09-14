@@ -5,6 +5,8 @@ exports[`tests consumer should produce to retry topic 1`] = `
   "headers": {
     "original-topic": "foo",
     "x-group-id": "test",
+    "x-response-body": "foo foo bar bar",
+    "x-response-status-code": "511",
   },
   "value": {
     "data": "foo",

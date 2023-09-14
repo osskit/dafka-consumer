@@ -5,6 +5,7 @@ exports[`tests consumer should produce to dead letter topic when value is not va
   "headers": {
     "original-topic": "foo",
     "x-group-id": "test",
+    "x-unexpected-exception-message": "A JSONObject text must begin with '{' at 1 [character 2 line 1]",
   },
   "value": "wat?",
 }

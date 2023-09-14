@@ -36,7 +36,7 @@ describe('tests', () => {
     });
 
     it('consumer should produce to retry topic', async () => {
-        const target = await mockHttpTarget(orchestrator.wiremockClient, '/consume', 511);
+        const target = await mockHttpTarget(orchestrator.wiremockClient, '/consume', 511, 'foo foo bar bar');
 
         await produce(orchestrator, {
             topic: 'foo',
