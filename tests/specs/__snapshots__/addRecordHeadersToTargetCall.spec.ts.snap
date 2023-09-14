@@ -13,10 +13,12 @@ exports[`tests should add record headers to target call 1`] = `
       "Content-Type": "application/json; charset=UTF-8",
       "Host": "mocks:8080",
       "User-Agent": "okhttp/4.11.0",
+      "my-awesome-header": "222",
       "x-record-offset": "0",
       "x-record-original-topic": "foo",
       "x-record-partition": "0",
       "x-record-topic": "foo",
+      "x-request-id": "111",
     },
   },
 ]
