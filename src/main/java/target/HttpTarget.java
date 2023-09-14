@@ -2,6 +2,7 @@ package target;
 
 import configuration.Config;
 import configuration.TopicsRoutes;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -89,6 +90,13 @@ public class HttpTarget implements ITarget {
                 }
             });
         }
+
+        record
+            .headers()
+            .forEach(header -> {
+                String headerKey = header.key();
+                requestBuilder.header(headerKey, new String(header.value(), StandardCharsets.UTF_8));
+            });
         return requestBuilder.build();
     }
 

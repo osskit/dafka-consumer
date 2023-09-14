@@ -36,13 +36,8 @@ describe('tests', () => {
                 {
                     value: JSON.stringify({data: 'foo'}),
                     headers: {
-                        'x-request-id': '123',
-                        'x-b3-traceid': '456',
-                        'x-b3-spanid': '789',
-                        'x-b3-parentspanid': '101112',
-                        'x-b3-sampled': '1',
-                        'x-b3-flags': '1',
-                        'x-ot-span-context': 'foo',
+                        'x-request-id': '111',
+                        'my-awesome-header': '222',
                     },
                 },
             ],
