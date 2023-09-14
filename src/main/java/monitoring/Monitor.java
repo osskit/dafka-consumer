@@ -4,7 +4,9 @@ import configuration.Config;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 import okhttp3.Response;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
@@ -161,7 +163,15 @@ public class Monitor {
                                 .put("topic", record.topic())
                                 .put("partition", record.partition())
                                 .put("offset", record.offset())
-                                .put("headers", record.headers())
+                                .put(
+                                    "headers",
+                                    Arrays
+                                        .stream(record.headers().toArray())
+                                        .map(header ->
+                                            header.key() + "->" + new String(header.value(), StandardCharsets.UTF_8)
+                                        )
+                                        .collect(Collectors.joining(","))
+                                )
                                 .put("key", record.key())
                         )
                         .put("requestId", requestId)
