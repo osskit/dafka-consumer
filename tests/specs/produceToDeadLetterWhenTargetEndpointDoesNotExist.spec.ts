@@ -19,7 +19,6 @@ describe('tests', () => {
                 TARGET_BASE_URL: 'http://mocks:8080',
                 TOPICS_ROUTES: topicRoutes([{topic: 'foo', targetPath: '/consume'}]),
                 DEAD_LETTER_TOPIC: 'dead',
-                BODY_HEADERS_PATHS: 'bla',
             },
             ['foo', 'dead']
         );
