@@ -2,7 +2,6 @@ import type {Orchestrator} from '../testcontainers/orchestrator.js';
 import {start} from '../testcontainers/orchestrator.js';
 import {produce} from '../services/produce.js';
 import delay from 'delay';
-import {mockHttpTarget} from '../services/target.js';
 import {getOffset} from '../services/getOffset.js';
 import {topicRoutes} from '../services/topicRoutes.js';
 import {consume} from '../services/consume.js';
