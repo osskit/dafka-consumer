@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`tests consumer should produce to dead letter when target endpoint does not exist 1`] = `
+{
+  "headers": {
+    "original-topic": "foo",
+    "x-group-id": "test",
+    "x-response-body": "No response could be served as there are no stub mappings in this WireMock instance.",
+    "x-response-status-code": "404",
+  },
+  "value": {
+    "data": "foo",
+  },
+}
+`;
