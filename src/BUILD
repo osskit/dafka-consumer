@@ -20,6 +20,7 @@ java_library(
         "@third_party//3rdparty/jvm/dev/failsafe:failsafe_okhttp",
         "@third_party//3rdparty/jvm/io/github/cdimascio:java_dotenv",
         "@third_party//3rdparty/jvm/io/projectreactor:reactor_core",
+        "@third_party//3rdparty/jvm/io/projectreactor/kafka:reactor_kafka",
         "@third_party//3rdparty/jvm/io/projectreactor/addons:reactor_extra",
         "@third_party//3rdparty/jvm/io/prometheus:simpleclient",
         "@third_party//3rdparty/jvm/io/prometheus:simpleclient_hotspot",
