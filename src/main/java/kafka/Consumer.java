@@ -4,7 +4,6 @@ import configuration.Config;
 import java.time.Duration;
 import java.util.Date;
 import monitoring.Monitor;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -28,7 +27,7 @@ public class Consumer {
             .concatMap(records -> {
                 var batchStartTimestamp = new Date().getTime();
                 return records
-                    .groupBy(ConsumerRecord::key)
+                    .groupBy(x -> x.key() == null ? x.partition() : x.key())
                     .delayElements(Duration.ofMillis(Config.PROCESSING_DELAY))
                     .publishOn(Schedulers.parallel())
                     .flatMap(partition ->
