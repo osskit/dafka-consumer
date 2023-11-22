@@ -5,14 +5,14 @@ import java.time.Duration;
 import java.util.Date;
 import java.util.stream.StreamSupport;
 import monitoring.Monitor;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import target.ITarget;
+import reactor.kafka.receiver.KafkaReceiver;
 
 public class Consumer {
-
+    private final KafkaReceiver<?, ?> foo;
     private final ReactiveKafkaClient<String, String> kafkaConsumer;
     private final ITarget target;
 
