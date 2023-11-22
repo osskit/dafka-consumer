@@ -12,9 +12,9 @@ import reactor.kafka.receiver.KafkaReceiver;
 import target.ITarget;
 
 public class Consumer {
+
     private final KafkaReceiver<String, String> kafkaReceiver;
     private final ITarget target;
-
 
     public Consumer(KafkaReceiver<String, String> kafkaReceiver, ITarget target) {
         this.kafkaReceiver = kafkaReceiver;
@@ -22,7 +22,8 @@ public class Consumer {
     }
 
     public Flux<?> stream() {
-        return kafkaReceiver.receiveBatch()
+        return kafkaReceiver
+            .receiveBatch()
             .doOnNext(records -> records.count().doOnNext(Monitor::batchProcessStarted))
             .concatMap(records -> {
                 var batchStartTimestamp = new Date().getTime();
@@ -30,14 +31,17 @@ public class Consumer {
                     .groupBy(ConsumerRecord::key)
                     .delayElements(Duration.ofMillis(Config.PROCESSING_DELAY))
                     .publishOn(Schedulers.parallel())
-                    .flatMap(partition -> partition.concatMap(record -> Mono.fromFuture(target.call(record)).
-                            map(__ -> record )))
+                    .flatMap(partition ->
+                        partition.concatMap(record -> Mono.fromFuture(target.call(record)).map(__ -> record))
+                    )
                     .collectList()
-                        .doOnNext(__ -> Monitor.batchProcessCompleted(batchStartTimestamp));
+                    .doOnNext(__ -> Monitor.batchProcessCompleted(batchStartTimestamp));
             })
-            .flatMap(records -> Mono.fromRunnable(() -> {
-                var lastOffset = records.get(records.size() - 1).receiverOffset();
-                lastOffset.commit().block();
-            }));
-}
+            .flatMap(records ->
+                Mono.fromRunnable(() -> {
+                    var lastOffset = records.get(records.size() - 1).receiverOffset();
+                    lastOffset.commit().block();
+                })
+            );
+    }
 }

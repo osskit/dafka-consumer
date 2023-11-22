@@ -1,3 +1,3 @@
 import {jest} from '@jest/globals';
 
-jest.retryTimes(3, {logErrorsBeforeRetry: true});
+jest.retryTimes(1, {logErrorsBeforeRetry: true});

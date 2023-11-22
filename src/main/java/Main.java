@@ -1,5 +1,3 @@
-package src.main.java;
-
 import configuration.Config;
 import configuration.TopicsRoutes;
 import java.util.concurrent.CountDownLatch;
@@ -48,7 +46,8 @@ public class Main {
     }
 
     private static Disposable createConsumer(MonitoringServer monitoringServer) {
-        var receiverOptions = KafkaClientFactory.createReceiverOptions()
+        var receiverOptions = KafkaClientFactory
+            .createReceiverOptions()
             .subscription(topicsRoutes.getTopics())
             .addAssignListener(partitions -> {
                 if (partitions.isEmpty()) {
@@ -59,12 +58,23 @@ public class Main {
             })
             .addRevokeListener(Monitor::revokedFromPartition);
 
-        return (Disposable) new Consumer(
-                KafkaReceiver.create(receiverOptions),
-                new HttpTarget(topicsRoutes, new Producer(KafkaClientFactory.createProducer())))
+        return new Consumer(
+            KafkaReceiver.create(receiverOptions),
+            new HttpTarget(topicsRoutes, new Producer(KafkaClientFactory.createProducer()))
+        )
             .stream()
-            .doOnError(Monitor::consumerError);
-
+            .doOnError(Monitor::consumerError)
+            .subscribe(
+                __ -> {},
+                exception -> {
+                    monitoringServer.consumerDisposed();
+                    Monitor.consumerError(exception);
+                },
+                () -> {
+                    monitoringServer.consumerDisposed();
+                    Monitor.consumerCompleted();
+                }
+            );
     }
 
     private static void onShutdown(Disposable consumer, MonitoringServer monitoringServer) {
