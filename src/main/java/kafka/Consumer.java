@@ -36,11 +36,6 @@ public class Consumer {
                     .collectList()
                     .doOnNext(__ -> Monitor.batchProcessCompleted(batchStartTimestamp));
             })
-            .flatMap(records ->
-                Mono.fromRunnable(() -> {
-                    var lastOffset = records.get(records.size() - 1).receiverOffset();
-                    lastOffset.commit().block();
-                })
-            );
+            .flatMap(records -> records.get(records.size() - 1).receiverOffset().commit());
     }
 }
