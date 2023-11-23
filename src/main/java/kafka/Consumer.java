@@ -35,6 +35,6 @@ public class Consumer {
                     .doOnNext(__ -> Monitor.batchProcessCompleted(batchStartTimestamp))
                     .map(__ -> records);
             })
-            .flatMap(records -> records.last().flatMap(l -> l.receiverOffset().commit()));
+            .flatMap(records -> records.last().flatMap(record -> record.receiverOffset().commit()));
     }
 }
