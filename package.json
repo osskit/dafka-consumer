@@ -15,7 +15,7 @@
     "homepage": "https://github.com/osskit/dafka-consumer#readme",
     "scripts": {
         "pretest": "bazel build //src:image.tar && docker load -i bazel-bin/src/image.tar",
-        "test": "NODE_OPTIONS=--experimental-vm-modules jest --config tests/jest.config.ts",
+        "test": "NODE_OPTIONS=--experimental-vm-modules jest --config tests/jest.config.ts --runInBand",
         "format": "prettier --write '**/*.{ts,js,json,java}'",
         "logs": "docker-compose -f tests/dafka.yml logs"
     },

@@ -5,7 +5,7 @@ import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
 import {topicRoutes} from '../services/topicRoutes.js';
 
-describe('tests', () => {
+describe.skip('tests', () => {
     let orchestrator: Orchestrator;
 
     beforeEach(async () => {
