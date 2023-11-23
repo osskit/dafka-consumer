@@ -30,12 +30,11 @@ public class Consumer {
                     .groupBy(x -> x.key() == null ? x.partition() : x.key())
                     .delayElements(Duration.ofMillis(Config.PROCESSING_DELAY))
                     .publishOn(Schedulers.parallel())
-                    .flatMap(partition ->
-                        partition.concatMap(record -> Mono.fromFuture(target.call(record)).map(__ -> record))
-                    )
+                    .flatMap(partition -> partition.concatMap(record -> Mono.fromFuture(target.call(record))))
                     .collectList()
-                    .doOnNext(__ -> Monitor.batchProcessCompleted(batchStartTimestamp));
+                    .doOnNext(__ -> Monitor.batchProcessCompleted(batchStartTimestamp))
+                    .map(__ -> records);
             })
-            .flatMap(records -> records.get(records.size() - 1).receiverOffset().commit());
+            .flatMap(records -> records.last().flatMap(l -> l.receiverOffset().commit()));
     }
 }
