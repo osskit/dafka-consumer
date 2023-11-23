@@ -126,7 +126,7 @@ public class Monitor {
         write(log);
     }
 
-    public static void batchProcessStarted(long count) {
+    public static void batchProcessStarted(Long count) {
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "batch process started")

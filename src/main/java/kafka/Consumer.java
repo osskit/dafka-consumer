@@ -23,7 +23,7 @@ public class Consumer {
     public Flux<?> stream() {
         return kafkaReceiver
             .receiveBatch()
-            .doOnNext(records -> records.count().doOnNext(Monitor::batchProcessStarted))
+            .flatMap(records -> records.count().doOnNext(Monitor::batchProcessStarted).thenReturn(records))
             .concatMap(records -> {
                 var batchStartTimestamp = new Date().getTime();
                 return records
