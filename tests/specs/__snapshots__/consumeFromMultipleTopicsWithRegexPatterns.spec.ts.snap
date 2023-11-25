@@ -1,0 +1,16 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`tests consume from multiple topics with regex patterns 1`] = `
+[
+  {
+    "body": {
+      "data": "foo1",
+    },
+  },
+  {
+    "body": {
+      "data": "foo2",
+    },
+  },
+]
+`;
