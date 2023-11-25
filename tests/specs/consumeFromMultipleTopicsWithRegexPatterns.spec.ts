@@ -4,6 +4,7 @@ import {getCalls, mockHttpTarget} from '../services/target.js';
 import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
 import {topicRoutes} from '../services/topicRoutes.js';
+import {sortBy} from 'lodash-es';
 
 describe('tests', () => {
     let orchestrator: Orchestrator;
@@ -17,7 +18,7 @@ describe('tests', () => {
                 TARGET_BASE_URL: 'http://mocks:8080',
                 TOPICS_ROUTES: topicRoutes([{topic: 'foo.*', targetPath: '/consume'}]),
             },
-            ['foo-7ff01d48-804d-4bd6-9f4b-ff6b9ef727df', 'foo-5f7d747e-6a8f-4f11-b001-2f5a658a3a35']
+            ['foo', 'foo-7ff01d48-804d-4bd6-9f4b-ff6b9ef727df', 'foo-5f7d747e-6a8f-4f11-b001-2f5a658a3a35']
         );
     }, 5 * 60 * 1000);
 
@@ -32,6 +33,10 @@ describe('tests', () => {
         const target = await mockHttpTarget(orchestrator.wiremockClient, '/consume', 200);
 
         await produce(orchestrator, {
+            topic: 'foo',
+            messages: [{value: JSON.stringify({data: 'foo'})}],
+        });
+        await produce(orchestrator, {
             topic: 'foo-7ff01d48-804d-4bd6-9f4b-ff6b9ef727df',
             messages: [{value: JSON.stringify({data: 'foo1'})}],
         });
@@ -40,7 +45,10 @@ describe('tests', () => {
             messages: [{value: JSON.stringify({data: 'foo2'})}],
         });
 
-        await expect(getCalls(orchestrator.wiremockClient, target)).resolves.toMatchSnapshot();
+        await expect(
+            getCalls(orchestrator.wiremockClient, target).then((calls) => sortBy(calls, 'body.data'))
+        ).resolves.toMatchSnapshot();
+        await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1);
         await expect(getOffset(orchestrator.kafkaClient, 'foo-7ff01d48-804d-4bd6-9f4b-ff6b9ef727df')).resolves.toBe(1);
         await expect(getOffset(orchestrator.kafkaClient, 'foo-5f7d747e-6a8f-4f11-b001-2f5a658a3a35')).resolves.toBe(1);
     });

@@ -4,6 +4,11 @@ exports[`tests consume from multiple topics with regex patterns 1`] = `
 [
   {
     "body": {
+      "data": "foo",
+    },
+  },
+  {
+    "body": {
       "data": "foo1",
     },
   },
