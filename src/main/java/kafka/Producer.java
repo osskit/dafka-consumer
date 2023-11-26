@@ -1,7 +1,6 @@
 package kafka;
 
 import configuration.Config;
-import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import monitoring.Monitor;

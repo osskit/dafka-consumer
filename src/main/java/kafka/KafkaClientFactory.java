@@ -3,10 +3,10 @@ package kafka;
 import configuration.Config;
 import java.util.Properties;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.RangeAssignor;
 import org.apache.kafka.clients.consumer.StickyAssignor;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import reactor.kafka.receiver.ReceiverOptions;
 
 public class KafkaClientFactory {
 
@@ -48,7 +48,7 @@ public class KafkaClientFactory {
         };
     }
 
-    public static <K, V> org.apache.kafka.clients.consumer.Consumer<K, V> createConsumer() {
+    public static ReceiverOptions<String, String> createReceiverOptions() {
         var props = getAuthProperties();
         props.put(ConsumerConfig.GROUP_ID_CONFIG, Config.GROUP_ID);
         props.put(
@@ -68,7 +68,7 @@ public class KafkaClientFactory {
         props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, Config.SESSION_TIMEOUT);
         props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, Config.SESSION_TIMEOUT / 3);
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, Config.KAFKA_POLL_INTERVAL_MS);
-        return new KafkaConsumer<>(props);
+        return ReceiverOptions.create(props);
     }
 
     public static <K, V> KafkaProducer<K, V> createProducer() {

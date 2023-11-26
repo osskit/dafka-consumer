@@ -4,7 +4,17 @@ exports[`tests should produce and consume 1`] = `
 [
   {
     "body": {
-      "data": "foo",
+      "data": "foo1",
+    },
+  },
+  {
+    "body": {
+      "data": "foo2",
+    },
+  },
+  {
+    "body": {
+      "data": "foo3",
     },
   },
 ]

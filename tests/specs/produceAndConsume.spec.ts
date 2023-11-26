@@ -33,10 +33,14 @@ describe('tests', () => {
 
         await produce(orchestrator, {
             topic: 'foo',
-            messages: [{value: JSON.stringify({data: 'foo'})}],
+            messages: [
+                {value: JSON.stringify({data: 'foo1'})},
+                {value: JSON.stringify({data: 'foo2'})},
+                {value: JSON.stringify({data: 'foo3'})},
+            ],
         });
 
         await expect(getCalls(orchestrator.wiremockClient, target)).resolves.toMatchSnapshot();
-        await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1);
+        await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(3);
     });
 });

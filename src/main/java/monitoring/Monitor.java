@@ -11,6 +11,7 @@ import okhttp3.Response;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.json.JSONObject;
+import reactor.kafka.receiver.ReceiverPartition;
 
 public class Monitor {
 
@@ -125,7 +126,7 @@ public class Monitor {
         write(log);
     }
 
-    public static void batchProcessStarted(int count) {
+    public static void batchProcessStarted(Long count) {
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "batch process started")
@@ -298,7 +299,7 @@ public class Monitor {
         write(log);
     }
 
-    public static void assignedToPartition(Collection<TopicPartition> partitions) {
+    public static void assignedToPartition(Collection<ReceiverPartition> partitions) {
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "consumer was assigned to partitions")
@@ -308,7 +309,7 @@ public class Monitor {
         assignedPartitions.inc(partitions.size());
     }
 
-    public static void revokedFromPartition(Collection<TopicPartition> partitions) {
+    public static void revokedFromPartition(Collection<ReceiverPartition> partitions) {
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "consumer was revoked from partitions")

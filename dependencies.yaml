@@ -68,12 +68,17 @@ dependencies:
   io.projectreactor:
     reactor-core:
       lang: java
-      version: "3.3.3.RELEASE"
+      version: "3.6.0"
 
   io.projectreactor.addons:
     reactor-extra:
       lang: java
-      version: "3.3.3.RELEASE"
+      version: "3.5.1"
+
+  io.projectreactor.kafka:
+    reactor-kafka:
+      lang: java
+      version: "1.3.22"
 
   io.prometheus:
     simpleclient:

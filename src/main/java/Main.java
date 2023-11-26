@@ -1,16 +1,14 @@
 import configuration.Config;
 import configuration.TopicsRoutes;
-import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
+import java.util.regex.Pattern;
 import kafka.Consumer;
 import kafka.KafkaClientFactory;
 import kafka.Producer;
-import kafka.ReactiveKafkaClient;
 import monitoring.Monitor;
 import monitoring.MonitoringServer;
-import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
-import org.apache.kafka.common.TopicPartition;
 import reactor.core.Disposable;
+import reactor.kafka.receiver.KafkaReceiver;
 import target.HttpTarget;
 import target.TargetHealthcheck;
 
@@ -27,7 +25,7 @@ public class Main {
             Monitor.init();
 
             topicsRoutes = new TopicsRoutes(Config.TOPICS_ROUTES);
-            waitForTargetHealthcheck();
+            waitForTargetHealthCheck();
             monitoringServer = new MonitoringServer().start();
             consumer = createConsumer(monitoringServer);
             onShutdown(consumer, monitoringServer);
@@ -40,7 +38,7 @@ public class Main {
         Monitor.serviceTerminated();
     }
 
-    private static void waitForTargetHealthcheck() throws InterruptedException {
+    private static void waitForTargetHealthCheck() throws InterruptedException {
         do {
             Monitor.waitingForTargetHealthcheck();
             Thread.sleep(1000);
@@ -49,27 +47,20 @@ public class Main {
     }
 
     private static Disposable createConsumer(MonitoringServer monitoringServer) {
-        return new Consumer(
-            new ReactiveKafkaClient<>(
-                KafkaClientFactory.createConsumer(),
-                topicsRoutes.getTopics(),
-                new ConsumerRebalanceListener() {
-                    @Override
-                    public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-                        if (partitions.size() == 0) {
-                            return;
-                        }
-
-                        Monitor.assignedToPartition(partitions);
-                        monitoringServer.consumerAssigned();
-                    }
-
-                    @Override
-                    public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-                        Monitor.revokedFromPartition(partitions);
-                    }
+        var receiverOptions = KafkaClientFactory
+            .createReceiverOptions()
+            .subscription(Pattern.compile(topicsRoutes.getTopicsPattern()))
+            .addAssignListener(partitions -> {
+                Monitor.assignedToPartition(partitions);
+                if (partitions.isEmpty()) {
+                    return;
                 }
-            ),
+                monitoringServer.consumerAssigned();
+            })
+            .addRevokeListener(Monitor::revokedFromPartition);
+
+        return new Consumer(
+            KafkaReceiver.create(receiverOptions),
             new HttpTarget(topicsRoutes, new Producer(KafkaClientFactory.createProducer()))
         )
             .stream()

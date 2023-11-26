@@ -3,6 +3,7 @@ package configuration;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class TopicsRoutes {
 
@@ -29,5 +30,12 @@ public class TopicsRoutes {
 
     public Set<String> getTopics() {
         return this.topicsRoutes.keySet();
+    }
+
+    public String getTopicsPattern() {
+        return this.topicsRoutes.keySet()
+            .stream()
+            .map(topic -> String.format("^%s$", topic))
+            .collect(Collectors.joining("|"));
     }
 }
