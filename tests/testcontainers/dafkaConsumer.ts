@@ -21,7 +21,12 @@ export const dafkaConsumer = async (
         .start();
 
     if (process.env.DEBUG) {
-        await container.logs().then((logs) => logs.pipe(fs.createWriteStream('./tests/logs/service.log', {})));
+        try {
+            fs.truncateSync('service.log', 0);
+        } catch (err) {
+            fs.writeFileSync('service.log', '', {flag: 'wx'});
+        }
+        await container.logs().then((logs) => logs.pipe(fs.createWriteStream('service.log')));
     }
 
     return {
