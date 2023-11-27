@@ -142,9 +142,10 @@ public class Monitor {
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "batch process completed")
-            .put("extra", new JSONObject().put("executionTime", executionTimeMs))
-            .put("count", count)
-            .put("requestId", requestId);
+            .put(
+                "extra",
+                new JSONObject().put("executionTime", executionTimeMs).put("count", count).put("requestId", requestId)
+            );
 
         write(log);
         processBatchExecutionTime.observe((double) executionTimeMs / 1000);
@@ -262,8 +263,7 @@ public class Monitor {
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "message acknowledged")
-            .put("extra", new JSONObject().put("offset", receiverOffset))
-            .put("requestId", requestId);
+            .put("extra", new JSONObject().put("offset", receiverOffset).put("requestId", requestId));
         write(log);
     }
 
