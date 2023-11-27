@@ -38,8 +38,7 @@ public class HttpTarget implements ITarget {
         this.producer = producer;
     }
 
-    public CompletableFuture<Object> call(final ConsumerRecord<String, String> record) {
-        var requestId = UUID.randomUUID().toString();
+    public CompletableFuture<Object> call(final ConsumerRecord<String, String> record, String requestId) {
         Monitor.processMessageStarted(record, requestId);
         try {
             return TargetRetryPolicy
