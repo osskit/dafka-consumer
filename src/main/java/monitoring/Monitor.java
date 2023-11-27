@@ -11,7 +11,9 @@ import okhttp3.Response;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.json.JSONObject;
+import reactor.kafka.receiver.ReceiverOffset;
 import reactor.kafka.receiver.ReceiverPartition;
+import reactor.kafka.receiver.ReceiverRecord;
 
 public class Monitor {
 
@@ -106,7 +108,7 @@ public class Monitor {
                 "extra",
                 new JSONObject()
                     .put("targetBaseUrl", Config.TARGET_BASE_URL)
-                    .put("targetHealthcheck", Config.TARGET_HEALTHCHECK)
+                    .put("targetHealthCheck", Config.TARGET_HEALTHCHECK)
             );
 
         write(log);
@@ -120,27 +122,29 @@ public class Monitor {
                 "extra",
                 new JSONObject()
                     .put("targetBaseUrl", Config.TARGET_BASE_URL)
-                    .put("targetHealthcheck", Config.TARGET_HEALTHCHECK)
+                    .put("targetHealthCheck", Config.TARGET_HEALTHCHECK)
             );
 
         write(log);
     }
 
-    public static void batchProcessStarted(Long count) {
+    public static void batchProcessStarted(String requestId) {
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "batch process started")
-            .put("extra", new JSONObject().put("count", count));
+            .put("extra", new JSONObject().put("requestId", requestId));
 
         write(log);
     }
 
-    public static void batchProcessCompleted(Long batchStartTimestamp) {
+    public static void batchProcessCompleted(int count, Long batchStartTimestamp, String requestId) {
         var executionTimeMs = new Date().getTime() - batchStartTimestamp;
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "batch process completed")
-            .put("extra", new JSONObject().put("executionTime", executionTimeMs));
+            .put("extra", new JSONObject().put("executionTime", executionTimeMs))
+            .put("count", count)
+            .put("requestId", requestId);
 
         write(log);
         processBatchExecutionTime.observe((double) executionTimeMs / 1000);
@@ -254,10 +258,29 @@ public class Monitor {
         write(log);
     }
 
-    public static void commitFailed(Throwable exception) {
+    public static void messageAcknowledge(ReceiverOffset receiverOffset, String requestId) {
+        JSONObject log = new JSONObject()
+            .put("level", "info")
+            .put("message", "message acknowledged")
+            .put("extra", new JSONObject().put("offset", receiverOffset))
+            .put("requestId", requestId);
+        write(log);
+    }
+
+    public static void commitSuccess(String requestId) {
+        JSONObject log = new JSONObject()
+            .put("level", "info")
+            .put("message", "commit success")
+            .put("extra", new JSONObject().put("requestId", requestId));
+
+        write(log);
+    }
+
+    public static void commitFailed(Throwable exception, String requestId) {
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "commit failed")
+            .put("extra", new JSONObject().put("requestId", requestId))
             .put(
                 "err",
                 new JSONObject()

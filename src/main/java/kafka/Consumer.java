@@ -2,7 +2,9 @@ package kafka;
 
 import configuration.Config;
 import java.time.Duration;
+import java.time.Month;
 import java.util.Date;
+import java.util.UUID;
 import monitoring.Monitor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -23,18 +25,35 @@ public class Consumer {
     public Flux<?> stream() {
         return kafkaReceiver
             .receiveBatch()
-            .flatMap(records -> records.count().doOnNext(Monitor::batchProcessStarted).thenReturn(records))
             .concatMap(records -> {
+                var requestId = UUID.randomUUID().toString();
                 var batchStartTimestamp = new Date().getTime();
+                Monitor.batchProcessStarted(requestId);
                 return records
                     .groupBy(x -> x.key() == null ? x.partition() : x.key())
                     .delayElements(Duration.ofMillis(Config.PROCESSING_DELAY))
                     .publishOn(Schedulers.parallel())
-                    .flatMap(partition -> partition.concatMap(record -> Mono.fromFuture(target.call(record))))
+                    .flatMap(partition ->
+                        partition.concatMap(record -> Mono.fromFuture(target.call(record, requestId)).thenReturn(record)
+                        )
+                    )
+                    .doOnNext(record -> {
+                        record.receiverOffset().acknowledge();
+                        Monitor.messageAcknowledge(record.receiverOffset(), requestId);
+                    })
                     .collectList()
-                    .doOnNext(__ -> Monitor.batchProcessCompleted(batchStartTimestamp))
-                    .map(__ -> records);
-            })
-            .flatMap(records -> records.last().flatMap(record -> record.receiverOffset().commit()));
+                    .doOnNext(batch -> Monitor.batchProcessCompleted(batch.size(), batchStartTimestamp, requestId))
+                    .flatMap(__ ->
+                        records
+                            .last()
+                            .flatMap(record ->
+                                record
+                                    .receiverOffset()
+                                    .commit()
+                                    .doOnSuccess(___ -> Monitor.commitSuccess(requestId))
+                                    .doOnError(throwable -> Monitor.commitFailed(throwable, requestId))
+                            )
+                    );
+            });
     }
 }

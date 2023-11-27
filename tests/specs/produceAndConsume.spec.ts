@@ -4,6 +4,7 @@ import {getCalls, mockHttpTarget} from '../services/target.js';
 import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
 import {topicRoutes} from '../services/topicRoutes.js';
+import {sortBy} from 'lodash-es';
 
 describe('tests', () => {
     let orchestrator: Orchestrator;
@@ -34,13 +35,15 @@ describe('tests', () => {
         await produce(orchestrator, {
             topic: 'foo',
             messages: [
-                {value: JSON.stringify({data: 'foo1'})},
-                {value: JSON.stringify({data: 'foo2'})},
-                {value: JSON.stringify({data: 'foo3'})},
+                {key: '1', value: JSON.stringify({data: 'foo1'})},
+                {key: '2', value: JSON.stringify({data: 'foo2'})},
+                {key: '3', value: JSON.stringify({data: 'foo3'})},
             ],
         });
 
-        await expect(getCalls(orchestrator.wiremockClient, target)).resolves.toMatchSnapshot();
+        await expect(
+            getCalls(orchestrator.wiremockClient, target).then((calls) => sortBy(calls, 'body.data'))
+        ).resolves.toMatchSnapshot();
         await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(3);
     });
 });
