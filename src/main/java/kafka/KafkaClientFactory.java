@@ -3,8 +3,6 @@ package kafka;
 import configuration.Config;
 import java.util.Properties;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.RangeAssignor;
-import org.apache.kafka.clients.consumer.StickyAssignor;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import reactor.kafka.receiver.ReceiverOptions;
 
@@ -60,12 +58,6 @@ public class KafkaClientFactory {
             "org.apache.kafka.common.serialization.StringDeserializer"
         );
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, Config.MAX_POLL_RECORDS);
-        props.put(
-            ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG,
-            String.format("%s,%s", StickyAssignor.class.getName(), RangeAssignor.class.getName())
-        );
-        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, Config.SESSION_TIMEOUT);
-        props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, Config.SESSION_TIMEOUT / 3);
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, Config.KAFKA_POLL_INTERVAL_MS);
         return ReceiverOptions.create(props);
     }
