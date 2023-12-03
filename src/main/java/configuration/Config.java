@@ -25,7 +25,6 @@ public class Config {
     public static int KAFKA_POLL_INTERVAL_MS;
     public static int MAX_POLL_RECORDS;
     public static int PROCESSING_DELAY;
-    public static int SESSION_TIMEOUT;
     public static String RETRY_TOPIC;
     public static String DEAD_LETTER_TOPIC;
     public static String CONNECTION_RETRY_PROCESS_WHEN_STATUS_CODE_MATCH;
@@ -81,11 +80,9 @@ public class Config {
         CONNECTION_POOL_KEEP_ALIVE_DURATION_MS = getOptionalInt(dotenv, "CONNECTION_POOL_KEEP_ALIVE_DURATION_MS", 1000);
 
         BODY_HEADERS_PATHS = getOptionalStringList(dotenv, "BODY_HEADERS_PATHS");
-        POLL_TIMEOUT = getOptionalInt(dotenv, "POLL_TIMEOUT", 1000);
         KAFKA_POLL_INTERVAL_MS = getOptionalInt(dotenv, "KAFKA_POLL_INTERVAL_MS", 5 * 60 * 1000);
 
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 500);
-        SESSION_TIMEOUT = getOptionalInt(dotenv, "SESSION_TIMEOUT", 10000);
         RETRY_POLICY_MAX_DURATION_MS =
             getOptionalInt(dotenv, "RETRY_POLICY_MAX_DURATION_MS", KAFKA_POLL_INTERVAL_MS - 1000);
         CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS =
