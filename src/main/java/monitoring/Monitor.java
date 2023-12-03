@@ -268,11 +268,19 @@ public class Monitor {
         write(log);
     }
 
-    public static void messageAcknowledge(ReceiverOffset receiverOffset, String requestId) {
+    public static void messageAcknowledge(ConsumerRecord<String, String> record, String requestId) {
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "message acknowledged")
-            .put("extra", new JSONObject().put("offset", receiverOffset).put("requestId", requestId));
+            .put(
+                "extra",
+                new JSONObject()
+                    .put("key", record.key())
+                    .put("topic", record.topic())
+                    .put("partition", record.partition())
+                    .put("offset", record.offset())
+                    .put("requestId", requestId)
+            );
         write(log);
     }
 
