@@ -39,7 +39,7 @@ public class Consumer {
                     )
                     .doOnNext(record -> {
                         record.receiverOffset().acknowledge();
-                        Monitor.messageAcknowledge(record.receiverOffset(), requestId);
+                        Monitor.messageAcknowledge(record, requestId);
                     })
                     .collectList()
                     .doOnNext(batch -> Monitor.batchProcessCompleted(batch.size(), batchStartTimestamp, requestId))
