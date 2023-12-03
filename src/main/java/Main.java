@@ -1,5 +1,6 @@
 import configuration.Config;
 import configuration.TopicsRoutes;
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Pattern;
 import kafka.Consumer;
@@ -49,6 +50,8 @@ public class Main {
     private static Disposable createConsumer(MonitoringServer monitoringServer) {
         var receiverOptions = KafkaClientFactory
             .createReceiverOptions()
+            .commitInterval(Duration.ZERO)
+            .commitBatchSize(0)
             .subscription(Pattern.compile(topicsRoutes.getTopicsPattern()))
             .addAssignListener(partitions -> {
                 Monitor.assignedToPartition(partitions);
