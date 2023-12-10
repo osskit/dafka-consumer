@@ -343,7 +343,15 @@ public class Monitor {
         JSONObject log = new JSONObject()
             .put("level", "info")
             .put("message", "consumer was assigned to partitions")
-            .put("extra", new JSONObject().put("count", partitions.size()));
+            .put(
+                "extra",
+                new JSONObject()
+                    .put("count", partitions.size())
+                    .put(
+                        "topicPartitions",
+                        partitions.stream().map(x -> x.topicPartition().toString()).collect(Collectors.joining(","))
+                    )
+            );
 
         write(log);
         assignedPartitions.inc(partitions.size());
