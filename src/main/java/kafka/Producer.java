@@ -60,7 +60,8 @@ public class Producer {
         ConsumerRecord<String, String> record,
         Optional<Response> response,
         Optional<Throwable> throwable,
-        String requestId
+        String batchRequestId,
+        String targetRequestId
     ) {
         Headers headers = getHeaders(record, response, throwable);
 
@@ -69,7 +70,7 @@ public class Producer {
             if (exception == null) {
                 promise.complete(null);
             } else {
-                Monitor.produceError(topic, requestId, exception);
+                Monitor.produceError(topic, batchRequestId, targetRequestId, exception);
                 promise.completeExceptionally(exception);
             }
         };
