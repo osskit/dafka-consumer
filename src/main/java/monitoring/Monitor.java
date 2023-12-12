@@ -249,6 +249,7 @@ public class Monitor {
                 "extra",
                 new JSONObject().put("recordKey", record.key()).put("topic", record.topic()).put("requestId", requestId)
             );
+        write(log);
 
         deadLetterProduced.inc();
     }
