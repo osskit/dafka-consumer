@@ -7,13 +7,9 @@ import io.prometheus.client.Histogram;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
-import okhttp3.Response;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.TopicPartition;
 import org.json.JSONObject;
-import reactor.kafka.receiver.ReceiverOffset;
 import reactor.kafka.receiver.ReceiverPartition;
-import reactor.kafka.receiver.ReceiverRecord;
 
 public class Monitor {
 
@@ -101,57 +97,64 @@ public class Monitor {
     }
 
     public static void waitingForTargetHealthcheck() {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "waiting for target healthcheck")
-            .put(
-                "extra",
-                new JSONObject()
-                    .put("targetBaseUrl", Config.TARGET_BASE_URL)
-                    .put("targetHealthCheck", Config.TARGET_HEALTHCHECK)
-            );
-
-        write(log);
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "waiting for target healthcheck")
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("targetBaseUrl", Config.TARGET_BASE_URL)
+                        .put("targetHealthCheck", Config.TARGET_HEALTHCHECK)
+                )
+        );
     }
 
     public static void targetHealthcheckPassedSuccessfully() {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "target healthcheck passed successfully")
-            .put(
-                "extra",
-                new JSONObject()
-                    .put("targetBaseUrl", Config.TARGET_BASE_URL)
-                    .put("targetHealthCheck", Config.TARGET_HEALTHCHECK)
-            );
-
-        write(log);
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "target healthcheck passed successfully")
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("targetBaseUrl", Config.TARGET_BASE_URL)
+                        .put("targetHealthCheck", Config.TARGET_HEALTHCHECK)
+                )
+        );
     }
 
     public static void batchProcessStarted(String requestId) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "batch process started")
-            .put("extra", new JSONObject().put("requestId", requestId));
-
-        write(log);
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "batch process started")
+                .put("extra", new JSONObject().put("batchRequestId", requestId))
+        );
     }
 
-    public static void batchProcessCompleted(int count, Long batchStartTimestamp, String requestId) {
+    public static void batchProcessCompleted(int count, Long batchStartTimestamp, String batchRequestId) {
         var executionTimeMs = new Date().getTime() - batchStartTimestamp;
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "batch process completed")
-            .put(
-                "extra",
-                new JSONObject().put("executionTime", executionTimeMs).put("count", count).put("requestId", requestId)
-            );
-
-        write(log);
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "batch process completed")
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("executionTime", executionTimeMs)
+                        .put("count", count)
+                        .put("batchRequestId", batchRequestId)
+                )
+        );
         processBatchExecutionTime.observe((double) executionTimeMs / 1000);
     }
 
-    public static void processMessageStarted(ConsumerRecord<String, String> record, String requestId) {
+    public static void processMessageStarted(
+        ConsumerRecord<String, String> record,
+        String batchRequestId,
+        String targetRequestId
+    ) {
         messageLatency.labels(record.topic()).observe(((double) (new Date().getTime() - record.timestamp())) / 1000);
         processMessageStarted.inc();
 
@@ -180,30 +183,34 @@ public class Monitor {
                                 )
                                 .put("key", record.key())
                         )
-                        .put("requestId", requestId)
+                        .put("batchRequestId", batchRequestId)
+                        .put("targetRequestId", targetRequestId)
                 )
         );
     }
 
     public static void processMessageCompleted(
         ConsumerRecord<String, String> record,
-        String requestId,
+        String batchRequestId,
+        String targetRequestId,
         long executionStart,
         int statusCode,
         Throwable throwable
     ) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "process message completed")
-            .put(
-                "extra",
-                new JSONObject()
-                    .put("recordKey", record.key())
-                    .put("statusCode", statusCode)
-                    .put("exception", throwable)
-                    .put("requestId", requestId)
-            );
-        write(log);
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "process message completed")
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("recordKey", record.key())
+                        .put("statusCode", statusCode)
+                        .put("exception", throwable)
+                        .put("batchRequestId", batchRequestId)
+                        .put("targetRequestId", targetRequestId)
+                )
+        );
         processMessageExecutionTime.observe(((double) (new Date().getTime() - executionStart)) / 1000);
         processMessageSuccess.inc();
     }
@@ -211,181 +218,210 @@ public class Monitor {
     public static void processMessageError(
         ConsumerRecord<String, String> record,
         Throwable exception,
-        String requestId
+        String batchRequestId,
+        String targetRequestId
     ) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "process message failed")
-            .put(
-                "err",
-                new JSONObject()
-                    .put("errorMessages", getErrorMessages(exception))
-                    .put("class", exception.getClass())
-                    .put("stacktrace", exception.getStackTrace())
-            )
-            .put("extra", new JSONObject().put("recordKey", record.key()).put("requestId", requestId));
-        write(log);
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "process message failed")
+                .put(
+                    "err",
+                    new JSONObject()
+                        .put("errorMessages", getErrorMessages(exception))
+                        .put("class", exception.getClass())
+                        .put("stacktrace", exception.getStackTrace())
+                )
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("recordKey", record.key())
+                        .put("batchRequestId", batchRequestId)
+                        .put("targetRequestId", targetRequestId)
+                )
+        );
+
         processMessageError.inc();
     }
 
-    public static void retryProduced(ConsumerRecord<String, String> record, String requestId) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "retry produced")
-            .put(
-                "extra",
-                new JSONObject().put("recordKey", record.key()).put("topic", record.topic()).put("requestId", requestId)
-            );
-        write(log);
+    public static void retryProduced(
+        ConsumerRecord<String, String> record,
+        String batchRequestId,
+        String targetRequestId
+    ) {
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "retry produced")
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("recordKey", record.key())
+                        .put("topic", record.topic())
+                        .put("batchRequestId", batchRequestId)
+                        .put("targetRequestId", targetRequestId)
+                )
+        );
 
         retryProduced.inc();
     }
 
-    public static void deadLetterProduced(ConsumerRecord<String, String> record, String requestId) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "dead letter produced")
-            .put(
-                "extra",
-                new JSONObject().put("recordKey", record.key()).put("topic", record.topic()).put("requestId", requestId)
-            );
-        write(log);
+    public static void deadLetterProduced(
+        ConsumerRecord<String, String> record,
+        String batchRequestId,
+        String targetRequestId
+    ) {
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "dead letter produced")
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("recordKey", record.key())
+                        .put("topic", record.topic())
+                        .put("batchRequestId", batchRequestId)
+                        .put("targetRequestId", targetRequestId)
+                )
+        );
 
         deadLetterProduced.inc();
     }
 
     public static void consumerError(Throwable exception) {
-        JSONObject log = new JSONObject()
-            .put("level", "error")
-            .put("message", "consumer stream was terminated due to unexpected error")
-            .put(
-                "err",
-                new JSONObject()
-                    .put("errorMessages", getErrorMessages(exception))
-                    .put("class", exception.getClass())
-                    .put("stacktrace", exception.getStackTrace())
-            );
-
-        write(log);
+        write(
+            new JSONObject()
+                .put("level", "error")
+                .put("message", "consumer stream was terminated due to unexpected error")
+                .put(
+                    "err",
+                    new JSONObject()
+                        .put("errorMessages", getErrorMessages(exception))
+                        .put("class", exception.getClass())
+                        .put("stacktrace", exception.getStackTrace())
+                )
+        );
     }
 
-    public static void messageAcknowledge(ConsumerRecord<String, String> record, String requestId) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "message acknowledged")
-            .put(
-                "extra",
-                new JSONObject()
-                    .put("key", record.key())
-                    .put("topic", record.topic())
-                    .put("partition", record.partition())
-                    .put("offset", record.offset())
-                    .put("requestId", requestId)
-            );
-        write(log);
+    public static void messageAcknowledge(
+        ConsumerRecord<String, String> record,
+        String batchRequestId,
+        String targetRequestId
+    ) {
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "message acknowledged")
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("key", record.key())
+                        .put("topic", record.topic())
+                        .put("partition", record.partition())
+                        .put("offset", record.offset())
+                        .put("batchRequestId", batchRequestId)
+                        .put("targetRequestId", targetRequestId)
+                )
+        );
     }
 
-    public static void commitSuccess(String requestId) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "commit success")
-            .put("extra", new JSONObject().put("requestId", requestId));
-
-        write(log);
+    public static void commitSuccess(String batchRequestId) {
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "commit success")
+                .put("extra", new JSONObject().put("batchRequestId", batchRequestId))
+        );
     }
 
-    public static void commitFailed(Throwable exception, String requestId) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "commit failed")
-            .put("extra", new JSONObject().put("requestId", requestId))
-            .put(
-                "err",
-                new JSONObject()
-                    .put("errorMessages", getErrorMessages(exception))
-                    .put("class", exception.getClass())
-                    .put("stacktrace", exception.getStackTrace())
-            );
-
-        write(log);
+    public static void commitFailed(Throwable exception, String batchRequestId) {
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "commit failed")
+                .put("extra", new JSONObject().put("batchRequestId", batchRequestId))
+                .put(
+                    "err",
+                    new JSONObject()
+                        .put("errorMessages", getErrorMessages(exception))
+                        .put("class", exception.getClass())
+                        .put("stacktrace", exception.getStackTrace())
+                )
+        );
     }
 
     public static void consumerCompleted() {
-        JSONObject log = new JSONObject().put("level", "error").put("message", "consumer stream was completed");
-        write(log);
+        write(new JSONObject().put("level", "error").put("message", "consumer stream was completed"));
     }
 
     public static void shuttingDown() {
-        JSONObject log = new JSONObject().put("level", "info").put("message", "shutting down");
-        write(log);
+        write(new JSONObject().put("level", "info").put("message", "shutting down"));
     }
 
     public static void initializationError(Throwable exception) {
-        JSONObject log = new JSONObject()
-            .put("level", "error")
-            .put("message", "Unexpected error while initializing")
-            .put(
-                "err",
-                new JSONObject().put("errorMessages", getErrorMessages(exception)).put("class", exception.getClass())
-            );
-
-        write(log);
+        write(
+            new JSONObject()
+                .put("level", "error")
+                .put("message", "Unexpected error while initializing")
+                .put(
+                    "err",
+                    new JSONObject()
+                        .put("errorMessages", getErrorMessages(exception))
+                        .put("class", exception.getClass())
+                )
+        );
     }
 
     public static void started() {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "kafka-consumer-" + Config.GROUP_ID + " started");
-
-        write(log);
+        write(new JSONObject().put("level", "info").put("message", "kafka-consumer-" + Config.GROUP_ID + " started"));
     }
 
     public static void assignedToPartition(Collection<ReceiverPartition> partitions) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "consumer was assigned to partitions")
-            .put(
-                "extra",
-                new JSONObject()
-                    .put("count", partitions.size())
-                    .put(
-                        "topicPartitions",
-                        partitions.stream().map(x -> x.topicPartition().toString()).collect(Collectors.joining(","))
-                    )
-            );
-
-        write(log);
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "consumer was assigned to partitions")
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("count", partitions.size())
+                        .put(
+                            "topicPartitions",
+                            partitions.stream().map(x -> x.topicPartition().toString()).collect(Collectors.joining(","))
+                        )
+                )
+        );
         assignedPartitions.inc(partitions.size());
     }
 
     public static void revokedFromPartition(Collection<ReceiverPartition> partitions) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "consumer was revoked from partitions")
-            .put("extra", new JSONObject().put("count", partitions.size()));
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "consumer was revoked from partitions")
+                .put("extra", new JSONObject().put("count", partitions.size()))
+        );
 
-        write(log);
         assignedPartitions.dec(partitions.size());
     }
 
     public static void serviceTerminated() {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "kafka-consumer-" + Config.GROUP_ID + " terminated");
-
-        write(log);
+        write(
+            new JSONObject().put("level", "info").put("message", "kafka-consumer-" + Config.GROUP_ID + " terminated")
+        );
     }
 
-    public static void produceError(String topic, String requestId, Throwable exception) {
-        var extra = new JSONObject();
-        extra.put("requestId", requestId);
-        JSONObject log = new JSONObject()
-            .put("level", "error")
-            .put("message", String.format("failed producing message to %s topic", topic))
-            .put("extra", extra)
-            .put("err", new JSONObject().put("message", exception.getMessage()));
-
-        write(log);
+    public static void produceError(String topic, String batchRequestId, String targetRequestId, Throwable exception) {
+        write(
+            new JSONObject()
+                .put("level", "error")
+                .put("message", String.format("failed producing message to %s topic", topic))
+                .put(
+                    "extra",
+                    new JSONObject().put("batchRequestId", batchRequestId).put("targetRequestId", targetRequestId)
+                )
+                .put("err", new JSONObject().put("message", exception.getMessage()))
+        );
 
         produceError.inc();
     }
@@ -393,11 +429,13 @@ public class Monitor {
     private static void logTargetRetry(
         Optional<String> responseBody,
         Throwable exception,
-        String requestId,
+        String batchRequestId,
+        String targetRequestId,
         String message
     ) {
         var extra = new JSONObject();
-        extra.put("requestId", requestId);
+        extra.put("batchRequestId", batchRequestId);
+        extra.put("targetRequestId", targetRequestId);
         if (responseBody.isPresent()) {
             extra.put("response", responseBody.get());
         }
@@ -408,12 +446,7 @@ public class Monitor {
             error.put("type", exception.getClass());
         }
 
-        JSONObject log = new JSONObject().put("level", "info").put("message", message);
-
-        log.put("extra", extra);
-        log.put("err", error);
-
-        write(log);
+        write(new JSONObject().put("level", "info").put("message", message).put("extra", extra).put("err", error));
     }
 
     private static void logTargetRetrySuccess(Optional<String> responseBody, String requestId, String message) {
@@ -425,24 +458,21 @@ public class Monitor {
 
         var error = new JSONObject();
 
-        JSONObject log = new JSONObject().put("level", "info").put("message", message);
-
-        log.put("extra", extra);
-        log.put("err", error);
-
-        write(log);
+        write(new JSONObject().put("level", "info").put("message", message).put("extra", extra).put("err", error));
     }
 
     public static void targetExecutionRetry(
         Optional<String> responseBody,
         Throwable exception,
         int attempt,
-        String requestId
+        String batchRequestId,
+        String targetRequestId
     ) {
         logTargetRetry(
             responseBody,
             exception,
-            requestId,
+            batchRequestId,
+            targetRequestId,
             String.format("target execution retry, attempt %s", attempt)
         );
         targetExecutionRetry.labels(String.valueOf(attempt)).inc();
@@ -452,24 +482,26 @@ public class Monitor {
         Optional<String> responseBody,
         Throwable exception,
         int attempt,
-        String requestId
+        String batchRequestId,
+        String targetRequestId
     ) {
         logTargetRetry(
             responseBody,
             exception,
-            requestId,
+            batchRequestId,
+            targetRequestId,
             String.format("target connection retry, attempt %s", attempt)
         );
         targetConnectionRetry.labels(String.valueOf(attempt)).inc();
     }
 
     public static void targetHealthcheckFailed(Exception exception) {
-        JSONObject log = new JSONObject()
-            .put("level", "info")
-            .put("message", "target healthcheck failed")
-            .put("exceptionMessage", exception.getMessage());
-
-        write(log);
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "target healthcheck failed")
+                .put("exceptionMessage", exception.getMessage())
+        );
     }
 
     private static void write(JSONObject log) {

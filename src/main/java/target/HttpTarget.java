@@ -38,26 +38,38 @@ public class HttpTarget implements ITarget {
         this.producer = producer;
     }
 
-    public CompletableFuture<Object> call(final ConsumerRecord<String, String> record, String requestId) {
-        Monitor.processMessageStarted(record, requestId);
+    public CompletableFuture<Object> call(
+        final ConsumerRecord<String, String> record,
+        String batchRequestId,
+        String targetRequestId
+    ) {
+        Monitor.processMessageStarted(record, batchRequestId, targetRequestId);
         try {
             return TargetRetryPolicy
-                .create(record, requestId)
+                .create(batchRequestId, targetRequestId)
                 .compose(client.newCall(createRequest(record)))
                 .executeAsync()
                 .handleAsync((response, throwable) ->
-                    onExecutionSuccess(response, throwable, record, (new Date()).getTime(), requestId)
+                    onExecutionSuccess(
+                        response,
+                        throwable,
+                        record,
+                        (new Date()).getTime(),
+                        batchRequestId,
+                        targetRequestId
+                    )
                 );
         } catch (Throwable throwable) {
-            Monitor.processMessageError(record, throwable, requestId);
+            Monitor.processMessageError(record, throwable, batchRequestId, targetRequestId);
             if (Config.DEAD_LETTER_TOPIC != null) {
-                Monitor.deadLetterProduced(record, requestId);
+                Monitor.deadLetterProduced(record, batchRequestId, targetRequestId);
                 return producer.produce(
                     Config.DEAD_LETTER_TOPIC,
                     record,
                     Optional.empty(),
                     Optional.of(throwable),
-                    requestId
+                    batchRequestId,
+                    targetRequestId
                 );
             }
             return CompletableFuture.failedFuture(throwable);
@@ -104,38 +116,54 @@ public class HttpTarget implements ITarget {
         Throwable throwable,
         ConsumerRecord<String, String> record,
         long executionStart,
-        String requestId
+        String batchRequestId,
+        String targetRequestId
     ) {
         try (Response r = response) {
             if (throwable != null) {
-                Monitor.processMessageCompleted(record, requestId, executionStart, -1, throwable);
+                Monitor.processMessageCompleted(record, batchRequestId, targetRequestId, executionStart, -1, throwable);
                 if (Config.RETRY_TOPIC != null) {
-                    Monitor.retryProduced(record, requestId);
+                    Monitor.retryProduced(record, batchRequestId, targetRequestId);
                     return producer.produce(
                         Config.RETRY_TOPIC,
                         record,
                         Optional.empty(),
                         Optional.of(throwable),
-                        requestId
+                        batchRequestId,
+                        targetRequestId
                     );
                 }
                 return CompletableFuture.failedFuture(throwable);
             }
-            Monitor.processMessageCompleted(record, requestId, executionStart, r.code(), null);
+            Monitor.processMessageCompleted(record, batchRequestId, targetRequestId, executionStart, r.code(), null);
             if (
                 Integer.toString(r.code()).matches(Config.PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH) &&
                 Config.RETRY_TOPIC != null
             ) {
-                Monitor.retryProduced(record, requestId);
-                return producer.produce(Config.RETRY_TOPIC, record, Optional.of(r), Optional.empty(), requestId);
+                Monitor.retryProduced(record, batchRequestId, targetRequestId);
+                return producer.produce(
+                    Config.RETRY_TOPIC,
+                    record,
+                    Optional.of(r),
+                    Optional.empty(),
+                    batchRequestId,
+                    targetRequestId
+                );
             }
 
             if (
                 Integer.toString(r.code()).matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH) &&
                 Config.DEAD_LETTER_TOPIC != null
             ) {
-                Monitor.deadLetterProduced(record, requestId);
-                return producer.produce(Config.DEAD_LETTER_TOPIC, record, Optional.of(r), Optional.empty(), requestId);
+                Monitor.deadLetterProduced(record, batchRequestId, targetRequestId);
+                return producer.produce(
+                    Config.DEAD_LETTER_TOPIC,
+                    record,
+                    Optional.of(r),
+                    Optional.empty(),
+                    batchRequestId,
+                    targetRequestId
+                );
             }
 
             return CompletableFuture.completedFuture(null);

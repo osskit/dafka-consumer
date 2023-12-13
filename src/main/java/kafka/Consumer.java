@@ -2,7 +2,6 @@ package kafka;
 
 import configuration.Config;
 import java.time.Duration;
-import java.time.Month;
 import java.util.Date;
 import java.util.UUID;
 import monitoring.Monitor;
@@ -26,23 +25,26 @@ public class Consumer {
         return kafkaReceiver
             .receiveBatch()
             .concatMap(records -> {
-                var requestId = UUID.randomUUID().toString();
+                var batchRequestId = UUID.randomUUID().toString();
                 var batchStartTimestamp = new Date().getTime();
-                Monitor.batchProcessStarted(requestId);
+                Monitor.batchProcessStarted(batchRequestId);
                 return records
                     .groupBy(x -> x.key() == null ? x.partition() : x.key())
                     .delayElements(Duration.ofMillis(Config.PROCESSING_DELAY))
                     .publishOn(Schedulers.parallel())
                     .flatMap(partition ->
-                        partition.concatMap(record -> Mono.fromFuture(target.call(record, requestId)).thenReturn(record)
-                        )
+                        partition.concatMap(record -> {
+                            var targetRequestId = UUID.randomUUID().toString();
+                            return Mono
+                                .fromFuture(target.call(record, batchRequestId, targetRequestId))
+                                .doOnSuccess(__ -> {
+                                    record.receiverOffset().acknowledge();
+                                    Monitor.messageAcknowledge(record, batchRequestId, targetRequestId);
+                                });
+                        })
                     )
-                    .doOnNext(record -> {
-                        record.receiverOffset().acknowledge();
-                        Monitor.messageAcknowledge(record, requestId);
-                    })
                     .collectList()
-                    .doOnNext(batch -> Monitor.batchProcessCompleted(batch.size(), batchStartTimestamp, requestId))
+                    .doOnNext(batch -> Monitor.batchProcessCompleted(batch.size(), batchStartTimestamp, batchRequestId))
                     .flatMap(__ ->
                         records
                             .last()
@@ -50,8 +52,8 @@ public class Consumer {
                                 record
                                     .receiverOffset()
                                     .commit()
-                                    .doOnSuccess(___ -> Monitor.commitSuccess(requestId))
-                                    .doOnError(throwable -> Monitor.commitFailed(throwable, requestId))
+                                    .doOnSuccess(___ -> Monitor.commitSuccess(batchRequestId))
+                                    .doOnError(throwable -> Monitor.commitFailed(throwable, batchRequestId))
                             )
                     );
             });
