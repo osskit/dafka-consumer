@@ -54,10 +54,10 @@ public class Main {
             .commitBatchSize(0)
             .subscription(Pattern.compile(topicsRoutes.getTopicsPattern()))
             .addAssignListener(partitions -> {
-                Monitor.assignedToPartition(partitions);
                 if (partitions.isEmpty()) {
                     return;
                 }
+                Monitor.assignedToPartition(partitions);
                 monitoringServer.consumerAssigned();
             })
             .addRevokeListener(Monitor::revokedFromPartition);
