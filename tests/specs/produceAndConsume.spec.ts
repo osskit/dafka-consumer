@@ -5,6 +5,7 @@ import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
 import {topicRoutes} from '../services/topicRoutes.js';
 import {sortBy} from 'lodash-es';
+import delay from 'delay';
 
 describe('tests', () => {
     let orchestrator: Orchestrator;
