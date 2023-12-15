@@ -50,8 +50,7 @@ public class Main {
     private static Disposable createConsumer(MonitoringServer monitoringServer) {
         var receiverOptions = KafkaClientFactory
             .createReceiverOptions()
-            .commitInterval(Duration.ZERO)
-            .commitBatchSize(0)
+            .commitInterval(Duration.ofSeconds(5))
             .subscription(Pattern.compile(topicsRoutes.getTopicsPattern()))
             .addAssignListener(partitions -> {
                 if (partitions.isEmpty()) {
