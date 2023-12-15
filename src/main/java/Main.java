@@ -10,6 +10,7 @@ import monitoring.Monitor;
 import monitoring.MonitoringServer;
 import reactor.core.Disposable;
 import reactor.kafka.receiver.KafkaReceiver;
+import reactor.kafka.receiver.ReceiverPartition;
 import target.HttpTarget;
 import target.TargetHealthcheck;
 
@@ -57,6 +58,7 @@ public class Main {
                 if (partitions.isEmpty()) {
                     return;
                 }
+                partitions.forEach(ReceiverPartition::seekToEnd);
                 Monitor.assignedToPartition(partitions);
                 monitoringServer.consumerAssigned();
             })
