@@ -24,6 +24,7 @@ public class Config {
     public static int POLL_TIMEOUT;
     public static int KAFKA_POLL_INTERVAL_MS;
     public static int MAX_POLL_RECORDS;
+    public static int COMMIT_INTERVAL_MS;
     public static int PROCESSING_DELAY;
     public static String RETRY_TOPIC;
     public static String DEAD_LETTER_TOPIC;
@@ -62,6 +63,7 @@ public class Config {
 
         KAFKA_BROKER = getString(dotenv, "KAFKA_BROKER");
         GROUP_ID = getString(dotenv, "GROUP_ID");
+        COMMIT_INTERVAL_MS = getOptionalInt(dotenv, "COMMIT_INTERVAL_MS", 5000);
 
         var k8sServiceHost = getOptionalString(dotenv, "K8S_SERVICE_HOST_ENV_VAR", "");
 

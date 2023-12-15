@@ -15,7 +15,7 @@ export const dafkaConsumer = async (
     const container = await new GenericContainer('bazel/src:image')
         .withExposedPorts(3000)
         .withNetwork(network)
-        .withEnvironment(env)
+        .withEnvironment({...env, COMMIT_INTERVAL_MS: '1'})
         .withWaitStrategy(Wait.forLogMessage('consumer was assigned to partitions'))
         .withStartupTimeout(startupTimeout)
         .start();
