@@ -51,8 +51,10 @@ public class Main {
         var receiverOptions = KafkaClientFactory
             .createReceiverOptions()
             .commitInterval(Duration.ofMillis(Config.COMMIT_INTERVAL_MS))
+            .commitBatchSize(0)
             .subscription(Pattern.compile(topicsRoutes.getTopicsPattern()))
             .addAssignListener(partitions -> {
+                partitions.
                 if (partitions.isEmpty()) {
                     return;
                 }

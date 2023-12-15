@@ -64,6 +64,7 @@ public class Config {
         KAFKA_BROKER = getString(dotenv, "KAFKA_BROKER");
         GROUP_ID = getString(dotenv, "GROUP_ID");
         COMMIT_INTERVAL_MS = getOptionalInt(dotenv, "COMMIT_INTERVAL_MS", 5000);
+        System.out.println("aaaaaaaaaa " + COMMIT_INTERVAL_MS);
 
         var k8sServiceHost = getOptionalString(dotenv, "K8S_SERVICE_HOST_ENV_VAR", "");
 

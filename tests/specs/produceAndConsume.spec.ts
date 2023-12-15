@@ -5,6 +5,7 @@ import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
 import {topicRoutes} from '../services/topicRoutes.js';
 import {sortBy} from 'lodash-es';
+import delay from 'delay';
 
 describe('tests', () => {
     let orchestrator: Orchestrator;
@@ -40,6 +41,8 @@ describe('tests', () => {
                 {key: '3', value: JSON.stringify({data: 'foo3'})},
             ],
         });
+
+        await delay(30000)
 
         await expect(
             getCalls(orchestrator.wiremockClient, target).then((calls) => sortBy(calls, 'body.data'))
