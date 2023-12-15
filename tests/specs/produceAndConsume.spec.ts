@@ -42,7 +42,7 @@ describe('tests', () => {
             ],
         });
 
-        await delay(30000)
+        await delay(30000);
 
         await expect(
             getCalls(orchestrator.wiremockClient, target).then((calls) => sortBy(calls, 'body.data'))
