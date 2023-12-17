@@ -5,6 +5,7 @@ import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
 import {topicRoutes} from '../services/topicRoutes.js';
 import {sortBy} from 'lodash-es';
+import delay from 'delay';
 
 describe('tests', () => {
     let orchestrator: Orchestrator;
@@ -34,16 +35,25 @@ describe('tests', () => {
 
         await produce(orchestrator, {
             topic: 'foo',
-            messages: [
-                {key: '1', value: JSON.stringify({data: 'foo1'})},
-                {key: '2', value: JSON.stringify({data: 'foo2'})},
-                {key: '3', value: JSON.stringify({data: 'foo3'})},
-            ],
+            messages: [{key: '1', value: JSON.stringify({data: 'foo1'})}],
         });
+
+        await produce(orchestrator, {
+            topic: 'foo',
+            messages: [{key: '2', value: JSON.stringify({data: 'foo2'})}],
+        });
+
+        await produce(orchestrator, {
+            topic: 'foo',
+            messages: [{key: '3', value: JSON.stringify({data: 'foo3'})}],
+        });
+
+        await delay(5000);
 
         await expect(
             getCalls(orchestrator.wiremockClient, target).then((calls) => sortBy(calls, 'body.data'))
         ).resolves.toMatchSnapshot();
+
         await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(3);
     });
 });

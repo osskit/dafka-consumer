@@ -44,17 +44,7 @@ public class Consumer {
                         })
                     )
                     .collectList()
-                    .doOnNext(batch -> Monitor.batchProcessCompleted(batch.size(), batchStartTimestamp, batchRequestId))
-                    .flatMap(__ ->
-                        records
-                            .last()
-                            .flatMap(record ->
-                                record
-                                    .receiverOffset()
-                                    .commit()
-                                    .doOnSuccess(___ -> Monitor.commitSuccess(batchRequestId))
-                                    .doOnError(throwable -> Monitor.commitFailed(throwable, batchRequestId))
-                            )
+                    .doOnNext(batch -> Monitor.batchProcessCompleted(batch.size(), batchStartTimestamp, batchRequestId)
                     );
             });
     }
