@@ -4,7 +4,6 @@ import {mockHttpTarget} from '../services/target.js';
 import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
 import {range} from 'lodash-es';
-import delay from 'delay';
 import {topicRoutes} from '../services/topicRoutes.js';
 
 describe('tests', () => {

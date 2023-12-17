@@ -3,7 +3,6 @@ import {start} from '../testcontainers/orchestrator.js';
 import {getCalls, mockHttpTarget} from '../services/target.js';
 import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
-import delay from 'delay';
 import {topicRoutes} from '../services/topicRoutes.js';
 import {consume} from '../services/consume.js';
 
