@@ -48,12 +48,8 @@ describe('tests', () => {
         await expect(
             getCalls(orchestrator.wiremockClient, target).then((calls) => sortBy(calls, 'body.data'))
         ).resolves.toMatchSnapshot();
-        await expect(getOffset(orchestrator.kafkaClient, 'foo', 1)).resolves.toBe(true);
-        await expect(getOffset(orchestrator.kafkaClient, 'foo-7ff01d48-804d-4bd6-9f4b-ff6b9ef727df', 1)).resolves.toBe(
-            true
-        );
-        await expect(getOffset(orchestrator.kafkaClient, 'foo-5f7d747e-6a8f-4f11-b001-2f5a658a3a35', 1)).resolves.toBe(
-            true
-        );
+        await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1);
+        await expect(getOffset(orchestrator.kafkaClient, 'foo-7ff01d48-804d-4bd6-9f4b-ff6b9ef727df')).resolves.toBe(1);
+        await expect(getOffset(orchestrator.kafkaClient, 'foo-5f7d747e-6a8f-4f11-b001-2f5a658a3a35')).resolves.toBe(1);
     });
 });
