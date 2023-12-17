@@ -54,7 +54,6 @@ public class Main {
             .commitBatchSize(0)
             .subscription(Pattern.compile(topicsRoutes.getTopicsPattern()))
             .addAssignListener(partitions -> {
-                partitions.
                 if (partitions.isEmpty()) {
                     return;
                 }
