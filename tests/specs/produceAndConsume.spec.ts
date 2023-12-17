@@ -44,6 +44,6 @@ describe('tests', () => {
         await expect(
             getCalls(orchestrator.wiremockClient, target).then((calls) => sortBy(calls, 'body.data'))
         ).resolves.toMatchSnapshot();
-        await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(3);
+        await expect(getOffset(orchestrator.kafkaClient, 'foo', 3)).resolves.toBe(true);
     });
 });

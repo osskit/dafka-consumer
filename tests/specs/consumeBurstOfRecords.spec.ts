@@ -39,6 +39,6 @@ describe('tests', () => {
         });
         await delay(30000);
 
-        await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1000);
+        await expect(getOffset(orchestrator.kafkaClient, 'foo', 1000)).resolves.toBe(true);
     });
 });
