@@ -10,5 +10,5 @@ export const getOffset = (kafka: Kafka, topic: string, expectedOffset: number) =
             admin.disconnect();
             return Number.parseInt(metadata[0]?.partitions[0]?.offset!) === expectedOffset;
         },
-        {interval: 100, timeout: 30000}
+        {interval: 100, timeout: 5000}
     );
