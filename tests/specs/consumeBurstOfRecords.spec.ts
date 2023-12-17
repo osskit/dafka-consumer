@@ -37,7 +37,6 @@ describe('tests', () => {
             topic: 'foo',
             messages: range(1000).map((_) => ({value: JSON.stringify({data: 'foo'})})),
         });
-        await delay(30000);
 
         await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1000);
     });

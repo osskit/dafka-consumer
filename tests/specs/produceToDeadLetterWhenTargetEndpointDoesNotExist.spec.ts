@@ -36,7 +36,6 @@ describe('tests', () => {
             topic: 'foo',
             messages: [{value: JSON.stringify({data: 'foo'})}],
         });
-        await delay(5000);
 
         //assert
         await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1);
