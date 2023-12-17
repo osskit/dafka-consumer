@@ -1,6 +1,8 @@
+import delay from 'delay';
 import {Kafka} from 'kafkajs';
 
 export const getOffset = async (kafka: Kafka, topic: string) => {
+    await delay(30000);
     const admin = kafka.admin();
     await admin.connect();
     const metadata = await admin.fetchOffsets({groupId: 'test', topics: [topic]});
