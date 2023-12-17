@@ -39,7 +39,7 @@ describe('tests', () => {
         await delay(5000);
 
         //assert
-        await expect(getOffset(orchestrator.kafkaClient, 'foo', 1)).resolves.toBe(true);
+        await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1);
         await expect(consume(orchestrator.kafkaClient, 'dead')).resolves.toMatchSnapshot();
     });
 });
