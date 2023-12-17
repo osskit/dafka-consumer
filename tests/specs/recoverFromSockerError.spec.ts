@@ -41,6 +41,7 @@ describe('tests', () => {
         await delay(2000);
         await orchestrator.wiremockClient.reset();
         const target = await mockHttpTarget(orchestrator.wiremockClient, '/consume', 200);
+        await delay(2000);
 
         await expect(getCalls(orchestrator.wiremockClient, target)).resolves.toHaveLength(1);
         await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1);

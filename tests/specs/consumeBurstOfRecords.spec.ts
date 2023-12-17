@@ -4,6 +4,7 @@ import {mockHttpTarget} from '../services/target.js';
 import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
 import {range} from 'lodash-es';
+import delay from 'delay';
 import {topicRoutes} from '../services/topicRoutes.js';
 
 describe('tests', () => {
@@ -36,6 +37,7 @@ describe('tests', () => {
             topic: 'foo',
             messages: range(1000).map((_) => ({value: JSON.stringify({data: 'foo'})})),
         });
+        await delay(30000);
 
         await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1000);
     });

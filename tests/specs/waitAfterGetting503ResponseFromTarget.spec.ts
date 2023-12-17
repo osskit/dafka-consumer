@@ -3,6 +3,7 @@ import {start} from '../testcontainers/orchestrator.js';
 import {getCalls, mockHttpTarget} from '../services/target.js';
 import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
+import delay from 'delay';
 import {topicRoutes} from '../services/topicRoutes.js';
 
 describe('tests', () => {
@@ -37,6 +38,7 @@ describe('tests', () => {
             topic: 'foo',
             messages: [{value: JSON.stringify({data: 'foo'})}],
         });
+        await delay(5000);
 
         await expect(getCalls(orchestrator.wiremockClient, target)).resolves.toHaveLength(5);
         await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(1);
