@@ -8,7 +8,9 @@ export const getOffset = (kafka: Kafka, topic: string, expectedOffset: number) =
             await admin.connect();
             const metadata = await admin.fetchOffsets({groupId: 'test', topics: [topic]});
             admin.disconnect();
-            return Number.parseInt(metadata[0]?.partitions[0]?.offset!) === expectedOffset;
+            const offset = Number.parseInt(metadata[0]?.partitions[0]?.offset!);
+            console.log('current offset is', offset);
+            return offset === expectedOffset && pWaitFor.resolveWith(true);
         },
         {interval: 100, timeout: 30000}
     );
