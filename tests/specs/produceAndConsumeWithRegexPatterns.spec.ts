@@ -36,6 +36,8 @@ describe('tests', () => {
             messages: [{value: JSON.stringify({data: 'foo'})}],
         });
 
+        await delay(30000);
+
         await expect(getCalls(orchestrator.wiremockClient, target)).resolves.toMatchSnapshot();
         await expect(getOffset(orchestrator.kafkaClient, 'prefix.foo')).resolves.toBe(1);
     });
