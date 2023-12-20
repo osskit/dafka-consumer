@@ -33,6 +33,13 @@ java_library(
     ],
 )
 
+java_binary(
+    name = "main",
+    main_class = "Main",
+    runtime_deps = [":lib"],
+)
+
+
 java_image(
     name = "image",
     base = "@java_base_image//image",
