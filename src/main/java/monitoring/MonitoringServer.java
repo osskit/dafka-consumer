@@ -29,7 +29,9 @@ public class MonitoringServer {
         readyRoute(server);
         server.setExecutor(Executors.newCachedThreadPool());
         if (Config.USE_PROMETHEUS) {
-            DefaultExports.initialize();
+            if (Config.EXPOSE_JAVA_METRICS) {
+                DefaultExports.initialize();
+            }
             new HTTPServer(server, CollectorRegistry.defaultRegistry, false);
         } else {
             server.start();

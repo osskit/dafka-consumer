@@ -52,6 +52,8 @@ public class Config {
     //Monitoring
     public static int MONITORING_SERVER_PORT;
     public static boolean USE_PROMETHEUS;
+
+    public static boolean EXPOSE_JAVA_METRICS;
     public static String PROMETHEUS_BUCKETS;
     public static String TARGET_HEALTHCHECK;
 
@@ -159,6 +161,8 @@ public class Config {
         }
 
         USE_PROMETHEUS = getOptionalBool(dotenv, "USE_PROMETHEUS", false);
+
+        EXPOSE_JAVA_METRICS = getOptionalBool(dotenv, "EXPOSE_JAVA_METRICS", false);
 
         PROMETHEUS_BUCKETS = getOptionalString(dotenv, "PROMETHEUS_BUCKETS", "0.003,0.03,0.1,0.3,1.5,10");
     }
