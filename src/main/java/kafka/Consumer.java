@@ -30,7 +30,6 @@ public class Consumer {
                 Monitor.batchProcessStarted(batchRequestId);
                 return records
                     .groupBy(x -> x.key() == null ? x.partition() : x.key())
-                    .delayElements(Duration.ofMillis(Config.PROCESSING_DELAY))
                     .publishOn(Schedulers.parallel())
                     .flatMap(partition ->
                         partition.concatMap(record -> {

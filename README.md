@@ -37,7 +37,6 @@ services:
             - KAFKA_BROKER=kafka:9092
             - TARGET_BASE_URL=http://target:2000/
             - TOPICS_ROUTES=foo:consume,bar:consume,^([^.]+).bar:consume
-            - RETRY_TOPIC=retry
             - DEAD_LETTER_TOPIC=dead-letter
             - GROUP_ID=consumer_1
             - MONITORING_SERVER_PORT=4001
@@ -57,7 +56,6 @@ services:
             - KAFKA_BROKER=kafka:9092
             - TARGET_BASE_URL=http://target:2000/
             - TOPICS_ROUTES=foo:consume,bar:consume,^([^.]+).bar:consume
-            - RETRY_TOPIC=retry # optional
             - DEAD_LETTER_TOPIC=dead-letter # optional
             - GROUP_ID=consumer_1
 
@@ -92,12 +90,9 @@ Container images are configured using parameters passed at runtime.
 | `MAX_POLL_RECORDS` | `50` | Number of records to process in a single batch |
 | `SESSION_TIMEOUT` | `10000` | [Description of SESSION_TIMEOUT](https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms) |
 | `RETRY_PROCESS_WHEN_STATUS_CODE_MATCH` | `5[0-9][0-9]` | Retry to process the record if the returning status code matches the regex |
-| `PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH` | `408` | Produce to retry topic on matching status code |
-| `PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH` | `4[0-9][0-79]` | Produce to dead letter topic when matching status code regex |
+| `PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH` | `^(?!2\\d\\d$)\\d{3}$` | Produce to dead letter topic when matching status code regex |
 | `RETRY_POLICY_EXPONENTIAL_BACKOFF` | `50,5000,10` | A list that represents the `[delay, maxDelay, delayFactor]` in retrying message processing |
-| `RETRY_TOPIC` | `null` | Retry topic name |
 | `DEAD_LETTER_TOPIC` | `null` | Dead letter topic name |
-| `PROCESSING_DELAY` | `0` | Delay the received batch processing |
 | `MONITORING_SERVER_PORT` | `0` | Consumer monitoring and healthcheck service port | 
 | `TARGET_HEALTHCHECK` | `null` | Target's healthcheck endpoint to verify it's alive | 
 | `USE_SASL_AUTH=false` | `false` | use SASL authentication |
