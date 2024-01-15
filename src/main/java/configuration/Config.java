@@ -25,12 +25,9 @@ public class Config {
     public static int KAFKA_POLL_INTERVAL_MS;
     public static int MAX_POLL_RECORDS;
     public static int COMMIT_INTERVAL_MS;
-    public static int PROCESSING_DELAY;
-    public static String RETRY_TOPIC;
     public static String DEAD_LETTER_TOPIC;
     public static String CONNECTION_RETRY_PROCESS_WHEN_STATUS_CODE_MATCH;
     public static String RETRY_PROCESS_WHEN_STATUS_CODE_MATCH;
-    public static String PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static String PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH;
     public static List<Integer> RETRY_POLICY_EXPONENTIAL_BACKOFF;
     public static List<Integer> CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF;
@@ -118,9 +115,6 @@ public class Config {
 
         RETRY_PROCESS_WHEN_STATUS_CODE_MATCH = getOptionalString(dotenv, "RETRY_PROCESS_WHEN_STATUS_CODE_MATCH", "500");
 
-        PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH =
-            getOptionalString(dotenv, "PRODUCE_TO_RETRY_TOPIC_WHEN_STATUS_CODE_MATCH", "");
-
         PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH =
             getOptionalString(dotenv, "PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH", "^(?!2\\d\\d$)\\d{3}$");
 
@@ -139,11 +133,7 @@ public class Config {
         CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES =
             getOptionalInt(dotenv, "CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES", 10);
 
-        RETRY_TOPIC = getOptionalString(dotenv, "RETRY_TOPIC", null);
-
         DEAD_LETTER_TOPIC = getOptionalString(dotenv, "DEAD_LETTER_TOPIC", null);
-
-        PROCESSING_DELAY = getOptionalInt(dotenv, "PROCESSING_DELAY", 0);
 
         MONITORING_SERVER_PORT = getOptionalInt(dotenv, "MONITORING_SERVER_PORT", 0);
 

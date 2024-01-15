@@ -16,7 +16,6 @@ public class Monitor {
     private static Counter processMessageStarted;
     private static Counter processMessageSuccess;
     private static Counter processMessageError;
-    private static Counter retryProduced;
     private static Counter deadLetterProduced;
     private static Counter produceError;
     private static Counter targetExecutionRetry;
@@ -72,8 +71,6 @@ public class Monitor {
 
         processMessageStarted =
             Counter.build().name("process_message_started").help("process_message_started").register();
-
-        retryProduced = Counter.build().name("retry_produced").help("retry_produced").register();
 
         deadLetterProduced = Counter.build().name("dead_letter_produced").help("dead_letter_produced").register();
 
@@ -244,28 +241,6 @@ public class Monitor {
         processMessageError.inc();
     }
 
-    public static void retryProduced(
-        ConsumerRecord<String, String> record,
-        String batchRequestId,
-        String targetRequestId
-    ) {
-        write(
-            new JSONObject()
-                .put("level", "info")
-                .put("message", "retry produced")
-                .put(
-                    "extra",
-                    new JSONObject()
-                        .put("recordKey", record.key())
-                        .put("topic", record.topic())
-                        .put("batchRequestId", batchRequestId)
-                        .put("targetRequestId", targetRequestId)
-                )
-        );
-
-        retryProduced.inc();
-    }
-
     public static void deadLetterProduced(
         ConsumerRecord<String, String> record,
         String batchRequestId,
@@ -279,7 +254,8 @@ public class Monitor {
                     "extra",
                     new JSONObject()
                         .put("recordKey", record.key())
-                        .put("topic", record.topic())
+                        .put("originalTopic", record.topic())
+                        .put("deadLetterTopic", Config.DEAD_LETTER_TOPIC)
                         .put("batchRequestId", batchRequestId)
                         .put("targetRequestId", targetRequestId)
                 )
@@ -445,18 +421,6 @@ public class Monitor {
             error.put("message", exception.getMessage());
             error.put("type", exception.getClass());
         }
-
-        write(new JSONObject().put("level", "info").put("message", message).put("extra", extra).put("err", error));
-    }
-
-    private static void logTargetRetrySuccess(Optional<String> responseBody, String requestId, String message) {
-        var extra = new JSONObject();
-        extra.put("requestId", requestId);
-        if (responseBody.isPresent()) {
-            extra.put("response", responseBody.get());
-        }
-
-        var error = new JSONObject();
 
         write(new JSONObject().put("level", "info").put("message", message).put("extra", extra).put("err", error));
     }
