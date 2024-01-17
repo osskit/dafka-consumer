@@ -1,6 +1,5 @@
 package kafka;
 
-import configuration.Config;
 import java.time.Duration;
 import java.util.Date;
 import java.util.UUID;
@@ -30,6 +29,7 @@ public class Consumer {
                 Monitor.batchProcessStarted(batchRequestId);
                 return records
                     .groupBy(x -> x.key() == null ? x.partition() : x.key())
+                    .delayElements(Duration.ofMillis(0))
                     .publishOn(Schedulers.parallel())
                     .flatMap(partition ->
                         partition.concatMap(record -> {
