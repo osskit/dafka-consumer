@@ -1,6 +1,11 @@
 package configuration;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import org.apache.kafka.clients.consumer.CooperativeStickyAssignor;
+import org.apache.kafka.clients.consumer.RangeAssignor;
+import org.apache.kafka.clients.consumer.RoundRobinAssignor;
+import org.apache.kafka.clients.consumer.StickyAssignor;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -9,6 +14,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Config {
+
+    private enum AssignmentStrategyConfig {
+        Range, RoundRobin, Sticky, CooperativeSticky
+    }
+
 
     //Constants
     public static String ORIGINAL_TOPIC = "original-topic";
@@ -53,6 +63,7 @@ public class Config {
     public static boolean EXPOSE_JAVA_METRICS;
     public static String PROMETHEUS_BUCKETS;
     public static String TARGET_HEALTHCHECK;
+    public static List<String> ASSIGNMENT_STRATEGY;
 
     public static int CONNECTION_POOL_MAX_IDLE_CONNECTIONS;
     public static int CONNECTION_POOL_KEEP_ALIVE_DURATION_MS;
@@ -85,59 +96,72 @@ public class Config {
 
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 500);
         RETRY_POLICY_MAX_DURATION_MS =
-            getOptionalInt(dotenv, "RETRY_POLICY_MAX_DURATION_MS", KAFKA_POLL_INTERVAL_MS - 1000);
+                getOptionalInt(dotenv, "RETRY_POLICY_MAX_DURATION_MS", KAFKA_POLL_INTERVAL_MS - 1000);
         CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS =
-            getOptionalInt(dotenv, "CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS", KAFKA_POLL_INTERVAL_MS - 1000);
+                getOptionalInt(dotenv, "CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS", KAFKA_POLL_INTERVAL_MS - 1000);
         TARGET_TIMEOUT_MS = getOptionalLong(dotenv, "TARGET_TIMEOUT_MS", RETRY_POLICY_MAX_DURATION_MS - 1000);
 
         if (KAFKA_POLL_INTERVAL_MS < RETRY_POLICY_MAX_DURATION_MS) {
             throw new IllegalArgumentException(
-                String.format(
-                    "KAFKA_POLL_INTERVAL_MS (%s) must be greater than RETRY_POLICY_MAX_DURATION_MS (%s)",
-                    KAFKA_POLL_INTERVAL_MS,
-                    RETRY_POLICY_MAX_DURATION_MS
-                )
+                    String.format(
+                            "KAFKA_POLL_INTERVAL_MS (%s) must be greater than RETRY_POLICY_MAX_DURATION_MS (%s)",
+                            KAFKA_POLL_INTERVAL_MS,
+                            RETRY_POLICY_MAX_DURATION_MS
+                    )
             );
         }
 
         if (RETRY_POLICY_MAX_DURATION_MS < TARGET_TIMEOUT_MS) {
             throw new IllegalArgumentException(
-                String.format(
-                    "RETRY_POLICY_MAX_DURATION_MS (%s) must be greater than TARGET_TIMEOUT_MS (%s)",
-                    RETRY_POLICY_MAX_DURATION_MS,
-                    TARGET_TIMEOUT_MS
-                )
+                    String.format(
+                            "RETRY_POLICY_MAX_DURATION_MS (%s) must be greater than TARGET_TIMEOUT_MS (%s)",
+                            RETRY_POLICY_MAX_DURATION_MS,
+                            TARGET_TIMEOUT_MS
+                    )
             );
         }
 
         CONNECTION_RETRY_PROCESS_WHEN_STATUS_CODE_MATCH =
-            getOptionalString(dotenv, "CONNECTION_RETRY_PROCESS_WHEN_STATUS_CODE_MATCH", "502|503|504");
+                getOptionalString(dotenv, "CONNECTION_RETRY_PROCESS_WHEN_STATUS_CODE_MATCH", "502|503|504");
 
         RETRY_PROCESS_WHEN_STATUS_CODE_MATCH = getOptionalString(dotenv, "RETRY_PROCESS_WHEN_STATUS_CODE_MATCH", "500");
 
         PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH =
-            getOptionalString(dotenv, "PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH", "^(?!2\\d\\d$)\\d{3}$");
+                getOptionalString(dotenv, "PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH", "^(?!2\\d\\d$)\\d{3}$");
 
         RETRY_POLICY_EXPONENTIAL_BACKOFF =
-            getOptionalIntList(dotenv, "RETRY_POLICY_EXPONENTIAL_BACKOFF", 3, List.of(50, 5000, 10));
+                getOptionalIntList(dotenv, "RETRY_POLICY_EXPONENTIAL_BACKOFF", 3, List.of(50, 5000, 10));
 
         CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF =
-            getOptionalIntList(
-                dotenv,
-                "CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF",
-                3,
-                List.of(5000, 300_000, 2)
-            );
+                getOptionalIntList(
+                        dotenv,
+                        "CONNECTION_FAILURE_RETRY_POLICY_EXPONENTIAL_BACKOFF",
+                        3,
+                        List.of(5000, 300_000, 2)
+                );
         RETRY_POLICY_MAX_RETRIES = getOptionalInt(dotenv, "RETRY_POLICY_MAX_RETRIES", 10);
 
         CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES =
-            getOptionalInt(dotenv, "CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES", 10);
+                getOptionalInt(dotenv, "CONNECTION_FAILURE_RETRY_POLICY_MAX_RETRIES", 10);
 
         DEAD_LETTER_TOPIC = getOptionalString(dotenv, "DEAD_LETTER_TOPIC", null);
 
         MONITORING_SERVER_PORT = getOptionalInt(dotenv, "MONITORING_SERVER_PORT", 0);
 
         TARGET_HEALTHCHECK = getOptionalString(dotenv, "TARGET_HEALTHCHECK", null);
+        List<String> assignmentStrategies = getOptionalStringList(dotenv, "ASSIGNMENT_STRATEGY");
+        if(assignmentStrategies != null && assignmentStrategies.size()>0){
+            ASSIGNMENT_STRATEGY = assignmentStrategies.stream().map(AssignmentStrategyConfig::valueOf).map(strategy -> {
+                switch(strategy){
+                    case Range -> {return RangeAssignor.class.getName();}
+                    case Sticky -> {return StickyAssignor.class.getName();}
+                    case CooperativeSticky -> {return CooperativeStickyAssignor.class.getName();}
+                    case RoundRobin -> {return RoundRobinAssignor.class.getName();}
+                    default -> throw new RuntimeException("ASSIGNMENT_STRATEGY value not supported {"+strategy+"}");
+                }
+            }).collect(Collectors.toList());
+        }
+
 
         USE_SASL_AUTH = getOptionalBool(dotenv, "USE_SASL_AUTH", false);
         if (USE_SASL_AUTH) {
@@ -178,10 +202,10 @@ public class Config {
     }
 
     private static List<Integer> getOptionalIntList(
-        Dotenv dotenv,
-        String name,
-        int expectedSize,
-        List<Integer> fallback
+            Dotenv dotenv,
+            String name,
+            int expectedSize,
+            List<Integer> fallback
     ) throws Exception {
         String value = dotenv.get(name);
 
@@ -193,11 +217,11 @@ public class Config {
 
         if (expectedSize != -1 && expectedSize != list.size()) {
             throw new Exception(
-                String.format(
-                    "env var parse error: expected list with size of %1$s, got list with size of %2$s",
-                    expectedSize,
-                    list.size()
-                )
+                    String.format(
+                            "env var parse error: expected list with size of %1$s, got list with size of %2$s",
+                            expectedSize,
+                            list.size()
+                    )
             );
         }
         return list;
@@ -263,8 +287,8 @@ public class Config {
 
     private static Map<String, String> getStringMap(Dotenv dotenv, String name) throws Exception {
         return getStringList(dotenv, name)
-            .stream()
-            .map(x -> x.split(":"))
-            .collect(Collectors.toMap(x -> x[0], x -> x[1]));
+                .stream()
+                .map(x -> x.split(":"))
+                .collect(Collectors.toMap(x -> x[0], x -> x[1]));
     }
 }

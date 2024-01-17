@@ -26,13 +26,13 @@ public class KafkaClientFactory {
         props.put("sasl.mechanism", Config.SASL_MECHANISM.toUpperCase());
         props.put("ssl.endpoint.identification.algorithm", "");
         props.put(
-            "sasl.jaas.config",
-            String.format(
-                "org.apache.kafka.common.security.%s required username=\"%s\" password=\"%s\";",
-                getSaslMechanism(),
-                Config.SASL_USERNAME,
-                Config.SASL_PASSWORD
-            )
+                "sasl.jaas.config",
+                String.format(
+                        "org.apache.kafka.common.security.%s required username=\"%s\" password=\"%s\";",
+                        getSaslMechanism(),
+                        Config.SASL_USERNAME,
+                        Config.SASL_PASSWORD
+                )
         );
 
         return props;
@@ -50,13 +50,16 @@ public class KafkaClientFactory {
         var props = getAuthProperties();
         props.put(ConsumerConfig.GROUP_ID_CONFIG, Config.GROUP_ID);
         props.put(
-            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-            "org.apache.kafka.common.serialization.StringDeserializer"
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                "org.apache.kafka.common.serialization.StringDeserializer"
         );
         props.put(
-            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-            "org.apache.kafka.common.serialization.StringDeserializer"
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                "org.apache.kafka.common.serialization.StringDeserializer"
         );
+        if(Config.ASSIGNMENT_STRATEGY != null && Config.ASSIGNMENT_STRATEGY.size()>0){
+            props.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, String.join(",",Config.ASSIGNMENT_STRATEGY));
+        }
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, Config.MAX_POLL_RECORDS);
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, Config.KAFKA_POLL_INTERVAL_MS);
         return ReceiverOptions.create(props);
