@@ -15,6 +15,11 @@ import java.util.stream.Collectors;
 
 public class Config {
 
+    private enum AssignmentStrategyConfig {
+        Range, RoundRobin, Sticky, CooperativeSticky
+    }
+
+
     //Constants
     public static String ORIGINAL_TOPIC = "original-topic";
 
