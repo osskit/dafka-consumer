@@ -47,7 +47,7 @@ public class Consumer {
                 return Mono
                     .fromFuture(target.callBatch(receiverRecords, batchRequestId, targetRequestId))
                     .flatMap(targetResult -> {
-                        if (targetResult instanceof TargetException) {
+                        if (targetResult instanceof TargetException && Config.DEAD_LETTER_TOPIC != null) {
                             return Flux
                                 .fromIterable(receiverRecords)
                                 .flatMap(record ->
