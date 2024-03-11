@@ -21,7 +21,6 @@ public class Consumer {
 
     private final KafkaReceiver<String, String> kafkaReceiver;
     private final KafkaSender<String, String> kafkaSender;
-
     private final ITarget target;
 
     public Consumer(

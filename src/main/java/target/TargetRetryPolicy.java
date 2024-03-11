@@ -10,7 +10,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import monitoring.Monitor;
 import okhttp3.Response;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 public class TargetRetryPolicy {
 

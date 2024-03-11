@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 import kafka.Producer;
 import monitoring.Monitor;
 import okhttp3.*;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.json.JSONObject;
 import reactor.kafka.receiver.ReceiverRecord;
 
@@ -114,7 +113,7 @@ public class HttpTarget implements ITarget {
         }
     }
 
-    private Request createRequest(final ConsumerRecord<String, String> record) {
+    private Request createRequest(final ReceiverRecord<String, String> record) {
         var requestBuilder = new Request.Builder()
             .url(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(record.topic()))
             .post(RequestBody.create(record.value(), MediaType.get("application/json; charset=utf-8")))
@@ -152,7 +151,7 @@ public class HttpTarget implements ITarget {
     private CompletableFuture<Object> onExecutionSuccess(
         Response response,
         Throwable throwable,
-        ConsumerRecord<String, String> record,
+        ReceiverRecord<String, String> record,
         long executionStart,
         String batchRequestId,
         String targetRequestId
