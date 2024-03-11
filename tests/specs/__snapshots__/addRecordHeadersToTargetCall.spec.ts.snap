@@ -20,6 +20,7 @@ exports[`tests should add record headers to target call 1`] = `
       "x-record-topic": "foo",
       "x-request-id": "111",
     },
+    "url": "/consume",
   },
 ]
 `;

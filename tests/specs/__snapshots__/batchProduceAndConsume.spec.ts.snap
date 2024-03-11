@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`tests batch produce and consume 1`] = `
+[
+  {
+    "body": [
+      {
+        "data": "foo1",
+      },
+      {
+        "data": "foo2",
+      },
+    ],
+    "url": "/consumeFoo",
+  },
+]
+`;
+
+exports[`tests batch produce and consume 2`] = `
+[
+  {
+    "body": [
+      {
+        "data": "bar1",
+      },
+      {
+        "data": "bar2",
+      },
+    ],
+    "url": "/consumeBar",
+  },
+]
+`;

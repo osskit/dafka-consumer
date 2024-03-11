@@ -26,7 +26,8 @@ export const mockFaultyHttpTarget = (wiremock: WireMockClient, url: string) =>
 
 export const getCalls = (wiremock: WireMockClient, target: RequestPattern, withHeaders = false) =>
     wiremock.waitForCalls(target).then((calls) =>
-        calls.map(({body, headers}) => ({
+        calls.map(({url, body, headers}) => ({
+            url,
             body,
             ...(withHeaders ? {headers: omit(headers, 'x-record-timestamp')} : {}),
         }))

@@ -6,16 +6,19 @@ exports[`tests should produce and consume 1`] = `
     "body": {
       "data": "foo1",
     },
+    "url": "/consume",
   },
   {
     "body": {
       "data": "foo2",
     },
+    "url": "/consume",
   },
   {
     "body": {
       "data": "foo3",
     },
+    "url": "/consume",
   },
 ]
 `;

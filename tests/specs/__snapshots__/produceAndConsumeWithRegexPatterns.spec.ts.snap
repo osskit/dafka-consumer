@@ -6,6 +6,7 @@ exports[`tests should produce and consume with regex patterns 1`] = `
     "body": {
       "data": "foo",
     },
+    "url": "/consume",
   },
 ]
 `;

@@ -10,6 +10,7 @@ import monitoring.Monitor;
 import monitoring.MonitoringServer;
 import reactor.core.Disposable;
 import reactor.kafka.receiver.KafkaReceiver;
+import reactor.kafka.sender.KafkaSender;
 import target.HttpTarget;
 import target.TargetHealthcheck;
 
@@ -61,8 +62,11 @@ public class Main {
             })
             .addRevokeListener(Monitor::revokedFromPartition);
 
+        var senderOptions = KafkaClientFactory.createSenderOptions();
+
         return new Consumer(
             KafkaReceiver.create(receiverOptions),
+            KafkaSender.create(senderOptions),
             new HttpTarget(topicsRoutes, new Producer(KafkaClientFactory.createProducer()))
         )
             .stream()

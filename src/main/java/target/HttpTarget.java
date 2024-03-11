@@ -4,14 +4,16 @@ import configuration.Config;
 import configuration.TopicsRoutes;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import kafka.Producer;
 import monitoring.Monitor;
 import okhttp3.*;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.json.JSONObject;
+import reactor.kafka.receiver.ReceiverRecord;
 
 public class HttpTarget implements ITarget {
 
@@ -39,7 +41,7 @@ public class HttpTarget implements ITarget {
     }
 
     public CompletableFuture<Object> call(
-        final ConsumerRecord<String, String> record,
+        final ReceiverRecord<String, String> record,
         String batchRequestId,
         String targetRequestId
     ) {
@@ -76,7 +78,42 @@ public class HttpTarget implements ITarget {
         }
     }
 
-    private Request createRequest(final ConsumerRecord<String, String> record) {
+    @Override
+    public CompletableFuture<Object> callBatch(
+        List<ReceiverRecord<String, String>> records,
+        String batchRequestId,
+        String targetRequestId
+    ) {
+        try {
+            var last = records.get(records.size() - 1);
+            var request = new Request.Builder()
+                .url(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(last.topic()))
+                .post(
+                    RequestBody.create(
+                        records.stream().map(ReceiverRecord::value).toList().toString(),
+                        MediaType.get("application/json; charset=utf-8")
+                    )
+                )
+                .build();
+
+            return TargetRetryPolicy
+                .create(batchRequestId, targetRequestId)
+                .compose(client.newCall(request))
+                .executeAsync()
+                .handleAsync((response, throwable) ->
+                    Integer
+                            .toString(response.code())
+                            .matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH) ||
+                        throwable != null
+                        ? new TargetException(response, throwable)
+                        : null
+                );
+        } catch (Throwable throwable) {
+            return CompletableFuture.failedFuture(throwable);
+        }
+    }
+
+    private Request createRequest(final ReceiverRecord<String, String> record) {
         var requestBuilder = new Request.Builder()
             .url(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(record.topic()))
             .post(RequestBody.create(record.value(), MediaType.get("application/json; charset=utf-8")))
@@ -114,7 +151,7 @@ public class HttpTarget implements ITarget {
     private CompletableFuture<Object> onExecutionSuccess(
         Response response,
         Throwable throwable,
-        ConsumerRecord<String, String> record,
+        ReceiverRecord<String, String> record,
         long executionStart,
         String batchRequestId,
         String targetRequestId

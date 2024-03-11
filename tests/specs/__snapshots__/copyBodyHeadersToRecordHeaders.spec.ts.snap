@@ -23,6 +23,7 @@ exports[`tests copy body headers to record headers 1`] = `
       "x-record-partition": "0",
       "x-record-topic": "foo",
     },
+    "url": "/consume",
   },
 ]
 `;
