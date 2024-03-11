@@ -86,7 +86,7 @@ public class Config {
 
             TARGET_BASE_URL = String.format("http://%s:%d", targetIp, targetPort);
         } else {
-                    TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
+            TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
         }
 
         TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
