@@ -17,7 +17,8 @@
         "pretest": "bazel build //src:image.tar && docker load -i bazel-bin/src/image.tar",
         "test": "NODE_OPTIONS=--experimental-vm-modules jest --config tests/jest.config.ts --runInBand",
         "format": "prettier --write '**/*.{ts,js,json,java}'",
-        "logs": "docker-compose -f tests/dafka.yml logs"
+        "logs": "docker-compose -f tests/dafka.yml logs",
+        "prepare": "husky"
     },
     "dependencies": {
         "@osskit/wiremock-client": "^4.3.1",
@@ -53,7 +54,6 @@
         "ts-node": "^10.9.1"
     },
     "lint-staged": {
-        "*.ts": "eslint --fix",
         "*.{ts,js,json,java}": "prettier --write"
     }
 }

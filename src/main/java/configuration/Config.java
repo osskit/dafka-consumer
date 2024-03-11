@@ -84,9 +84,9 @@ public class Config {
             var targetPort = getOptionalInt(dotenv, "TARGET_PORT", 80);
             var targetIp = getString(dotenv, k8sServiceHost);
 
-                            TARGET_BASE_URL = String.format("http://%s:%d", targetIp, targetPort);
+            TARGET_BASE_URL = String.format("http://%s:%d", targetIp, targetPort);
         } else {
-            TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
+                    TARGET_BASE_URL = getString(dotenv, "TARGET_BASE_URL");
         }
 
         TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
