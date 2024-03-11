@@ -15,3 +15,26 @@ export const consume = async (kafka: Kafka, topic: string, parse = true) => {
     );
     return {value, headers};
 };
+
+export const consumeAll = async (kafka: Kafka, topic: string, expectedCount: number) => {
+    const messages: unknown[] = [];
+    const consumer = kafka.consumer({groupId: 'orchestrator'});
+    await consumer.subscribe({topic: topic, fromBeginning: true});
+    const consumedMessages = await new Promise((resolve) => {
+        consumer.run({
+            eachMessage: async ({message}) => {
+                messages.push({
+                    value: JSON.parse(message.value?.toString() ?? '{}'),
+                    headers: Object.fromEntries(
+                        Object.entries(message.headers!).map(([key, value]) => [key, value?.toString()])
+                    ),
+                });
+                if (messages.length === expectedCount) {
+                    resolve(messages);
+                }
+            },
+        });
+    });
+    await consumer.disconnect();
+    return consumedMessages;
+};

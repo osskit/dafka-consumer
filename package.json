@@ -1,6 +1,6 @@
 {
     "name": "dafka-consumer",
-    "version": "12.1.1",
+    "version": "12.2.0",
     "description": "Dockerized kafka consumer",
     "private": true,
     "repository": {
@@ -42,8 +42,9 @@
         "@osskit/fetch-enhancers": "^4.1.0",
         "@osskit/tsconfig": "^0.0.6",
         "@types/lodash-es": "^4.17.7",
-        "husky": "^3.1.0",
+        "husky": "^9.0.11",
         "kafkajs": "^2.2.4",
+        "lint-staged": "^15.2.2",
         "lodash-es": "^4.17.21",
         "p-retry": "^5.1.2",
         "prettier": "^2.3.2",
@@ -51,9 +52,8 @@
         "testcontainers": "^10.2.1",
         "ts-node": "^10.9.1"
     },
-    "husky": {
-        "hooks": {
-            "pre-commit": "yarn format && git add ."
-        }
+    "lint-staged": {
+        "*.ts": "eslint --fix",
+        "*.{ts,js,json}": "prettier --write"
     }
 }
