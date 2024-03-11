@@ -48,20 +48,24 @@ public class Consumer {
                             return Flux
                                 .fromIterable(receiverRecords)
                                 .flatMap(record ->
-                                    kafkaSender.send(
-                                        Mono.just(
-                                            SenderRecord.create(
-                                                new ProducerRecord<>(
-                                                    Config.DEAD_LETTER_TOPIC,
-                                                    null,
-                                                    record.key(),
-                                                    record.value(),
-                                                    ((TargetException) targetResult).getHeaders(record)
-                                                ),
-                                                null
+                                    kafkaSender
+                                        .send(
+                                            Mono.just(
+                                                SenderRecord.create(
+                                                    new ProducerRecord<>(
+                                                        Config.DEAD_LETTER_TOPIC,
+                                                        null,
+                                                        record.key(),
+                                                        record.value(),
+                                                        ((TargetException) targetResult).getHeaders(record)
+                                                    ),
+                                                    null
+                                                )
                                             )
                                         )
-                                    )
+                                        .doOnComplete(() ->
+                                            Monitor.deadLetterProduced(record, batchRequestId, targetRequestId)
+                                        )
                                 )
                                 .then(Mono.just(receiverRecords));
                         }
