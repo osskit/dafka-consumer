@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import monitoring.Monitor;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -33,13 +34,15 @@ public class Consumer {
         this.target = target;
     }
 
-    private Mono<List<ReceiverRecord<String, String>>> processAsBatch(Flux<ReceiverRecord<String, String>> records) {
-        var batchRequestId = UUID.randomUUID().toString();
-        var batchStartTimestamp = new Date().getTime();
-        Monitor.batchProcessStarted(batchRequestId);
+    private Flux<List<ReceiverRecord<String, String>>> processAsBatch(Flux<ReceiverRecord<String, String>> records) {
         return records
-            .collectList()
+            .groupBy(ConsumerRecord::topic)
+            .flatMap(Flux::collectList)
+            .publishOn(Schedulers.parallel())
             .flatMap(receiverRecords -> {
+                var batchRequestId = UUID.randomUUID().toString();
+                var batchStartTimestamp = new Date().getTime();
+                Monitor.batchProcessStarted(batchRequestId);
                 var targetRequestId = UUID.randomUUID().toString();
                 return Mono
                     .fromFuture(target.callBatch(receiverRecords, batchRequestId, targetRequestId))

@@ -6,16 +6,19 @@ exports[`tests consume from multiple topics with regex patterns 1`] = `
     "body": {
       "data": "foo",
     },
+    "url": "/consume",
   },
   {
     "body": {
       "data": "foo1",
     },
+    "url": "/consume",
   },
   {
     "body": {
       "data": "foo2",
     },
+    "url": "/consume",
   },
 ]
 `;

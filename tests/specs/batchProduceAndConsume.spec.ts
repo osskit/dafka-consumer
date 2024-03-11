@@ -17,10 +17,13 @@ describe('tests', () => {
                 MONITORING_SERVER_PORT: '3000',
                 GROUP_ID: 'test',
                 TARGET_BASE_URL: 'http://mocks:8080',
-                TOPICS_ROUTES: topicRoutes([{topic: 'foo', targetPath: '/consume'}]),
+                TOPICS_ROUTES: topicRoutes([
+                    {topic: 'foo', targetPath: '/consumeFoo'},
+                    {topic: 'bar', targetPath: '/consumeBar'},
+                ]),
                 TARGET_PROCESS_TYPE: 'batch',
             },
-            ['foo']
+            ['foo', 'bar']
         );
     }, 5 * 60 * 1000);
 
@@ -32,25 +35,35 @@ describe('tests', () => {
     });
 
     it('batch produce and consume', async () => {
-        const target = await mockHttpTarget(orchestrator.wiremockClient, '/consume', 200);
+        const target1 = await mockHttpTarget(orchestrator.wiremockClient, '/consumeFoo', 200);
+        const target2 = await mockHttpTarget(orchestrator.wiremockClient, '/consumeBar', 200);
 
         await produce(orchestrator, {
             topic: 'foo',
             messages: [
                 {key: '1', value: JSON.stringify({data: 'foo1'})},
                 {key: '2', value: JSON.stringify({data: 'foo2'})},
-                {key: '3', value: JSON.stringify({data: 'foo3'})},
-                {key: '4', value: JSON.stringify({data: 'foo4'})},
-                {key: '5', value: JSON.stringify({data: 'foo5'})},
+            ],
+        });
+        await produce(orchestrator, {
+            topic: 'bar',
+            messages: [
+                {key: '1', value: JSON.stringify({data: 'bar1'})},
+                {key: '2', value: JSON.stringify({data: 'bar2'})},
             ],
         });
 
         await delay(5000);
 
         await expect(
-            getCalls(orchestrator.wiremockClient, target).then((calls) => sortBy(calls, 'body.data'))
+            getCalls(orchestrator.wiremockClient, target1).then((calls) => sortBy(calls, 'body.data'))
         ).resolves.toMatchSnapshot();
 
-        await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(5);
+        await expect(
+            getCalls(orchestrator.wiremockClient, target2).then((calls) => sortBy(calls, 'body.data'))
+        ).resolves.toMatchSnapshot();
+
+        await expect(getOffset(orchestrator.kafkaClient, 'foo')).resolves.toBe(2);
+        await expect(getOffset(orchestrator.kafkaClient, 'bar')).resolves.toBe(2);
     });
 });

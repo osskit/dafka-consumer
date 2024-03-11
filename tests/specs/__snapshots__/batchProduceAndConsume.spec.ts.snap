@@ -10,16 +10,24 @@ exports[`tests batch produce and consume 1`] = `
       {
         "data": "foo2",
       },
+    ],
+    "url": "/consumeFoo",
+  },
+]
+`;
+
+exports[`tests batch produce and consume 2`] = `
+[
+  {
+    "body": [
       {
-        "data": "foo3",
+        "data": "bar1",
       },
       {
-        "data": "foo4",
-      },
-      {
-        "data": "foo5",
+        "data": "bar2",
       },
     ],
+    "url": "/consumeBar",
   },
 ]
 `;
