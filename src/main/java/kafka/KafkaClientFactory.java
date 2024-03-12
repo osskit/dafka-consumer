@@ -4,7 +4,6 @@ import configuration.Config;
 import java.util.Properties;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.common.network.Send;
 import reactor.kafka.receiver.ReceiverOptions;
 import reactor.kafka.sender.SenderOptions;
 
@@ -67,6 +66,7 @@ public class KafkaClientFactory {
         }
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, Config.MAX_POLL_RECORDS);
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, Config.KAFKA_POLL_INTERVAL_MS);
+        props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, Config.KAFKA_FETCH_MAX_BYTES_CONFIG);
         return ReceiverOptions.create(props);
     }
 
