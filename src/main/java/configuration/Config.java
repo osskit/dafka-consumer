@@ -34,9 +34,9 @@ public class Config {
     public static Map<String, String> TOPICS_ROUTES;
 
     //Optional
-    public static int POLL_TIMEOUT;
     public static int KAFKA_POLL_INTERVAL_MS;
     public static int MAX_POLL_RECORDS;
+    public static int KAFKA_FETCH_MAX_BYTES_CONFIG;
     public static int COMMIT_INTERVAL_MS;
     public static String DEAD_LETTER_TOPIC;
     public static String CONNECTION_RETRY_PROCESS_WHEN_STATUS_CODE_MATCH;
@@ -100,6 +100,7 @@ public class Config {
         KAFKA_POLL_INTERVAL_MS = getOptionalInt(dotenv, "KAFKA_POLL_INTERVAL_MS", 5 * 60 * 1000);
 
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 500);
+        KAFKA_FETCH_MAX_BYTES_CONFIG = getOptionalInt(dotenv, "KAFKA_FETCH_MAX_BYTES_CONFIG", 5242880);
         RETRY_POLICY_MAX_DURATION_MS =
             getOptionalInt(dotenv, "RETRY_POLICY_MAX_DURATION_MS", KAFKA_POLL_INTERVAL_MS - 1000);
         CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS =
