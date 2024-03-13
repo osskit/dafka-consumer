@@ -74,13 +74,12 @@ public class Consumer {
                         }
                         return Mono.just(receiverRecords);
                     })
-                    .doOnSuccess(__ -> {
+                    .doOnSuccess(batch -> {
                         var lastRecord = receiverRecords.get(receiverRecords.size() - 1);
                         lastRecord.receiverOffset().acknowledge();
                         Monitor.messageAcknowledge(lastRecord, batchRequestId, targetRequestId);
-                    })
-                    .doOnNext(batch -> Monitor.batchProcessCompleted(batch.size(), batchStartTimestamp, batchRequestId)
-                    );
+                        Monitor.batchProcessCompleted(batch.size(), batchStartTimestamp, batchRequestId);
+                    });
             });
     }
 
