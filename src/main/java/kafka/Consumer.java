@@ -74,7 +74,7 @@ public class Consumer {
                         }
                         return Mono.just(receiverRecords);
                     })
-                    .doOnSuccess(batch -> {
+                    .doOnSuccess(__ -> {
                         var lastRecord = receiverRecords.get(receiverRecords.size() - 1);
                         lastRecord.receiverOffset().acknowledge();
                         Monitor.messageAcknowledge(lastRecord, batchRequestId, targetRequestId);
