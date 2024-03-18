@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`stream consume with record pick field 1`] = `
+[
+  {
+    "body": "foo1",
+    "url": "/consume",
+  },
+  {
+    "body": "foo2",
+    "url": "/consume",
+  },
+  {
+    "body": "foo3",
+    "url": "/consume",
+  },
+]
+`;
