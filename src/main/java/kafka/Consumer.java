@@ -78,9 +78,8 @@ public class Consumer {
                         var lastRecord = receiverRecords.get(receiverRecords.size() - 1);
                         lastRecord.receiverOffset().acknowledge();
                         Monitor.messageAcknowledge(lastRecord, batchRequestId, targetRequestId);
-                    })
-                    .doOnNext(batch -> Monitor.batchProcessCompleted(batch.size(), batchStartTimestamp, batchRequestId)
-                    );
+                        Monitor.batchProcessCompleted(receiverRecords.size(), batchStartTimestamp, batchRequestId);
+                    });
             });
     }
 
