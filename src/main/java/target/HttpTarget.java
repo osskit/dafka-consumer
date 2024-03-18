@@ -83,28 +83,15 @@ public class HttpTarget implements ITarget {
 
     @Override
     public CompletableFuture<Object> callBatch(
-        List<ReceiverRecord<String, String>> records,
+        List<Object> batch,
+        String endpoint,
         String batchRequestId,
         String targetRequestId
     ) {
-        var gson = new Gson();
-        var body = !Config.RECORD_PICK_FIELD.isEmpty()
-            ? gson.toJson(
-                (
-                    records
-                        .stream()
-                        .map(r -> gson.fromJson(r.value(), JsonElement.class).getAsJsonObject())
-                        .map(x -> x.get(Config.RECORD_PICK_FIELD))
-                        .collect(Collectors.toList())
-                )
-            )
-            : records.stream().map(ReceiverRecord::value).toList().toString();
-
         try {
-            var last = records.get(records.size() - 1);
             var request = new Request.Builder()
-                .url(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(last.topic()))
-                .post(RequestBody.create(body, MediaType.get("application/json; charset=utf-8")))
+                .url(Config.TARGET_BASE_URL + endpoint)
+                .post(RequestBody.create(batch.toString(), MediaType.get("application/json; charset=utf-8")))
                 .build();
 
             return TargetRetryPolicy
@@ -127,9 +114,9 @@ public class HttpTarget implements ITarget {
     private Request createRequest(final ReceiverRecord<String, String> record) {
         var gson = new Gson();
 
-        var body = !Config.RECORD_PICK_FIELD.isEmpty()
+        var body = !Config.RECORD_PROJECT_FIELD.isEmpty()
             ? gson.toJson(
-                (gson.fromJson(record.value(), JsonElement.class).getAsJsonObject().get(Config.RECORD_PICK_FIELD))
+                (gson.fromJson(record.value(), JsonElement.class).getAsJsonObject().get(Config.RECORD_PROJECT_FIELD))
             )
             : record.value();
 

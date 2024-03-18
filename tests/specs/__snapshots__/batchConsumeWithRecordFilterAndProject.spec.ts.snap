@@ -1,12 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`tests batch consume with record pick field 1`] = `
+exports[`tests batch consume with record filter and project 1`] = `
 [
   {
     "body": [
       "foo1",
       "foo2",
-      "foo3",
     ],
     "url": "/consume",
   },
