@@ -71,6 +71,8 @@ public class Config {
     public static int CONNECTION_POOL_MAX_IDLE_CONNECTIONS;
     public static int CONNECTION_POOL_KEEP_ALIVE_DURATION_MS;
 
+    public static String RECORD_PICK_FIELD;
+
     public static void init() throws Exception {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
@@ -97,6 +99,8 @@ public class Config {
         CONNECTION_POOL_KEEP_ALIVE_DURATION_MS = getOptionalInt(dotenv, "CONNECTION_POOL_KEEP_ALIVE_DURATION_MS", 1000);
 
         BODY_HEADERS_PATHS = getOptionalStringList(dotenv, "BODY_HEADERS_PATHS");
+        RECORD_PICK_FIELD = getOptionalString(dotenv, "RECORD_PICK_FIELD", "");
+
         KAFKA_POLL_INTERVAL_MS = getOptionalInt(dotenv, "KAFKA_POLL_INTERVAL_MS", 5 * 60 * 1000);
 
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 500);
