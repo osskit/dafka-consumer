@@ -1,5 +1,7 @@
 package target;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import configuration.Config;
 import configuration.TopicsRoutes;
 import java.nio.charset.StandardCharsets;
@@ -9,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import kafka.Producer;
 import monitoring.Monitor;
 import okhttp3.*;
@@ -84,16 +87,24 @@ public class HttpTarget implements ITarget {
         String batchRequestId,
         String targetRequestId
     ) {
+        var gson = new Gson();
+        var body = !Config.RECORD_PICK_FIELD.isEmpty()
+            ? gson.toJson(
+                (
+                    records
+                        .stream()
+                        .map(r -> gson.fromJson(r.value(), JsonElement.class).getAsJsonObject())
+                        .map(x -> x.get(Config.RECORD_PICK_FIELD))
+                        .collect(Collectors.toList())
+                )
+            )
+            : records.stream().map(ReceiverRecord::value).toList().toString();
+
         try {
             var last = records.get(records.size() - 1);
             var request = new Request.Builder()
                 .url(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(last.topic()))
-                .post(
-                    RequestBody.create(
-                        records.stream().map(ReceiverRecord::value).toList().toString(),
-                        MediaType.get("application/json; charset=utf-8")
-                    )
-                )
+                .post(RequestBody.create(body, MediaType.get("application/json; charset=utf-8")))
                 .build();
 
             return TargetRetryPolicy
@@ -114,9 +125,17 @@ public class HttpTarget implements ITarget {
     }
 
     private Request createRequest(final ReceiverRecord<String, String> record) {
+        var gson = new Gson();
+
+        var body = !Config.RECORD_PICK_FIELD.isEmpty()
+            ? gson.toJson(
+                (gson.fromJson(record.value(), JsonElement.class).getAsJsonObject().get(Config.RECORD_PICK_FIELD))
+            )
+            : record.value();
+
         var requestBuilder = new Request.Builder()
             .url(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(record.topic()))
-            .post(RequestBody.create(record.value(), MediaType.get("application/json; charset=utf-8")))
+            .post(RequestBody.create(body, MediaType.get("application/json; charset=utf-8")))
             .header("x-record-topic", record.topic())
             .header("x-record-partition", String.valueOf(record.partition()))
             .header("x-record-offset", String.valueOf(record.offset()))

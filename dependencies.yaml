@@ -27,6 +27,11 @@ dependencies:
       lang: java
       version: "2.9.3"
 
+  com.google.code.gson:
+    gson:
+      lang: java
+      version: "2.8.8"
+
   com.google.guava:
     guava:
       lang: java

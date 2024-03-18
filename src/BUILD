@@ -10,6 +10,7 @@ java_library(
         "@third_party//3rdparty/jvm/ch/qos/logback/contrib:logback_json_classic",
         "@third_party//3rdparty/jvm/com/fasterxml/jackson/core:jackson_databind",
         "@third_party//3rdparty/jvm/com/google/guava",
+        "@third_party//3rdparty/jvm/com/google/code/gson:gson",
         "@third_party//3rdparty/jvm/com/google/protobuf:protobuf_java",
         "@third_party//3rdparty/jvm/com/google/protobuf:protobuf_java_util",
         "@third_party//3rdparty/jvm/com/spotify:futures_extra",
