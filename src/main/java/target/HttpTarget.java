@@ -21,6 +21,9 @@ import reactor.kafka.receiver.ReceiverRecord;
 public class HttpTarget implements ITarget {
 
     private final TopicsRoutes topicsRoutes;
+
+    private final Router router;
+
     private static final Duration httpTimeout = Duration.ofMillis(Config.TARGET_TIMEOUT_MS);
     private static final OkHttpClient client = new OkHttpClient.Builder()
         .callTimeout(httpTimeout)
@@ -38,9 +41,10 @@ public class HttpTarget implements ITarget {
 
     private final Producer producer;
 
-    public HttpTarget(TopicsRoutes topicsRoutes, Producer producer) {
+    public HttpTarget(TopicsRoutes topicsRoutes, Router router, Producer producer) {
         this.topicsRoutes = topicsRoutes;
         this.producer = producer;
+        this.router = router;
     }
 
     public CompletableFuture<Object> call(
@@ -87,6 +91,8 @@ public class HttpTarget implements ITarget {
         String batchRequestId,
         String targetRequestId
     ) {
+
+        records.stream().filter(x -> x.)
         var gson = new Gson();
         var body = !Config.RECORD_PICK_FIELD.isEmpty()
             ? gson.toJson(
@@ -125,17 +131,11 @@ public class HttpTarget implements ITarget {
     }
 
     private Request createRequest(final ReceiverRecord<String, String> record) {
-        var gson = new Gson();
-
-        var body = !Config.RECORD_PICK_FIELD.isEmpty()
-            ? gson.toJson(
-                (gson.fromJson(record.value(), JsonElement.class).getAsJsonObject().get(Config.RECORD_PICK_FIELD))
-            )
-            : record.value();
+        var route = router.getRoute(record);
 
         var requestBuilder = new Request.Builder()
-            .url(Config.TARGET_BASE_URL + this.topicsRoutes.getRoute(record.topic()))
-            .post(RequestBody.create(body, MediaType.get("application/json; charset=utf-8")))
+            .url(Config.TARGET_BASE_URL + route.endpoint)
+            .post(RequestBody.create(route.body, MediaType.get("application/json; charset=utf-8")))
             .header("x-record-topic", record.topic())
             .header("x-record-partition", String.valueOf(record.partition()))
             .header("x-record-offset", String.valueOf(record.offset()))

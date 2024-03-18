@@ -12,6 +12,7 @@ import reactor.core.Disposable;
 import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.sender.KafkaSender;
 import target.HttpTarget;
+import target.Router;
 import target.TargetHealthcheck;
 
 public class Main {
@@ -21,12 +22,15 @@ public class Main {
     static CountDownLatch latch = new CountDownLatch(1);
     static TopicsRoutes topicsRoutes;
 
+    static Router router;
+
     public static void main(String[] args) throws Exception {
         try {
             Config.init();
             Monitor.init();
 
             topicsRoutes = new TopicsRoutes(Config.TOPICS_ROUTES);
+            router = new Router(Config.ROUTER);
             waitForTargetHealthCheck();
             monitoringServer = new MonitoringServer().start();
             consumer = createConsumer(monitoringServer);
@@ -67,7 +71,7 @@ public class Main {
         return new Consumer(
             KafkaReceiver.create(receiverOptions),
             KafkaSender.create(senderOptions),
-            new HttpTarget(topicsRoutes, new Producer(KafkaClientFactory.createProducer()))
+            new HttpTarget(topicsRoutes, router, new Producer(KafkaClientFactory.createProducer()))
         )
             .stream()
             .doOnError(Monitor::consumerError)

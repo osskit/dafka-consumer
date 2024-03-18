@@ -18,6 +18,17 @@ describe('tests', () => {
                 GROUP_ID: 'test',
                 TARGET_BASE_URL: 'http://mocks:8080',
                 TOPICS_ROUTES: topicRoutes([{topic: 'foo', targetPath: '/consume'}]),
+                ROUTER: JSON.stringify([
+                    {
+                        topic: 'foo',
+                        filter: {
+                            field: 'type',
+                            value: 'created',
+                        },
+                        projection: 'data',
+                        endpoint: '/consume',
+                    },
+                ]),
             },
             ['foo']
         );
@@ -35,7 +46,7 @@ describe('tests', () => {
 
         await produce(orchestrator, {
             topic: 'foo',
-            messages: [{key: '1', value: JSON.stringify({data: 'foo1'})}],
+            messages: [{key: '1', value: JSON.stringify({data: 'foo1', type: "created"})}],
         });
 
         await produce(orchestrator, {

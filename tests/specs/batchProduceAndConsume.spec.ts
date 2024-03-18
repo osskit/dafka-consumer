@@ -21,6 +21,17 @@ describe('tests', () => {
                     {topic: 'foo', targetPath: '/consumeFoo'},
                     {topic: 'bar', targetPath: '/consumeBar'},
                 ]),
+                ROUTER: JSON.stringify([
+                    {
+                        topic: 'foo',
+                        filter: {
+                            field: 'type',
+                            value: 'created',
+                        },
+                        projection: 'data',
+                        endpoint: '/consume',
+                    },
+                ]),
                 TARGET_PROCESS_TYPE: 'batch',
             },
             ['foo', 'bar']

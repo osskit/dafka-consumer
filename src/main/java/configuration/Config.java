@@ -11,6 +11,8 @@ import org.apache.kafka.clients.consumer.CooperativeStickyAssignor;
 import org.apache.kafka.clients.consumer.RangeAssignor;
 import org.apache.kafka.clients.consumer.RoundRobinAssignor;
 import org.apache.kafka.clients.consumer.StickyAssignor;
+import org.json.JSONObject;
+import target.Router;
 
 public class Config {
 
@@ -32,6 +34,7 @@ public class Config {
     public static String TARGET_PROCESS_TYPE;
 
     public static Map<String, String> TOPICS_ROUTES;
+    public static String ROUTER;
 
     //Optional
     public static int KAFKA_POLL_INTERVAL_MS;
@@ -92,6 +95,8 @@ public class Config {
         }
 
         TOPICS_ROUTES = getStringMap(dotenv, "TOPICS_ROUTES");
+
+        ROUTER = getString(dotenv, "ROUTER");
 
         TARGET_PROCESS_TYPE = getOptionalString(dotenv, "TARGET_PROCESS_TYPE", "stream");
 
