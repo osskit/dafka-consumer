@@ -71,7 +71,10 @@ public class Config {
     public static int CONNECTION_POOL_MAX_IDLE_CONNECTIONS;
     public static int CONNECTION_POOL_KEEP_ALIVE_DURATION_MS;
 
-    public static String RECORD_PICK_FIELD;
+    public static String RECORD_PROJECT_FIELD;
+
+    public static String RECORD_FILTER_FIELD;
+    public static String RECORD_FILTER_VALUE;
 
     public static void init() throws Exception {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -99,7 +102,6 @@ public class Config {
         CONNECTION_POOL_KEEP_ALIVE_DURATION_MS = getOptionalInt(dotenv, "CONNECTION_POOL_KEEP_ALIVE_DURATION_MS", 1000);
 
         BODY_HEADERS_PATHS = getOptionalStringList(dotenv, "BODY_HEADERS_PATHS");
-        RECORD_PICK_FIELD = getOptionalString(dotenv, "RECORD_PICK_FIELD", "");
 
         KAFKA_POLL_INTERVAL_MS = getOptionalInt(dotenv, "KAFKA_POLL_INTERVAL_MS", 5 * 60 * 1000);
 
@@ -203,6 +205,16 @@ public class Config {
         EXPOSE_JAVA_METRICS = getOptionalBool(dotenv, "EXPOSE_JAVA_METRICS", false);
 
         PROMETHEUS_BUCKETS = getOptionalString(dotenv, "PROMETHEUS_BUCKETS", "0.003,0.03,0.1,0.3,1.5,10");
+
+        RECORD_PROJECT_FIELD = getOptionalString(dotenv, "RECORD_PROJECT_FIELD", "");
+        RECORD_FILTER_FIELD = getOptionalString(dotenv, "RECORD_FILTER_FIELD", "");
+        RECORD_FILTER_VALUE = getOptionalString(dotenv, "RECORD_FILTER_VALUE", "");
+
+        if ((!RECORD_FILTER_FIELD.isEmpty() || !RECORD_FILTER_VALUE.isEmpty()) & !TARGET_PROCESS_TYPE.equals("batch")) {
+            throw new IllegalArgumentException(
+                "RECORD_FILTER_FIELD and RECORD_FILTER_VALUE are allowed only when TARGET_PROCESS_TYPE=batch"
+            );
+        }
     }
 
     private static String getString(Dotenv dotenv, String name) throws Exception {

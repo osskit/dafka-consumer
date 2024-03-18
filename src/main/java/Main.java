@@ -67,6 +67,7 @@ public class Main {
         return new Consumer(
             KafkaReceiver.create(receiverOptions),
             KafkaSender.create(senderOptions),
+            topicsRoutes,
             new HttpTarget(topicsRoutes, new Producer(KafkaClientFactory.createProducer()))
         )
             .stream()
