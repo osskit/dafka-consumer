@@ -1,7 +1,6 @@
 package target;
 
 import configuration.Config;
-import okhttp3.Response;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
@@ -9,11 +8,13 @@ import reactor.kafka.receiver.ReceiverRecord;
 
 public class TargetException extends Exception {
 
-    private final Response response;
+    private final Integer responseCode;
+    private final String responseBody;
     private final Throwable error;
 
-    public TargetException(Response response, Throwable error) {
-        this.response = response;
+    public TargetException(Integer responseCode, String responseBody, Throwable error) {
+        this.responseCode = responseCode;
+        this.responseBody = responseBody;
         this.error = error;
     }
 
@@ -32,15 +33,8 @@ public class TargetException extends Exception {
 
         headersToSend.add(Config.ORIGINAL_TOPIC, record.topic().getBytes());
         headersToSend.add("x-group-id", Config.GROUP_ID.getBytes());
-        if (response != null) {
-            headersToSend.add("x-response-status-code", String.valueOf(response.code()).getBytes());
-            try {
-                assert response.body() != null;
-                headersToSend.add("x-response-body", response.body().string().getBytes());
-            } catch (Exception e) {
-                //ignore
-            }
-        }
+        headersToSend.add("x-response-status-code", String.valueOf(responseCode).getBytes());
+        headersToSend.add("x-response-body", responseBody.getBytes());
         if (error != null) {
             headersToSend.add("x-unexpected-exception-message", error.getMessage().getBytes());
         }
