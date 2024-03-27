@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import configuration.Config;
 import configuration.TopicsRoutes;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Date;
@@ -111,14 +112,23 @@ public class HttpTarget implements ITarget {
                 .create(batchRequestId, targetRequestId)
                 .compose(client.newCall(request))
                 .executeAsync()
-                .handleAsync((response, throwable) ->
-                    Integer
-                            .toString(response.code())
-                            .matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH) ||
-                        throwable != null
-                        ? new TargetException(response, throwable)
-                        : null
-                );
+                .handleAsync((response, throwable) -> {
+                    try {
+                        if (
+                            Integer
+                                .toString(response.code())
+                                .matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH) ||
+                            throwable != null
+                        ) {
+                            assert response.body() != null;
+                            return new TargetException(response.code(), response.body().string(), throwable);
+                        } else {
+                            return null;
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
         } catch (Throwable throwable) {
             return CompletableFuture.failedFuture(throwable);
         }
