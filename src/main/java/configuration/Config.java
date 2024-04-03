@@ -33,8 +33,8 @@ public class Config {
     //Optional
     public static int KAFKA_POLL_INTERVAL_MS;
     public static int KAFKA_MAX_POLL_RECORDS;
-    public static int KAFKA_FETCH_MAX_BYTES_CONFIG;
-    public static int KAFKA_MAX_PARTITION_FETCH_BYTES_CONFIG;
+    public static int KAFKA_FETCH_MAX_BYTES;
+    public static int KAFKA_MAX_PARTITION_FETCH_BYTES;
     public static int BATCH_PARALLELISM_FACTOR;
     public static int COMMIT_INTERVAL_MS;
     public static String DEAD_LETTER_TOPIC;
@@ -102,9 +102,9 @@ public class Config {
 
         KAFKA_POLL_INTERVAL_MS = getOptionalInt(dotenv, "KAFKA_POLL_INTERVAL_MS", 5 * 60 * 1000);
         KAFKA_MAX_POLL_RECORDS = getOptionalInt(dotenv, "KAFKA_MAX_POLL_RECORDS", 500);
-        KAFKA_FETCH_MAX_BYTES_CONFIG =
+        KAFKA_FETCH_MAX_BYTES =
             getOptionalInt(dotenv, "KAFKA_FETCH_MAX_BYTES_CONFIG", ConsumerConfig.DEFAULT_FETCH_MAX_BYTES);
-        KAFKA_MAX_PARTITION_FETCH_BYTES_CONFIG =
+        KAFKA_MAX_PARTITION_FETCH_BYTES =
             getOptionalInt(
                 dotenv,
                 "KAFKA_MAX_PARTITION_FETCH_BYTES_CONFIG",

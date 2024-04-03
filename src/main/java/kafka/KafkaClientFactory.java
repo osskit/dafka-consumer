@@ -67,8 +67,8 @@ public class KafkaClientFactory {
 
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, Config.KAFKA_POLL_INTERVAL_MS);
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, Config.KAFKA_MAX_POLL_RECORDS);
-        props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, Config.KAFKA_FETCH_MAX_BYTES_CONFIG);
-        props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, Config.KAFKA_MAX_PARTITION_FETCH_BYTES_CONFIG);
+        props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, Config.KAFKA_FETCH_MAX_BYTES);
+        props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, Config.KAFKA_MAX_PARTITION_FETCH_BYTES);
 
         return ReceiverOptions.create(props);
     }
