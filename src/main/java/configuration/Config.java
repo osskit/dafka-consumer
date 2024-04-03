@@ -37,6 +37,7 @@ public class Config {
     public static int KAFKA_POLL_INTERVAL_MS;
     public static int MAX_POLL_RECORDS;
     public static int KAFKA_FETCH_MAX_BYTES_CONFIG;
+    public static int BATCH_PARALLELISM_FACTOR;
     public static int COMMIT_INTERVAL_MS;
     public static String DEAD_LETTER_TOPIC;
     public static String CONNECTION_RETRY_PROCESS_WHEN_STATUS_CODE_MATCH;
@@ -105,6 +106,9 @@ public class Config {
 
         MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 500);
         KAFKA_FETCH_MAX_BYTES_CONFIG = getOptionalInt(dotenv, "KAFKA_FETCH_MAX_BYTES_CONFIG", 5242880);
+
+        BATCH_PARALLELISM_FACTOR = getOptionalInt(dotenv, "BATCH_PARALLELISM_FACTOR", 5);
+
         RETRY_POLICY_MAX_DURATION_MS =
             getOptionalInt(dotenv, "RETRY_POLICY_MAX_DURATION_MS", KAFKA_POLL_INTERVAL_MS - 1000);
         CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS =
