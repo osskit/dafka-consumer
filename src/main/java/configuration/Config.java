@@ -102,14 +102,9 @@ public class Config {
 
         KAFKA_POLL_INTERVAL_MS = getOptionalInt(dotenv, "KAFKA_POLL_INTERVAL_MS", 5 * 60 * 1000);
         KAFKA_MAX_POLL_RECORDS = getOptionalInt(dotenv, "KAFKA_MAX_POLL_RECORDS", 500);
-        KAFKA_FETCH_MAX_BYTES =
-            getOptionalInt(dotenv, "KAFKA_FETCH_MAX_BYTES_CONFIG", ConsumerConfig.DEFAULT_FETCH_MAX_BYTES);
+        KAFKA_FETCH_MAX_BYTES = getOptionalInt(dotenv, "KAFKA_FETCH_MAX_BYTES", ConsumerConfig.DEFAULT_FETCH_MAX_BYTES);
         KAFKA_MAX_PARTITION_FETCH_BYTES =
-            getOptionalInt(
-                dotenv,
-                "KAFKA_MAX_PARTITION_FETCH_BYTES_CONFIG",
-                ConsumerConfig.DEFAULT_MAX_PARTITION_FETCH_BYTES
-            );
+            getOptionalInt(dotenv, "KAFKA_MAX_PARTITION_FETCH_BYTES", ConsumerConfig.DEFAULT_MAX_PARTITION_FETCH_BYTES);
 
         BATCH_PARALLELISM_FACTOR = getOptionalInt(dotenv, "BATCH_PARALLELISM_FACTOR", 5);
 
