@@ -38,49 +38,64 @@ public class Consumer {
         return records
             .groupBy(ConsumerRecord::topic)
             .flatMap(Flux::collectList)
-            .publishOn(Schedulers.parallel())
-            .flatMap(receiverRecords -> {
-                var batchRequestId = UUID.randomUUID().toString();
-                var batchStartTimestamp = new Date().getTime();
-                Monitor.batchProcessStarted(batchRequestId);
-                var targetRequestId = UUID.randomUUID().toString();
-                return Mono
-                    .fromFuture(target.callBatch(receiverRecords, batchRequestId, targetRequestId))
-                    .flatMap(targetResult -> {
-                        if (targetResult instanceof TargetException && Config.DEAD_LETTER_TOPIC != null) {
-                            return Flux
-                                .fromIterable(receiverRecords)
-                                .flatMap(record ->
-                                    kafkaSender
-                                        .send(
-                                            Mono.just(
-                                                SenderRecord.create(
-                                                    new ProducerRecord<>(
-                                                        Config.DEAD_LETTER_TOPIC,
-                                                        null,
-                                                        record.key(),
-                                                        record.value(),
-                                                        ((TargetException) targetResult).getHeaders(record)
-                                                    ),
-                                                    null
-                                                )
+            .flatMap(batch ->
+                Flux
+                    .fromIterable(batch)
+                    .buffer(batch.size() / Config.BATCH_PARALLELISM_FACTOR + 1)
+                    .flatMap(
+                        receiverRecords -> {
+                            var batchRequestId = UUID.randomUUID().toString();
+                            var batchStartTimestamp = new Date().getTime();
+                            Monitor.batchProcessStarted(batchRequestId);
+                            var targetRequestId = UUID.randomUUID().toString();
+                            return Mono
+                                .fromFuture(target.callBatch(receiverRecords, batchRequestId, targetRequestId))
+                                .flatMap(targetResult -> {
+                                    if (targetResult instanceof TargetException && Config.DEAD_LETTER_TOPIC != null) {
+                                        return Flux
+                                            .fromIterable(receiverRecords)
+                                            .flatMap(record ->
+                                                kafkaSender
+                                                    .send(
+                                                        Mono.just(
+                                                            SenderRecord.create(
+                                                                new ProducerRecord<>(
+                                                                    Config.DEAD_LETTER_TOPIC,
+                                                                    null,
+                                                                    record.key(),
+                                                                    record.value(),
+                                                                    ((TargetException) targetResult).getHeaders(record)
+                                                                ),
+                                                                null
+                                                            )
+                                                        )
+                                                    )
+                                                    .doOnComplete(() ->
+                                                        Monitor.deadLetterProduced(
+                                                            record,
+                                                            batchRequestId,
+                                                            targetRequestId
+                                                        )
+                                                    )
                                             )
-                                        )
-                                        .doOnComplete(() ->
-                                            Monitor.deadLetterProduced(record, batchRequestId, targetRequestId)
-                                        )
-                                )
-                                .then(Mono.just(receiverRecords));
-                        }
-                        return Mono.just(receiverRecords);
-                    })
-                    .doOnSuccess(__ -> {
-                        var lastRecord = receiverRecords.get(receiverRecords.size() - 1);
-                        lastRecord.receiverOffset().acknowledge();
-                        Monitor.messageAcknowledge(lastRecord, batchRequestId, targetRequestId);
-                        Monitor.batchProcessCompleted(receiverRecords.size(), batchStartTimestamp, batchRequestId);
-                    });
-            });
+                                            .then(Mono.just(receiverRecords));
+                                    }
+                                    return Mono.just(receiverRecords);
+                                })
+                                .doOnSuccess(__ -> {
+                                    var lastRecord = receiverRecords.get(receiverRecords.size() - 1);
+                                    lastRecord.receiverOffset().acknowledge();
+                                    Monitor.messageAcknowledge(lastRecord, batchRequestId, targetRequestId);
+                                    Monitor.batchProcessCompleted(
+                                        receiverRecords.size(),
+                                        batchStartTimestamp,
+                                        batchRequestId
+                                    );
+                                });
+                        },
+                        Config.BATCH_PARALLELISM_FACTOR
+                    )
+            );
     }
 
     private Mono<List<ReceiverRecord<String, String>>> processAsStream(Flux<ReceiverRecord<String, String>> records) {
