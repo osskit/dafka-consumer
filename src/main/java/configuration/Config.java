@@ -104,7 +104,7 @@ public class Config {
 
         KAFKA_POLL_INTERVAL_MS = getOptionalInt(dotenv, "KAFKA_POLL_INTERVAL_MS", 5 * 60 * 1000);
 
-        MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 500);
+        MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 1000);
         KAFKA_FETCH_MAX_BYTES_CONFIG = getOptionalInt(dotenv, "KAFKA_FETCH_MAX_BYTES_CONFIG", 52428800);
 
         BATCH_PARALLELISM_FACTOR = getOptionalInt(dotenv, "BATCH_PARALLELISM_FACTOR", 5);
