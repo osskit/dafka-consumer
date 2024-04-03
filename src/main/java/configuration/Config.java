@@ -7,10 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.apache.kafka.clients.consumer.CooperativeStickyAssignor;
-import org.apache.kafka.clients.consumer.RangeAssignor;
-import org.apache.kafka.clients.consumer.RoundRobinAssignor;
-import org.apache.kafka.clients.consumer.StickyAssignor;
+import org.apache.kafka.clients.consumer.*;
 
 public class Config {
 
@@ -35,8 +32,9 @@ public class Config {
 
     //Optional
     public static int KAFKA_POLL_INTERVAL_MS;
-    public static int MAX_POLL_RECORDS;
-    public static int KAFKA_FETCH_MAX_BYTES_CONFIG;
+    public static int KAFKA_MAX_POLL_RECORDS;
+    public static int KAFKA_FETCH_MAX_BYTES;
+    public static int KAFKA_MAX_PARTITION_FETCH_BYTES;
     public static int BATCH_PARALLELISM_FACTOR;
     public static int COMMIT_INTERVAL_MS;
     public static String DEAD_LETTER_TOPIC;
@@ -103,9 +101,10 @@ public class Config {
         RECORD_PICK_FIELD = getOptionalString(dotenv, "RECORD_PICK_FIELD", "");
 
         KAFKA_POLL_INTERVAL_MS = getOptionalInt(dotenv, "KAFKA_POLL_INTERVAL_MS", 5 * 60 * 1000);
-
-        MAX_POLL_RECORDS = getOptionalInt(dotenv, "MAX_POLL_RECORDS", 1000);
-        KAFKA_FETCH_MAX_BYTES_CONFIG = getOptionalInt(dotenv, "KAFKA_FETCH_MAX_BYTES_CONFIG", 52428800);
+        KAFKA_MAX_POLL_RECORDS = getOptionalInt(dotenv, "KAFKA_MAX_POLL_RECORDS", 500);
+        KAFKA_FETCH_MAX_BYTES = getOptionalInt(dotenv, "KAFKA_FETCH_MAX_BYTES", ConsumerConfig.DEFAULT_FETCH_MAX_BYTES);
+        KAFKA_MAX_PARTITION_FETCH_BYTES =
+            getOptionalInt(dotenv, "KAFKA_MAX_PARTITION_FETCH_BYTES", ConsumerConfig.DEFAULT_MAX_PARTITION_FETCH_BYTES);
 
         BATCH_PARALLELISM_FACTOR = getOptionalInt(dotenv, "BATCH_PARALLELISM_FACTOR", 5);
 
