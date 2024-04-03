@@ -20,6 +20,7 @@ describe('tests', () => {
                 DEAD_LETTER_TOPIC: 'dead',
                 PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH: '428',
                 TARGET_PROCESS_TYPE: 'batch',
+                BATCH_PARALLELISM_FACTOR: '1',
             },
             ['foo', 'dead']
         );

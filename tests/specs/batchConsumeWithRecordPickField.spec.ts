@@ -3,9 +3,7 @@ import {start} from '../testcontainers/orchestrator.js';
 import {getCalls, mockHttpTarget} from '../services/target.js';
 import {produce} from '../services/produce.js';
 import {topicRoutes} from '../services/topicRoutes.js';
-import {sortBy} from 'lodash-es';
 import delay from 'delay';
-import {getOffset} from '../services/getOffset.js';
 
 describe('tests', () => {
     let orchestrator: Orchestrator;
@@ -19,6 +17,7 @@ describe('tests', () => {
                 TARGET_BASE_URL: 'http://mocks:8080',
                 TOPICS_ROUTES: topicRoutes([{topic: 'foo', targetPath: '/consume'}]),
                 TARGET_PROCESS_TYPE: 'batch',
+                BATCH_PARALLELISM_FACTOR: '1',
                 RECORD_PICK_FIELD: 'data',
             },
             ['foo']
