@@ -45,10 +45,10 @@ public class Consumer {
                 return Flux
                     .fromIterable(batch)
                     .buffer(batch.size() / Config.BATCH_PARALLELISM_FACTOR + 1)
+                    .publishOn(Schedulers.parallel())
                     .flatMap(
                         receiverRecords -> {
                             var targetRequestId = UUID.randomUUID().toString();
-                            //Monitor.processMessageStarted();
                             return Mono
                                 .fromFuture(target.call(receiverRecords, batchRequestId, targetRequestId))
                                 .flatMap(targetResult -> {
