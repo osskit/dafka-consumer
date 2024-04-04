@@ -83,11 +83,13 @@ public class HttpTarget implements ITarget {
     }
 
     @Override
-    public CompletableFuture<Object> callBatch(
+    public CompletableFuture<Object> call(
         List<ReceiverRecord<String, String>> records,
         String batchRequestId,
         String targetRequestId
     ) {
+        Monitor.targetCallStarted(records, targetRequestId, batchRequestId);
+        var executionStart = new Date().getTime();
         var gson = new Gson();
         var body = !Config.RECORD_PICK_FIELD.isEmpty()
             ? gson.toJson(
@@ -127,9 +129,19 @@ public class HttpTarget implements ITarget {
                         }
                     } catch (IOException e) {
                         throw new RuntimeException(e);
+                    } finally {
+                        Monitor.targetCallCompleted(
+                            records,
+                            targetRequestId,
+                            batchRequestId,
+                            executionStart,
+                            response.code(),
+                            throwable
+                        );
                     }
                 });
         } catch (Throwable throwable) {
+            Monitor.targetCallCompleted(records, targetRequestId, batchRequestId, executionStart, -1, throwable);
             return CompletableFuture.failedFuture(throwable);
         }
     }

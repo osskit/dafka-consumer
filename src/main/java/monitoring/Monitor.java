@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.json.JSONObject;
 import reactor.kafka.receiver.ReceiverPartition;
+import reactor.kafka.receiver.ReceiverRecord;
 
 public class Monitor {
 
@@ -210,6 +211,51 @@ public class Monitor {
         );
         processMessageExecutionTime.observe(((double) (new Date().getTime() - executionStart)) / 1000);
         processMessageSuccess.inc();
+    }
+
+    public static void targetCallStarted(
+        List<ReceiverRecord<String, String>> records,
+        String targetRequestId,
+        String batchRequestId
+    ) {
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "target call started")
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("count", records.size())
+                        .put("batchRequestId", batchRequestId)
+                        .put("targetRequestId", targetRequestId)
+                )
+        );
+    }
+
+    public static void targetCallCompleted(
+        List<ReceiverRecord<String, String>> records,
+        String targetRequestId,
+        String batchRequestId,
+        long executionStart,
+        int statusCode,
+        Throwable throwable
+    ) {
+        var executionTimeMs = new Date().getTime() - executionStart;
+        write(
+            new JSONObject()
+                .put("level", "info")
+                .put("message", "target call completed")
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("count", records.size())
+                        .put("executionTime", executionTimeMs)
+                        .put("statusCode", statusCode)
+                        .put("exception", throwable)
+                        .put("batchRequestId", batchRequestId)
+                        .put("targetRequestId", targetRequestId)
+                )
+        );
     }
 
     public static void processMessageError(
