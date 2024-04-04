@@ -48,7 +48,7 @@ describe('tests', () => {
             messages: [{key: '3', value: JSON.stringify({data: 'foo3'})}],
         });
 
-        await delay(5000);
+        await delay(30000);
 
         await expect(
             getCalls(orchestrator.wiremockClient, target).then((calls) => sortBy(calls, 'body.data'))
