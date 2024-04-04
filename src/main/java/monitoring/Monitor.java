@@ -240,7 +240,7 @@ public class Monitor {
         int statusCode,
         Throwable throwable
     ) {
-        var executionTime = (double) ((new Date().getTime() - executionStart) / 1000);
+        var executionTimeMs = new Date().getTime() - executionStart;
         write(
             new JSONObject()
                 .put("level", "info")
@@ -249,15 +249,13 @@ public class Monitor {
                     "extra",
                     new JSONObject()
                         .put("count", records.size())
-                        .put("executionTime", executionTime)
+                        .put("executionTime", executionTimeMs)
                         .put("statusCode", statusCode)
                         .put("exception", throwable)
                         .put("batchRequestId", batchRequestId)
                         .put("targetRequestId", targetRequestId)
                 )
         );
-        processMessageExecutionTime.observe(executionTime);
-        processMessageSuccess.inc();
     }
 
     public static void processMessageError(
