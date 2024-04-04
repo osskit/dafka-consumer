@@ -38,18 +38,19 @@ public class Consumer {
         return records
             .groupBy(ConsumerRecord::topic)
             .flatMap(Flux::collectList)
-            .flatMap(batch ->
-                Flux
+            .flatMap(batch -> {
+                var batchRequestId = UUID.randomUUID().toString();
+                var batchStartTimestamp = new Date().getTime();
+                Monitor.batchProcessStarted(batchRequestId);
+                return Flux
                     .fromIterable(batch)
                     .buffer(batch.size() / Config.BATCH_PARALLELISM_FACTOR + 1)
                     .flatMap(
                         receiverRecords -> {
-                            var batchRequestId = UUID.randomUUID().toString();
-                            var batchStartTimestamp = new Date().getTime();
-                            Monitor.batchProcessStarted(batchRequestId);
                             var targetRequestId = UUID.randomUUID().toString();
+                            //Monitor.processMessageStarted();
                             return Mono
-                                .fromFuture(target.callBatch(receiverRecords, batchRequestId, targetRequestId))
+                                .fromFuture(target.call(receiverRecords, batchRequestId, targetRequestId))
                                 .flatMap(targetResult -> {
                                     if (targetResult instanceof TargetException && Config.DEAD_LETTER_TOPIC != null) {
                                         return Flux
@@ -86,16 +87,12 @@ public class Consumer {
                                     var lastRecord = receiverRecords.get(receiverRecords.size() - 1);
                                     lastRecord.receiverOffset().acknowledge();
                                     Monitor.messageAcknowledge(lastRecord, batchRequestId, targetRequestId);
-                                    Monitor.batchProcessCompleted(
-                                        receiverRecords.size(),
-                                        batchStartTimestamp,
-                                        batchRequestId
-                                    );
                                 });
                         },
                         Config.BATCH_PARALLELISM_FACTOR
                     )
-            );
+                    .doFinally(__ -> Monitor.batchProcessCompleted(batch.size(), batchStartTimestamp, batchRequestId));
+            });
     }
 
     private Mono<List<ReceiverRecord<String, String>>> processAsStream(Flux<ReceiverRecord<String, String>> records) {

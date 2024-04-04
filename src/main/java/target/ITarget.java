@@ -14,7 +14,7 @@ public interface ITarget {
         String targetRequestId
     );
 
-    CompletableFuture<Object> callBatch(
+    CompletableFuture<Object> call(
         List<ReceiverRecord<String, String>> records,
         String batchRequestId,
         String targetRequestId
