@@ -45,7 +45,7 @@ public class Consumer {
                 return Flux
                     .fromIterable(batch)
                     .buffer(batch.size() / Config.BATCH_PARALLELISM_FACTOR + 1)
-                    .publishOn(Schedulers.parallel())
+                    .publishOn(Schedulers.boundedElastic())
                     .flatMap(
                         receiverRecords -> {
                             var targetRequestId = UUID.randomUUID().toString();
