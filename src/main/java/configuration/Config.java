@@ -71,6 +71,7 @@ public class Config {
     public static int CONNECTION_POOL_KEEP_ALIVE_DURATION_MS;
 
     public static String RECORD_PICK_FIELD;
+    public static int KAFKA_HEARTBEAT_INTERVAL_MS;
 
     public static void init() throws Exception {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -105,6 +106,7 @@ public class Config {
         KAFKA_FETCH_MAX_BYTES = getOptionalInt(dotenv, "KAFKA_FETCH_MAX_BYTES", ConsumerConfig.DEFAULT_FETCH_MAX_BYTES);
         KAFKA_MAX_PARTITION_FETCH_BYTES =
             getOptionalInt(dotenv, "KAFKA_MAX_PARTITION_FETCH_BYTES", ConsumerConfig.DEFAULT_MAX_PARTITION_FETCH_BYTES);
+        KAFKA_HEARTBEAT_INTERVAL_MS = getOptionalInt(dotenv, "KAFKA_HEARTBEAT_INTERVAL_MS", 30000);
 
         BATCH_PARALLELISM_FACTOR = getOptionalInt(dotenv, "BATCH_PARALLELISM_FACTOR", 5);
 
