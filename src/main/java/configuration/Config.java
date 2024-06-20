@@ -112,7 +112,7 @@ public class Config {
             getOptionalInt(dotenv, "RETRY_POLICY_MAX_DURATION_MS", KAFKA_POLL_INTERVAL_MS - 1000);
         CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS =
             getOptionalInt(dotenv, "CONNECTION_FAILURE_RETRY_POLICY_MAX_DURATION_MS", KAFKA_POLL_INTERVAL_MS - 1000);
-        TARGET_TIMEOUT_MS = getOptionalLong(dotenv, "TARGET_TIMEOUT_MS", RETRY_POLICY_MAX_DURATION_MS - 1000);
+        TARGET_TIMEOUT_MS = getOptionalLong(dotenv, "TARGET_TIMEOUT_MS", RETRY_POLICY_MAX_DURATION_MS / 2);
 
         if (KAFKA_POLL_INTERVAL_MS < RETRY_POLICY_MAX_DURATION_MS) {
             throw new IllegalArgumentException(
