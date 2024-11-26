@@ -24,6 +24,7 @@ describe('tests', () => {
                 COMMIT_INTERVAL_MS: '100',
                 TARGET_PROCESS_TYPE: 'batch',
                 BATCH_PARALLELISM_FACTOR: '1',
+                WINDOW_DURATION: '1000',
             },
             ['foo', 'bar']
         );

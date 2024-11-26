@@ -123,11 +123,15 @@ public class Consumer {
         var stream = kafkaReceiver.receiveBatch();
         if (Config.WINDOW_DURATION > 0) {
             return stream
-                .windowTimeout(Integer.MAX_VALUE, Duration.ofMillis(Config.WINDOW_DURATION), true)
+                .bufferTimeout(Integer.MAX_VALUE, Duration.ofMillis(Config.WINDOW_DURATION), true)
                 .concatMap(windows ->
-                    windows.concatMap(records ->
-                        Config.TARGET_PROCESS_TYPE.equals("batch") ? processAsBatch(records) : processAsStream(records)
-                    )
+                    Flux
+                        .fromIterable(windows)
+                        .concatMap(records ->
+                            Config.TARGET_PROCESS_TYPE.equals("batch")
+                                ? processAsBatch(records)
+                                : processAsStream(records)
+                        )
                 );
         } else {
             return stream.concatMap(records ->
