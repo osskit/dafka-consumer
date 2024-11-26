@@ -120,17 +120,19 @@ public class Consumer {
     }
 
     public Flux<?> stream() {
-        return kafkaReceiver
-            .receiveBatch()
-            .concatMap(records -> {
-                if (Config.WINDOW_DURATION > 0) {
-                    return records.window(Duration.ofMillis(Config.WINDOW_DURATION));
-                } else {
-                    return Flux.just(records);
-                }
-            })
-            .concatMap(records ->
+        var stream = kafkaReceiver.receiveBatch();
+        if (Config.WINDOW_DURATION > 0) {
+            return stream
+                .window(Duration.ofMillis(Config.WINDOW_DURATION))
+                .concatMap(windows ->
+                    windows.concatMap(records ->
+                        Config.TARGET_PROCESS_TYPE.equals("batch") ? processAsBatch(records) : processAsStream(records)
+                    )
+                );
+        } else {
+            return stream.concatMap(records ->
                 Config.TARGET_PROCESS_TYPE.equals("batch") ? processAsBatch(records) : processAsStream(records)
             );
+        }
     }
 }
