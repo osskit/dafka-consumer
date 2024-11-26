@@ -122,7 +122,7 @@ public class Consumer {
     public Flux<?> stream() {
         return kafkaReceiver
             .receiveBatch()
-            .flatMap(records -> {
+            .concatMap(records -> {
                 if (Config.WINDOW_DURATION > 0) {
                     return records.window(Duration.ofMillis(Config.WINDOW_DURATION));
                 } else {
