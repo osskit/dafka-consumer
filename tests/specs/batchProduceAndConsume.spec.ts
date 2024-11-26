@@ -23,7 +23,7 @@ describe('tests', () => {
                 ]),
                 COMMIT_INTERVAL_MS: '100',
                 TARGET_PROCESS_TYPE: 'batch',
-                BATCH_PARALLELISM_FACTOR: '2',
+                BATCH_PARALLELISM_FACTOR: '1',
             },
             ['foo', 'bar']
         );
@@ -71,7 +71,7 @@ describe('tests', () => {
             ],
         });
 
-        await delay(30000);
+        await delay(10000);
 
         await expect(
             getCalls(orchestrator.wiremockClient, target1).then((calls) => sortArray(calls))
