@@ -122,6 +122,13 @@ public class Consumer {
     public Flux<?> stream() {
         return kafkaReceiver
             .receiveBatch()
+            .flatMap(records -> {
+                if (Config.WINDOW_DURATION > 0) {
+                    return records.window(Duration.ofMillis(Config.WINDOW_DURATION));
+                } else {
+                    return Flux.just(records);
+                }
+            })
             .concatMap(records ->
                 Config.TARGET_PROCESS_TYPE.equals("batch") ? processAsBatch(records) : processAsStream(records)
             );

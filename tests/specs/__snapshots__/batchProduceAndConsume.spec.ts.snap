@@ -22,11 +22,6 @@ exports[`tests batch produce and consume 1`] = `
       {
         "data": "foo6",
       },
-    ],
-    "url": "/consumeFoo",
-  },
-  {
-    "body": [
       {
         "data": "foo7",
       },
@@ -50,23 +45,6 @@ exports[`tests batch produce and consume 2`] = `
   {
     "body": [
       {
-        "data": "bar7",
-      },
-      {
-        "data": "bar8",
-      },
-      {
-        "data": "bar9",
-      },
-      {
-        "data": "bar10",
-      },
-    ],
-    "url": "/consumeBar",
-  },
-  {
-    "body": [
-      {
         "data": "bar1",
       },
       {
@@ -83,6 +61,18 @@ exports[`tests batch produce and consume 2`] = `
       },
       {
         "data": "bar6",
+      },
+      {
+        "data": "bar7",
+      },
+      {
+        "data": "bar8",
+      },
+      {
+        "data": "bar9",
+      },
+      {
+        "data": "bar10",
       },
     ],
     "url": "/consumeBar",

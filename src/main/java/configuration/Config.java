@@ -72,6 +72,8 @@ public class Config {
 
     public static String RECORD_PICK_FIELD;
 
+    public static Integer WINDOW_DURATION;
+
     public static void init() throws Exception {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
@@ -206,6 +208,8 @@ public class Config {
         EXPOSE_JAVA_METRICS = getOptionalBool(dotenv, "EXPOSE_JAVA_METRICS", false);
 
         PROMETHEUS_BUCKETS = getOptionalString(dotenv, "PROMETHEUS_BUCKETS", "0.003,0.03,0.1,0.3,1.5,10");
+
+        WINDOW_DURATION = getOptionalInt(dotenv, "WINDOW_DURATION", 0);
     }
 
     private static String getString(Dotenv dotenv, String name) throws Exception {
