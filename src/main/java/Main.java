@@ -28,13 +28,16 @@ public class Main {
 
             topicsRoutes = new TopicsRoutes(Config.TOPICS_ROUTES);
             waitForTargetHealthCheck();
-            consumer = createConsumer(monitoringServer);
             monitoringServer = new MonitoringServer().start();
+            consumer = createConsumer(monitoringServer);
             onShutdown(consumer, monitoringServer);
             Monitor.started();
             latch.await();
         } catch (Exception e) {
             Monitor.initializationError(e);
+            Monitor.shuttingDown();
+            consumer.dispose();
+            monitoringServer.close();
         }
         Monitor.serviceTerminated();
     }
