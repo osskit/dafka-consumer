@@ -35,7 +35,6 @@ public class Main {
             latch.await();
         } catch (Exception e) {
             Monitor.initializationError(e);
-            throw e;
         }
         Monitor.serviceTerminated();
     }
