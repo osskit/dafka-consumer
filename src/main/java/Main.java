@@ -29,8 +29,8 @@ public class Main {
             topicsRoutes = new TopicsRoutes(Config.TOPICS_ROUTES);
             waitForTargetHealthCheck();
             consumer = createConsumer(monitoringServer);
-            onShutdown(consumer, monitoringServer);
             monitoringServer = new MonitoringServer().start();
+            onShutdown(consumer, monitoringServer);
             Monitor.started();
             latch.await();
         } catch (Exception e) {
