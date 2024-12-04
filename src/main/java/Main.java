@@ -36,8 +36,12 @@ public class Main {
         } catch (Exception e) {
             Monitor.initializationError(e);
             Monitor.shuttingDown();
-            consumer.dispose();
-            monitoringServer.close();
+            if (consumer != null) {
+                consumer.dispose();
+            }
+            if (monitoringServer != null) {
+                monitoringServer.close();
+            }
         }
         Monitor.serviceTerminated();
     }

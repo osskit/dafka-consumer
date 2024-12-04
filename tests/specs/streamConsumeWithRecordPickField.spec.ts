@@ -1,10 +1,8 @@
 import type {Orchestrator} from '../testcontainers/orchestrator.js';
 import {start} from '../testcontainers/orchestrator.js';
 import {getCalls, mockHttpTarget} from '../services/target.js';
-import {getOffset} from '../services/getOffset.js';
 import {produce} from '../services/produce.js';
 import {topicRoutes} from '../services/topicRoutes.js';
-import {sortBy} from 'lodash-es';
 import delay from 'delay';
 
 describe('stream', () => {
