@@ -33,6 +33,6 @@ describe('tests', () => {
 
         await delay(30000);
 
-        await expect(orchestrator.dafkaConsumerInspect().then(({State}) => State)).resolves.toMatchSnapshot();
+        await expect(orchestrator.dafkaConsumerInspect().then(({State}) => State.Status)).resolves.toBe('exited');
     });
 });

@@ -30,18 +30,12 @@ public class Main {
             waitForTargetHealthCheck();
             monitoringServer = new MonitoringServer().start();
             consumer = createConsumer(monitoringServer);
-            onShutdown(consumer, monitoringServer);
+            onShutdownHook(consumer, monitoringServer);
             Monitor.started();
             latch.await();
         } catch (Exception e) {
             Monitor.initializationError(e);
-            Monitor.shuttingDown();
-            if (consumer != null) {
-                consumer.dispose();
-            }
-            if (monitoringServer != null) {
-                monitoringServer.close();
-            }
+            shutdown();
         }
         Monitor.serviceTerminated();
     }
@@ -90,16 +84,24 @@ public class Main {
             );
     }
 
-    private static void onShutdown(Disposable consumer, MonitoringServer monitoringServer) {
+    private static void onShutdownHook(Disposable consumer, MonitoringServer monitoringServer) {
         Runtime
             .getRuntime()
             .addShutdownHook(
                 new Thread(() -> {
-                    Monitor.shuttingDown();
-                    consumer.dispose();
-                    monitoringServer.close();
+                    shutdown();
                     latch.countDown();
                 })
             );
+    }
+
+    private static void shutdown() {
+        Monitor.shuttingDown();
+        if (consumer != null) {
+            consumer.dispose();
+        }
+        if (monitoringServer != null) {
+            monitoringServer.close();
+        }
     }
 }
