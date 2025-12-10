@@ -1,4 +1,5 @@
 load("@io_bazel_rules_docker//java:image.bzl", "java_image")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image")
 
 java_library(
     name = "lib",
@@ -41,9 +42,17 @@ java_binary(
 )
 
 
+container_image(
+    name = "java_base_with_symlink",
+    base = "@java_base_image//image",
+    symlinks = {
+        "/usr/bin/java": "/opt/java/openjdk/bin/java",
+    },
+)
+
 java_image(
     name = "image",
-    base = "@java_base_image//image",
+    base = ":java_base_with_symlink",
     main_class = "Main",
     runtime_deps = [":lib"],
 )
