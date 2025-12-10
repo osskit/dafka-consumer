@@ -84,7 +84,7 @@ container_deps()
 
 container_pull(
     name = "java_base_image",
-    repository = "openjdk",
+    repository = "eclipse-temurin",
     registry = "docker.io",
     tag = "18"
 )
