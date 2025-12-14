@@ -347,21 +347,37 @@ public class Monitor {
         );
     }
 
-    public static void commitSuccess(String batchRequestId) {
+    public static void commitSuccess(ConsumerRecord<String, String> record, String batchRequestId) {
         write(
             new JSONObject()
                 .put("level", "info")
                 .put("message", "commit success")
-                .put("extra", new JSONObject().put("batchRequestId", batchRequestId))
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("key", record.key())
+                        .put("topic", record.topic())
+                        .put("partition", record.partition())
+                        .put("offset", record.offset())
+                        .put("batchRequestId", batchRequestId)
+                )
         );
     }
 
-    public static void commitFailed(Throwable exception, String batchRequestId) {
+    public static void commitFailed(Throwable exception, ConsumerRecord<String, String> record, String batchRequestId) {
         write(
             new JSONObject()
-                .put("level", "info")
+                .put("level", "error")
                 .put("message", "commit failed")
-                .put("extra", new JSONObject().put("batchRequestId", batchRequestId))
+                .put(
+                    "extra",
+                    new JSONObject()
+                        .put("key", record.key())
+                        .put("topic", record.topic())
+                        .put("partition", record.partition())
+                        .put("offset", record.offset())
+                        .put("batchRequestId", batchRequestId)
+                )
                 .put(
                     "err",
                     new JSONObject()

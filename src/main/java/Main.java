@@ -16,7 +16,8 @@ import target.TargetHealthcheck;
 
 public class Main {
 
-    static Disposable consumer;
+    static Disposable consumerSubscription;
+    static Consumer consumer;
     static MonitoringServer monitoringServer;
     static CountDownLatch latch = new CountDownLatch(1);
     static TopicsRoutes topicsRoutes;
@@ -29,8 +30,10 @@ public class Main {
             topicsRoutes = new TopicsRoutes(Config.TOPICS_ROUTES);
             waitForTargetHealthCheck();
             monitoringServer = new MonitoringServer().start();
-            consumer = createConsumer(monitoringServer);
-            onShutdownHook(consumer, monitoringServer);
+            var consumerAndSubscription = createConsumer(monitoringServer);
+            consumer = consumerAndSubscription.consumer();
+            consumerSubscription = consumerAndSubscription.subscription();
+            onShutdownHook(monitoringServer);
             Monitor.started();
             latch.await();
         } catch (Exception e) {
@@ -48,7 +51,7 @@ public class Main {
         Monitor.targetHealthcheckPassedSuccessfully();
     }
 
-    private static Disposable createConsumer(MonitoringServer monitoringServer) {
+    private static ConsumerAndSubscription createConsumer(MonitoringServer monitoringServer) {
         var receiverOptions = KafkaClientFactory
             .createReceiverOptions()
             .commitInterval(Duration.ofMillis(Config.COMMIT_INTERVAL_MS))
@@ -64,11 +67,14 @@ public class Main {
 
         var senderOptions = KafkaClientFactory.createSenderOptions();
 
-        return new Consumer(
-            KafkaReceiver.create(receiverOptions),
+        var kafkaReceiver = KafkaReceiver.create(receiverOptions);
+        var consumerInstance = new Consumer(
+            kafkaReceiver,
             KafkaSender.create(senderOptions),
             new HttpTarget(topicsRoutes, new Producer(KafkaClientFactory.createProducer()))
-        )
+        );
+
+        var subscription = consumerInstance
             .stream()
             .doOnError(Monitor::consumerError)
             .subscribe(
@@ -82,9 +88,13 @@ public class Main {
                     Monitor.consumerCompleted();
                 }
             );
+
+        return new ConsumerAndSubscription(consumerInstance, subscription);
     }
 
-    private static void onShutdownHook(Disposable consumer, MonitoringServer monitoringServer) {
+    private record ConsumerAndSubscription(Consumer consumer, Disposable subscription) {}
+
+    private static void onShutdownHook(MonitoringServer monitoringServer) {
         Runtime
             .getRuntime()
             .addShutdownHook(
@@ -97,8 +107,8 @@ public class Main {
 
     private static void shutdown() {
         Monitor.shuttingDown();
-        if (consumer != null) {
-            consumer.dispose();
+        if (consumerSubscription != null) {
+            consumerSubscription.dispose();
         }
         if (monitoringServer != null) {
             monitoringServer.close();
