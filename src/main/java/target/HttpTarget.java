@@ -115,15 +115,19 @@ public class HttpTarget implements ITarget {
                 .compose(client.newCall(request))
                 .executeAsync()
                 .handleAsync((response, throwable) -> {
+                    int statusCode = response != null ? response.code() : -1;
                     try {
                         if (
                             Integer
-                                .toString(response.code())
+                                .toString(statusCode)
                                 .matches(Config.PRODUCE_TO_DEAD_LETTER_TOPIC_WHEN_STATUS_CODE_MATCH) ||
                             throwable != null
                         ) {
-                            assert response.body() != null;
-                            return new TargetException(response.code(), response.body().string(), throwable);
+                            String bodyString = "";
+                            if (response != null && response.body() != null) {
+                                bodyString = response.body().string();
+                            }
+                            return new TargetException(statusCode, bodyString, throwable);
                         } else {
                             return null;
                         }
@@ -135,7 +139,7 @@ public class HttpTarget implements ITarget {
                             targetRequestId,
                             batchRequestId,
                             executionStart,
-                            response.code(),
+                            statusCode,
                             throwable
                         );
                     }
@@ -197,6 +201,23 @@ public class HttpTarget implements ITarget {
         String batchRequestId,
         String targetRequestId
     ) {
+        if (response == null) {
+            Monitor.processMessageCompleted(record, batchRequestId, targetRequestId, executionStart, -1, throwable);
+            if (Config.DEAD_LETTER_TOPIC != null) {
+                Monitor.deadLetterProduced(record, batchRequestId, targetRequestId);
+                return producer.produce(
+                    Config.DEAD_LETTER_TOPIC,
+                    record,
+                    Optional.empty(),
+                    Optional.of(throwable != null ? throwable : new RuntimeException("response is null")),
+                    batchRequestId,
+                    targetRequestId
+                );
+            }
+            return CompletableFuture.failedFuture(
+                throwable != null ? throwable : new RuntimeException("response is null")
+            );
+        }
         try (Response r = response) {
             if (throwable != null) {
                 Monitor.processMessageCompleted(record, batchRequestId, targetRequestId, executionStart, -1, throwable);
