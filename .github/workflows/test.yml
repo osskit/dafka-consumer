@@ -15,22 +15,29 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
             - name: Use Node.js
-              uses: actions/setup-node@v2
+              uses: actions/setup-node@v4
               with:
                   node-version: '20.2'
 
+            - name: Set up JDK
+              uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: '18'
+
             - name: Install bazelisk
               run: |
-                  curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.1.0/bazelisk-linux-amd64"
+                  curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.20.0/bazelisk-linux-amd64"
                   mkdir -p "${GITHUB_WORKSPACE}/bin/"
                   mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
                   chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
+                  echo "${GITHUB_WORKSPACE}/bin" >> "${GITHUB_PATH}"
 
             - run: yarn
             - run: |
-                  docker pull confluentinc/cp-kafka:7.2.2
+                  docker pull confluentinc/cp-kafka:7.6.0
                   yarn test
               env:
                   MAX_RETRIES: 20

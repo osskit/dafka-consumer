@@ -1,5 +1,6 @@
-load("@io_bazel_rules_docker//java:image.bzl", "java_image")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 java_library(
     name = "lib",
@@ -41,18 +42,41 @@ java_binary(
     runtime_deps = [":lib"],
 )
 
-
-container_image(
-    name = "java_base_with_symlink",
-    base = "@java_base_image//image",
-    symlinks = {
-        "/usr/bin/java": "/opt/java/openjdk/bin/java",
-    },
+copy_file(
+    name = "app_jar",
+    src = ":main_deploy.jar",
+    out = "dafka-consumer.jar",
 )
 
-java_image(
+pkg_tar(
+    name = "app_layer",
+    srcs = [":app_jar"],
+    package_dir = "/app",
+)
+
+oci_image(
     name = "image",
-    base = ":java_base_with_symlink",
-    main_class = "Main",
-    runtime_deps = [":lib"],
+    base = "@java_base_image",
+    entrypoint = [
+        "java",
+        "-cp",
+        "/app/dafka-consumer.jar",
+        "Main",
+    ],
+    env = {"JAVA_RUNFILES": "/app"},
+    tars = [":app_layer"],
+)
+
+oci_tarball(
+    name = "image_tarball",
+    image = ":image",
+    repo_tags = ["bazel/src:image"],
+)
+
+# `//src:image.tar` in `bazel-bin/src/` is the contract the release workflow and
+# the `pretest` script rely on; oci_tarball writes to `image_tarball/tarball.tar`.
+copy_file(
+    name = "image_tar",
+    src = ":image_tarball",
+    out = "image.tar",
 )
