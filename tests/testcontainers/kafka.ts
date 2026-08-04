@@ -5,7 +5,7 @@ import delay from 'delay';
 import fs from 'node:fs';
 
 export const kafka = async (network: StartedNetwork, topics: string[]) => {
-    const container = await new KafkaContainer('confluentinc/cp-kafka:7.2.2')
+    const container = await new KafkaContainer('confluentinc/cp-kafka:7.6.0')
         .withNetwork(network)
         .withNetworkAliases('kafka')
         .withWaitStrategy(Wait.forLogMessage('started (kafka.server.KafkaServer)'))

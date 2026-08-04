@@ -37,7 +37,7 @@ jobs:
 
             - run: yarn
             - run: |
-                  docker pull confluentinc/cp-kafka:7.2.2
+                  docker pull confluentinc/cp-kafka:7.6.0
                   yarn test
               env:
                   MAX_RETRIES: 20
