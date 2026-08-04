@@ -102,6 +102,8 @@ Container images are configured using parameters passed at runtime.
 | `TRUSTSTORE_PASSWORD` | `required` if `TRUSTSTORE_FILE_PATH != null` | Truststore's password | 
 | `USE_PROMETHEUS` | `false` | Export metrics to Prometheus |
 | `PROMETHEUS_BUCKETS` | `0.003,0.03,0.1,0.3,1.5,10` | A list of Prometheus buckets to use |
+| `KAFKA_CONSUMER_PROPERTY_*` | `null` | Any [consumer config](https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html), passed as is to the Kafka consumer. The name is lowercased and underscores become dots, so `KAFKA_CONSUMER_PROPERTY_MAX_PARTITION_FETCH_BYTES=5242880` sets `max.partition.fetch.bytes=5242880`. Properties that have a dedicated parameter above are not overridable this way |
+| `KAFKA_PRODUCER_PROPERTY_*` | `null` | Any [producer config](https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html), passed as is to the dead letter producer. The name is lowercased and underscores become dots, so `KAFKA_PRODUCER_PROPERTY_MAX_REQUEST_SIZE=5242880` sets `max.request.size=5242880` |
 
 
 

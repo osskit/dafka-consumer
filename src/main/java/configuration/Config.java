@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.consumer.*;
@@ -20,6 +21,9 @@ public class Config {
 
     //Constants
     public static String ORIGINAL_TOPIC = "original-topic";
+
+    private static final String CONSUMER_PROPERTY_PREFIX = "KAFKA_CONSUMER_PROPERTY_";
+    private static final String PRODUCER_PROPERTY_PREFIX = "KAFKA_PRODUCER_PROPERTY_";
 
     //Required
     public static String KAFKA_BROKER;
@@ -73,6 +77,9 @@ public class Config {
     public static String RECORD_PICK_FIELD;
 
     public static Integer WINDOW_DURATION;
+
+    public static Map<String, String> KAFKA_CONSUMER_PROPERTIES;
+    public static Map<String, String> KAFKA_PRODUCER_PROPERTIES;
 
     public static void init() throws Exception {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -210,6 +217,27 @@ public class Config {
         PROMETHEUS_BUCKETS = getOptionalString(dotenv, "PROMETHEUS_BUCKETS", "0.003,0.03,0.1,0.3,1.5,10");
 
         WINDOW_DURATION = getOptionalInt(dotenv, "WINDOW_DURATION", 0);
+
+        KAFKA_CONSUMER_PROPERTIES = getPropertiesByPrefix(CONSUMER_PROPERTY_PREFIX);
+        KAFKA_PRODUCER_PROPERTIES = getPropertiesByPrefix(PRODUCER_PROPERTY_PREFIX);
+    }
+
+    // The consumer and the dead letter producer are separate Kafka clients with disjoint property
+    // sets, so they take separate prefixes: KAFKA_CONSUMER_PROPERTY_MAX_PARTITION_FETCH_BYTES sets
+    // max.partition.fetch.bytes on the consumer, KAFKA_PRODUCER_PROPERTY_MAX_REQUEST_SIZE sets
+    // max.request.size on the producer.
+    private static Map<String, String> getPropertiesByPrefix(String prefix) {
+        return System
+            .getenv()
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getKey().startsWith(prefix) && entry.getKey().length() > prefix.length())
+            .collect(
+                Collectors.toMap(
+                    entry -> entry.getKey().substring(prefix.length()).toLowerCase(Locale.ROOT).replace('_', '.'),
+                    Map.Entry::getValue
+                )
+            );
     }
 
     private static String getString(Dotenv dotenv, String name) throws Exception {

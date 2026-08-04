@@ -70,20 +70,27 @@ public class KafkaClientFactory {
         props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, Config.KAFKA_FETCH_MAX_BYTES);
         props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, Config.KAFKA_MAX_PARTITION_FETCH_BYTES);
 
+        // putIfAbsent so a dedicated parameter always wins over the generic passthrough
+        Config.KAFKA_CONSUMER_PROPERTIES.forEach(props::putIfAbsent);
+
         return ReceiverOptions.create(props);
     }
 
-    public static SenderOptions<String, String> createSenderOptions() {
+    private static Properties getProducerProperties() {
         var props = getAuthProperties();
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        return SenderOptions.create(props);
+
+        Config.KAFKA_PRODUCER_PROPERTIES.forEach(props::putIfAbsent);
+
+        return props;
+    }
+
+    public static SenderOptions<String, String> createSenderOptions() {
+        return SenderOptions.create(getProducerProperties());
     }
 
     public static <K, V> KafkaProducer<K, V> createProducer() {
-        var props = getAuthProperties();
-        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        return new KafkaProducer<>(props);
+        return new KafkaProducer<>(getProducerProperties());
     }
 }
