@@ -125,7 +125,7 @@ public class Monitor {
     public static void batchProcessStarted(String requestId) {
         write(
             new JSONObject()
-                .put("level", "info")
+                .put("level", "debug")
                 .put("message", "batch process started")
                 .put("extra", new JSONObject().put("batchRequestId", requestId))
         );
@@ -135,7 +135,7 @@ public class Monitor {
         var executionTimeMs = new Date().getTime() - batchStartTimestamp;
         write(
             new JSONObject()
-                .put("level", "info")
+                .put("level", "debug")
                 .put("message", "batch process completed")
                 .put(
                     "extra",
@@ -158,7 +158,7 @@ public class Monitor {
 
         write(
             new JSONObject()
-                .put("level", "info")
+                .put("level", "debug")
                 .put("message", "process message started")
                 .put(
                     "extra",
@@ -197,7 +197,7 @@ public class Monitor {
     ) {
         write(
             new JSONObject()
-                .put("level", "info")
+                .put("level", outcomeLevel(statusCode, throwable))
                 .put("message", "process message completed")
                 .put(
                     "extra",
@@ -220,7 +220,7 @@ public class Monitor {
     ) {
         write(
             new JSONObject()
-                .put("level", "info")
+                .put("level", "debug")
                 .put("message", "target call started")
                 .put(
                     "extra",
@@ -243,7 +243,7 @@ public class Monitor {
         var executionTimeMs = new Date().getTime() - executionStart;
         write(
             new JSONObject()
-                .put("level", "info")
+                .put("level", outcomeLevel(statusCode, throwable))
                 .put("message", "target call completed")
                 .put(
                     "extra",
@@ -266,7 +266,7 @@ public class Monitor {
     ) {
         write(
             new JSONObject()
-                .put("level", "info")
+                .put("level", "error")
                 .put("message", "process message failed")
                 .put(
                     "err",
@@ -294,7 +294,7 @@ public class Monitor {
     ) {
         write(
             new JSONObject()
-                .put("level", "info")
+                .put("level", "warn")
                 .put("message", "dead letter produced")
                 .put(
                     "extra",
@@ -332,7 +332,7 @@ public class Monitor {
     ) {
         write(
             new JSONObject()
-                .put("level", "info")
+                .put("level", "debug")
                 .put("message", "message acknowledged")
                 .put(
                     "extra",
@@ -350,7 +350,7 @@ public class Monitor {
     public static void commitSuccess(ConsumerRecord<String, String> record, String batchRequestId) {
         write(
             new JSONObject()
-                .put("level", "info")
+                .put("level", "debug")
                 .put("message", "commit success")
                 .put(
                     "extra",
@@ -484,7 +484,7 @@ public class Monitor {
             error.put("type", exception.getClass());
         }
 
-        write(new JSONObject().put("level", "info").put("message", message).put("extra", extra).put("err", error));
+        write(new JSONObject().put("level", "warn").put("message", message).put("extra", extra).put("err", error));
     }
 
     public static void targetExecutionRetry(
@@ -524,13 +524,20 @@ public class Monitor {
     public static void targetHealthcheckFailed(Exception exception) {
         write(
             new JSONObject()
-                .put("level", "info")
+                .put("level", "warn")
                 .put("message", "target healthcheck failed")
                 .put("exceptionMessage", exception.getMessage())
         );
     }
 
+    private static String outcomeLevel(int statusCode, Throwable throwable) {
+        return throwable == null && statusCode >= 200 && statusCode < 300 ? "debug" : "warn";
+    }
+
     private static void write(JSONObject log) {
+        if (Config.LOG_LEVELS.indexOf(log.getString("level")) < Config.LOG_LEVELS.indexOf(Config.LOG_LEVEL)) {
+            return;
+        }
         System.out.println(log.toString());
     }
 

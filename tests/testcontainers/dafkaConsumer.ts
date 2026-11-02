@@ -7,6 +7,7 @@ import Dockerode from 'dockerode';
 export interface ServiceContainer {
     stop: () => Promise<StoppedTestContainer>;
     inspect: () => Promise<Dockerode.ContainerInspectInfo>;
+    logs: () => Promise<string>;
 }
 
 export const dafkaConsumer = async (
@@ -42,6 +43,13 @@ export const dafkaConsumer = async (
         inspect: async () => {
             const containerRuntimeClient = await getContainerRuntimeClient();
             return containerRuntimeClient.container.getById(container.getId()).inspect();
+        },
+        logs: async () => {
+            const containerRuntimeClient = await getContainerRuntimeClient();
+            const logs = await containerRuntimeClient.container
+                .getById(container.getId())
+                .logs({stdout: true, stderr: true, follow: false});
+            return logs.toString();
         },
     };
 };

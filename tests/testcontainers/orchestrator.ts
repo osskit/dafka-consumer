@@ -10,6 +10,7 @@ export interface Orchestrator {
     kafkaClient: Kafka;
     wiremockClient: WireMockClient;
     dafkaConsumerInspect: () => Promise<Dockerode.ContainerInspectInfo>;
+    dafkaConsumerLogs: () => Promise<string>;
     stop: () => Promise<void>;
 }
 
@@ -21,17 +22,18 @@ export const start = async (
     const network = await new Network().start();
 
     const {client: kafkaClient, stop: stopKafka} = await kafka(network, topics);
-    const {stop: stopConsumer, inspect: dafkaConsumerInspect} = await dafkaConsumer(
-        network,
-        env,
-        waitForAssignedPartitions
-    );
+    const {
+        stop: stopConsumer,
+        inspect: dafkaConsumerInspect,
+        logs: dafkaConsumerLogs,
+    } = await dafkaConsumer(network, env, waitForAssignedPartitions);
     const {client: wiremockClient, stop: stopWiremock} = await wiremock(network);
 
     return {
         kafkaClient,
         wiremockClient,
         dafkaConsumerInspect,
+        dafkaConsumerLogs,
         stop: async () => {
             await stopConsumer();
             await stopWiremock();

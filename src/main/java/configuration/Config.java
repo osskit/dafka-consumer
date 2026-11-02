@@ -67,6 +67,8 @@ public class Config {
     public static boolean USE_PROMETHEUS;
 
     public static boolean EXPOSE_JAVA_METRICS;
+    public static final List<String> LOG_LEVELS = List.of("debug", "info", "warn", "error");
+    public static String LOG_LEVEL = "debug";
     public static String PROMETHEUS_BUCKETS;
     public static String TARGET_HEALTHCHECK;
     public static List<String> ASSIGNMENT_STRATEGY;
@@ -217,6 +219,11 @@ public class Config {
         PROMETHEUS_BUCKETS = getOptionalString(dotenv, "PROMETHEUS_BUCKETS", "0.003,0.03,0.1,0.3,1.5,10");
 
         WINDOW_DURATION = getOptionalInt(dotenv, "WINDOW_DURATION", 0);
+
+        LOG_LEVEL = getOptionalString(dotenv, "LOG_LEVEL", "debug").toLowerCase(Locale.ROOT);
+        if (!LOG_LEVELS.contains(LOG_LEVEL)) {
+            throw new RuntimeException("LOG_LEVEL value not supported {" + LOG_LEVEL + "}");
+        }
 
         KAFKA_CONSUMER_PROPERTIES = getPropertiesByPrefix(CONSUMER_PROPERTY_PREFIX);
         KAFKA_PRODUCER_PROPERTIES = getPropertiesByPrefix(PRODUCER_PROPERTY_PREFIX);
